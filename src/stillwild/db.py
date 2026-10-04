@@ -283,11 +283,14 @@ class Repository:
     ) -> str:
         outcome_id = str(uuid4())
         with self.connection() as conn:
-            exists = conn.execute(
-                "SELECT id FROM recommendations WHERE id = ?", (recommendation_id,)
+            conn.execute("BEGIN IMMEDIATE")
+            recommendation = conn.execute(
+                "SELECT status FROM recommendations WHERE id = ?", (recommendation_id,)
             ).fetchone()
-            if not exists:
+            if not recommendation:
                 raise KeyError(recommendation_id)
+            if recommendation["status"] == "resolved":
+                raise ValueError("recommendation already resolved")
             conn.execute(
                 """
                 INSERT INTO outcomes(id,recommendation_id,outcome,utility_score,notes,created_at)
