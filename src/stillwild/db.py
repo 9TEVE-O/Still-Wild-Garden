@@ -590,6 +590,25 @@ class Repository:
             ).fetchone()
             return json.loads(row["state_json"]) if row else None
 
+    def save_world_if_revision(
+        self,
+        name: str,
+        state: dict[str, Any],
+        expected_revision: int,
+        connection: sqlite3.Connection | None = None,
+    ) -> bool:
+        # A fencing check: the save only lands if nobody else has saved the world since the
+        # caller loaded it, so a stale writer can never overwrite newer state.
+        with self.connection(connection) as conn:
+            cur = conn.execute(
+                """
+                UPDATE worlds SET state_json = ?, updated_at = ?
+                WHERE name = ? AND COALESCE(json_extract(state_json, '$.revision'), 0) = ?
+                """,
+                (json.dumps(state, separators=(",", ":")), _now(), name, expected_revision),
+            )
+            return cur.rowcount == 1
+
     def save_world(
         self, name: str, state: dict[str, Any], connection: sqlite3.Connection | None = None
     ) -> None:

@@ -36,6 +36,7 @@ JOURNAL_LIMIT = 200
 HISTORY_LIMIT = 600
 LEASE_TTL_SECONDS = 120
 LOST_LEASE_MESSAGE = "another process took over the Wild; this advance stopped without saving"
+STALE_WORLD_MESSAGE = "the Wild changed since this advance began; it stopped without saving"
 REAL_GARDEN_MESSAGE = (
     "this database holds real garden observations; run the Wild against a dedicated "
     "simulated-garden database"
@@ -304,7 +305,7 @@ class Wild:
                     if not self.repo.claim_world(WORLD, state, connection=conn):
                         raise RealGardenError(REAL_GARDEN_MESSAGE)
                     events += self._ingest_all(state, self._initial_survey(state), conn)
-                    self.repo.save_world(WORLD, state, connection=conn)
+                    self._save(state, conn)
             first_day = state["day"]
             evolution: list[dict[str, Any]] = []
             for _ in range(days):
@@ -315,14 +316,14 @@ class Wild:
                     self._renew(holder, conn)
                     events += self._ingest_all(state, day_events, conn)
                     resolved = self._judge(state, conn)
-                    self.repo.save_world(WORLD, state, connection=conn)
+                    self._save(state, conn)
                 outcomes += resolved
                 if resolved:
                     created = self._evolve(state)
                     if created:
                         with self.repo.transaction() as conn:
                             self._renew(holder, conn)
-                            self.repo.save_world(WORLD, state, connection=conn)
+                            self._save(state, conn)
                     evolution.extend(created)
             new_notes = [note for note in state["journal"] if note["day"] > first_day]
             return {
@@ -462,6 +463,7 @@ class Wild:
             }
         state: dict[str, Any] = {
             "version": 1,
+            "revision": 0,
             "seed": self.seed,
             "day": 0,
             "start": START_DATE.isoformat(),
@@ -938,6 +940,14 @@ class Wild:
     def _renew(self, holder: str, conn: sqlite3.Connection) -> None:
         if not self.repo.try_acquire_lease(LEASE, holder, LEASE_TTL_SECONDS, connection=conn):
             raise WildBusyError(LOST_LEASE_MESSAGE)
+
+    def _save(self, state: dict[str, Any], conn: sqlite3.Connection) -> None:
+        # The lease keeps advances from overlapping; the revision is the fence. Even an advance
+        # that lost its lease and later re-acquired it cannot commit over newer state.
+        expected = state.get("revision", 0)
+        state["revision"] = expected + 1
+        if not self.repo.save_world_if_revision(WORLD, state, expected, connection=conn):
+            raise WildBusyError(STALE_WORLD_MESSAGE)
 
     def _ingest_all(
         self,

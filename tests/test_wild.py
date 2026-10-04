@@ -372,3 +372,29 @@ def test_an_advance_that_loses_its_lease_stops_without_saving(tmp_path):
 
     assert repo.load_world("wild")["day"] == 2
     assert _events_on_day(repo, 3) == []
+
+
+def test_a_stale_advance_cannot_commit_after_its_lease_was_reused(tmp_path):
+    repo, engine, stale = make_wild(tmp_path)
+    successor = Wild(repo, engine, seed=7)
+    original_step = stale._step
+
+    def suspended_past_the_lease(state):
+        if state["day"] == 2:
+            # The stale advance pauses past its lease; a successor takes over, advances and
+            # releases the lease, deleting the only record that ownership changed.
+            with repo.connection() as conn:
+                conn.execute("UPDATE leases SET expires_at = '2000-01-01T00:00:00+00:00'")
+            successor.advance(2)
+        return original_step(state)
+
+    stale._step = suspended_past_the_lease
+    with pytest.raises(WildBusyError, match="changed since"):
+        stale.advance(5)
+
+    world = repo.load_world("wild")
+    assert world["day"] == 4, "the successor's progress survives"
+    temperatures = [event for event in repo.list_events(limit=1000)
+                    if event["type"] == "sensor.temperature"]
+    days = [event["payload"]["sim_day"] for event in temperatures]
+    assert sorted(days) == [1, 2, 3, 4], "no simulated day was written twice"
