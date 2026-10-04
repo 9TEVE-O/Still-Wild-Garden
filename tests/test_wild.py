@@ -7,7 +7,7 @@ from stillwild import api, worker
 from stillwild.config import settings
 from stillwild.db import Repository
 from stillwild.domain import GardenEvent
-from stillwild.engine import GardenEngine
+from stillwild.engine import GardenEngine, SimulatedGardenError, is_real_observation
 from stillwild.wild import LEASE, SOURCE, RealGardenError, Wild, WildBusyError
 
 
@@ -213,3 +213,55 @@ def test_worker_stops_simulating_when_garden_is_real(monkeypatch):
     assert worker._grow_wild(RealWild()) is None
     busy = BusyWild()
     assert worker._grow_wild(busy) is busy
+
+
+def test_real_observation_cannot_slip_in_while_the_wild_advances(tmp_path):
+    repo, engine, wild = make_wild(tmp_path)
+    original_step = wild._step
+    attempts = []
+
+    def step_with_intruder(state):
+        if state["day"] == 2:
+            try:
+                engine.ingest(GardenEvent(type="plant.observation", zone_id="bed", source="human",
+                                          payload={"condition": "thriving"}))
+                attempts.append("accepted")
+            except SimulatedGardenError:
+                attempts.append("rejected")
+        return original_step(state)
+
+    wild._step = step_with_intruder
+    wild.advance(5)
+
+    assert attempts == ["rejected"]
+    assert not repo.has_real_observations()
+    engine.tick(source="worker-1")  # periodic ticks remain welcome
+
+
+def test_world_claim_refuses_a_database_with_real_observations(tmp_path):
+    repo, engine, wild = make_wild(tmp_path)
+    engine.ingest(GardenEvent(type="sensor.temperature", source="sensor", payload={"celsius": 9}))
+    assert repo.claim_world("wild", wild._new_world()) is False
+    assert not repo.has_world()
+
+
+@pytest.mark.parametrize(("flag", "real"), [(True, False), (1, True), ("true", True), (None, True)])
+def test_python_and_sql_agree_on_what_is_real(tmp_path, flag, real):
+    repo = Repository(str(tmp_path / "garden.db"))
+    payload = {} if flag is None else {"simulated": flag}
+    event = GardenEvent(type="plant.observation", source="x", payload=payload)
+    repo.add_event(event)
+    assert is_real_observation(event) is real
+    assert repo.has_real_observations() is real
+
+
+def test_api_rejects_real_observations_in_a_simulated_garden(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch, wild_sim=True)
+    assert client.post("/wild/advance?days=1").status_code == 200
+
+    response = client.post("/events", json={"type": "wildlife.observation", "zone_id": "pond",
+                                            "payload": {"taxon": "heron"}})
+    assert response.status_code == 409
+    assert "simulated garden" in response.json()["detail"]
+    assert not api.repo.has_real_observations()
+    assert client.post("/tasks/tick").status_code == 200

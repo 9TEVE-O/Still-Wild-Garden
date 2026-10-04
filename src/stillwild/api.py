@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
-from .engine import GardenEngine
+from .engine import GardenEngine, SimulatedGardenError
 from .wild import RealGardenError, Wild, WildBusyError
 
 repo = Repository(settings.db_path)
@@ -35,7 +35,10 @@ def health() -> dict:
 
 @app.post("/events", status_code=201)
 def ingest_event(event: GardenEvent) -> dict:
-    return engine.ingest(event)
+    try:
+        return engine.ingest(event)
+    except SimulatedGardenError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.get("/events")

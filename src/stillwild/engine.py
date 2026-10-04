@@ -10,6 +10,14 @@ from .domain import AgentOutput, GardenEvent
 TAXON_EVENT_TYPES = {"plant.observation", "wildlife.observation", "fungi.observation"}
 
 
+class SimulatedGardenError(RuntimeError):
+    """Raised instead of mixing a real observation into a simulated garden."""
+
+
+def is_real_observation(event: GardenEvent) -> bool:
+    return event.type != "system.tick" and event.payload.get("simulated") is not True
+
+
 class GardenEngine:
     def __init__(self, repo: Repository, automation_authority: bool = False):
         self.repo = repo
@@ -20,6 +28,11 @@ class GardenEngine:
 
     def ingest(self, event: GardenEvent) -> dict:
         with self.repo.transaction() as conn:
+            if is_real_observation(event) and self.repo.has_world(connection=conn):
+                raise SimulatedGardenError(
+                    "this database hosts a simulated garden; record real observations in a "
+                    "separate garden database"
+                )
             seq = self.repo.add_event(event, connection=conn)
             return self.process(event, seq=seq, conn=conn)
 

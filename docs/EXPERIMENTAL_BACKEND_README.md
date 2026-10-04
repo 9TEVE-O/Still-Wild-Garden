@@ -134,7 +134,8 @@ The simulation is deterministic for a given `STILLWILD_WILD_SEED`.
 
 A simulated garden is never a real one. Every event it emits carries `"simulated": true` and
 the source `wild-sim`. The Wild refuses to run against a database that already holds real
-observations, and it is off unless `STILLWILD_WILD_SIM=true`.
+observations, and once a simulated garden exists, `POST /events` rejects real observations
+with `409`. It is off unless `STILLWILD_WILD_SIM=true`.
 
 ## Authority
 

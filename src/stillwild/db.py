@@ -536,19 +536,35 @@ class Repository:
         with self.connection() as conn:
             conn.execute("DELETE FROM leases WHERE name = ? AND holder = ?", (name, holder))
 
-    def has_real_observations(self) -> bool:
-        # Anything other than periodic ticks and explicitly simulated events is treated
-        # as a real-world observation.
-        with self.connection() as conn:
+    def has_real_observations(self, connection: sqlite3.Connection | None = None) -> bool:
+        # Anything other than periodic ticks and events whose payload says "simulated": true
+        # is treated as a real-world observation.
+        with self.connection(connection) as conn:
             row = conn.execute(
                 """
                 SELECT 1 FROM events
                 WHERE type != 'system.tick'
-                  AND COALESCE(json_extract(payload_json, '$.simulated'), 0) != 1
+                  AND COALESCE(json_type(payload_json, '$.simulated'), '') != 'true'
                 LIMIT 1
                 """
             ).fetchone()
             return row is not None
+
+    def has_world(self, connection: sqlite3.Connection | None = None) -> bool:
+        with self.connection(connection) as conn:
+            return conn.execute("SELECT 1 FROM worlds LIMIT 1").fetchone() is not None
+
+    def claim_world(self, name: str, state: dict[str, Any]) -> bool:
+        # Claiming happens under the same write lock as event ingestion, so a real
+        # observation and a new simulated garden can never both land in one database.
+        with self.transaction() as conn:
+            if self.has_real_observations(connection=conn):
+                return False
+            conn.execute(
+                "INSERT OR IGNORE INTO worlds(name,state_json,updated_at) VALUES (?,?,?)",
+                (name, json.dumps(state, separators=(",", ":")), _now()),
+            )
+            return True
 
     def load_world(self, name: str) -> dict[str, Any] | None:
         with self.connection() as conn:

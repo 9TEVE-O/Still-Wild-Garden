@@ -6,6 +6,7 @@ services:
     environment:
       STILLWILD_DB_PATH: /data/stillwild.db
       STILLWILD_WILD_SIM: ${STILLWILD_WILD_SIM:-false}
+      STILLWILD_WILD_SEED: ${STILLWILD_WILD_SEED:-7}
     ports:
       - "8000:8000"
     volumes:
@@ -20,6 +21,7 @@ services:
       STILLWILD_TICK_SECONDS: "300"
       STILLWILD_WORKER_ID: worker-1
       STILLWILD_WILD_SIM: ${STILLWILD_WILD_SIM:-false}
+      STILLWILD_WILD_SEED: ${STILLWILD_WILD_SEED:-7}
       STILLWILD_WILD_DAYS_PER_TICK: ${STILLWILD_WILD_DAYS_PER_TICK:-1}
     volumes:
       - stillwild-data:/data

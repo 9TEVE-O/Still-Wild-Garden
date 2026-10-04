@@ -33,6 +33,10 @@ IRRIGATE_HORIZON_DAYS = 3
 INSPECT_HORIZON_DAYS = 10
 JOURNAL_LIMIT = 200
 HISTORY_LIMIT = 600
+REAL_GARDEN_MESSAGE = (
+    "this database holds real garden observations; run the Wild against a dedicated "
+    "simulated-garden database"
+)
 
 
 class RealGardenError(RuntimeError):
@@ -285,15 +289,16 @@ class Wild:
         if not self.repo.try_acquire_lease(LEASE, holder, ttl_seconds=max(60, days * 2)):
             raise WildBusyError("another process is already advancing the Wild")
         try:
+            # Once a world exists the engine refuses real observations, so checking here and
+            # claiming atomically below keeps real and simulated evidence apart.
             if self.repo.has_real_observations():
-                raise RealGardenError(
-                    "this database holds real garden observations; run the Wild against a "
-                    "dedicated simulated-garden database"
-                )
+                raise RealGardenError(REAL_GARDEN_MESSAGE)
             state = self.repo.load_world(WORLD)
             events = outcomes = 0
             if state is None:
                 state = self._new_world()
+                if not self.repo.claim_world(WORLD, state):
+                    raise RealGardenError(REAL_GARDEN_MESSAGE)
                 events += self._ingest_all(state, self._initial_survey(state))
                 self.repo.save_world(WORLD, state)
             first_day = state["day"]

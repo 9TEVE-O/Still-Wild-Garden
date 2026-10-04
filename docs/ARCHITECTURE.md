@@ -76,9 +76,10 @@ agents years of experience in minutes:
   inspections 10 days later. Each is scored on whether drought damage, rain or recovery followed,
   and the result is recorded as a normal outcome, which can raise evolution candidates. The
   outcome notes say the action was never executed.
-- **Guards.** A `wild-sim` lease stops two processes advancing the same world. The simulation
-  also refuses to run if the database holds any non-simulated observation, so it can never be
-  mistaken for a real garden.
+- **Guards.** A `wild-sim` lease stops two processes advancing the same world. A new world
+  claims its database in the same write transaction that confirms no real observation exists.
+  After that, `GardenEngine.ingest` rejects real observations inside its own transaction, so
+  real and simulated evidence can never mix, whichever side writes first.
 
 `GET /garden` renders the world live from `GET /wild` and `/stream`.
 
