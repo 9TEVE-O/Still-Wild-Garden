@@ -1,6 +1,6 @@
-
 from __future__ import annotations
 
+import sqlite3
 from datetime import UTC, datetime
 
 from .agents import CouncilAgent, WildnessAgent, default_agents
@@ -17,19 +17,22 @@ class GardenEngine:
         self.council = CouncilAgent()
 
     def ingest(self, event: GardenEvent) -> dict:
-        seq = self.repo.add_event(event)
-        return self.process(event, seq=seq)
+        with self.repo.transaction() as conn:
+            seq = self.repo.add_event(event, connection=conn)
+            return self.process(event, seq=seq, conn=conn)
 
-    def process(self, event: GardenEvent, seq: int | None = None) -> dict:
+    def process(
+        self, event: GardenEvent, seq: int | None = None, conn: sqlite3.Connection | None = None
+    ) -> dict:
         outputs: list[AgentOutput] = []
         for agent in self.agents:
             if agent.handles(event):
                 output = agent.run(event, self.repo)
-                self.repo.add_agent_run(event.id, output)
+                self.repo.add_agent_run(event.id, output, connection=conn)
                 outputs.append(output)
 
         wildness = self.wildness.review(outputs)
-        self.repo.add_agent_run(event.id, wildness)
+        self.repo.add_agent_run(event.id, wildness, connection=conn)
 
         final = self.council.decide(
             event,
@@ -37,15 +40,16 @@ class GardenEngine:
             wildness,
             automation_authority=self.automation_authority,
         )
-        self.repo.add_agent_run(event.id, final)
+        self.repo.add_agent_run(event.id, final, connection=conn)
         recommendation_id = self.repo.add_recommendation(
             event,
             decision=final.decision,
             summary=final.summary,
             confidence=final.confidence,
             proposed_action=final.proposed_action,
+            connection=conn,
         )
-        self._learn(event, outputs, final)
+        self._learn(event, outputs, final, conn=conn)
         return {
             "event_id": event.id,
             "seq": seq,
@@ -94,7 +98,11 @@ class GardenEngine:
         return created
 
     def _learn(
-        self, event: GardenEvent, outputs: list[AgentOutput], final: AgentOutput
+        self,
+        event: GardenEvent,
+        outputs: list[AgentOutput],
+        final: AgentOutput,
+        conn: sqlite3.Connection | None = None,
     ) -> None:
         zone = event.zone_id or "garden"
         self.repo.upsert_memory(
@@ -110,6 +118,7 @@ class GardenEngine:
             confidence=0.98,
             evidence_ids=[event.id],
             status="observation",
+            connection=conn,
         )
 
         if event.type == "sensor.soil_moisture":
@@ -122,4 +131,5 @@ class GardenEngine:
                     confidence=0.84,
                     evidence_ids=[event.id],
                     status="observation",
+                    connection=conn,
                 )

@@ -1,17 +1,15 @@
-
 from __future__ import annotations
 
+import json
+import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
-import json
 from pathlib import Path
-import sqlite3
 from typing import Any
 from uuid import uuid4
 
 from .domain import AgentOutput, ExperimentInput, GardenEvent
-
 
 SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -130,21 +128,33 @@ class Repository:
         self.init()
 
     @contextmanager
-    def connection(self) -> Iterator[sqlite3.Connection]:
+    def connection(
+        self, existing: sqlite3.Connection | None = None
+    ) -> Iterator[sqlite3.Connection]:
+        if existing is not None:
+            yield existing
+            return
         conn = sqlite3.connect(self.path, timeout=15)
         conn.row_factory = sqlite3.Row
         try:
+            conn.execute("PRAGMA foreign_keys=ON")
             yield conn
             conn.commit()
         finally:
             conn.close()
 
+    @contextmanager
+    def transaction(self) -> Iterator[sqlite3.Connection]:
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            yield conn
+
     def init(self) -> None:
         with self.connection() as conn:
             conn.executescript(SCHEMA)
 
-    def add_event(self, event: GardenEvent) -> int:
-        with self.connection() as conn:
+    def add_event(self, event: GardenEvent, connection: sqlite3.Connection | None = None) -> int:
+        with self.connection(connection) as conn:
             cur = conn.execute(
                 """
                 INSERT INTO events(id, type, zone_id, source, observed_at, payload_json, created_at)
@@ -200,9 +210,14 @@ class Repository:
                 ).fetchone()
             return self._event(row) if row else None
 
-    def add_agent_run(self, event_id: str, output: AgentOutput) -> str:
+    def add_agent_run(
+        self,
+        event_id: str,
+        output: AgentOutput,
+        connection: sqlite3.Connection | None = None,
+    ) -> str:
         run_id = str(uuid4())
-        with self.connection() as conn:
+        with self.connection(connection) as conn:
             conn.execute(
                 """
                 INSERT INTO agent_runs(
@@ -232,9 +247,10 @@ class Repository:
         summary: str,
         confidence: float,
         proposed_action: dict[str, Any] | None,
+        connection: sqlite3.Connection | None = None,
     ) -> str:
         rec_id = str(uuid4())
-        with self.connection() as conn:
+        with self.connection(connection) as conn:
             conn.execute(
                 """
                 INSERT INTO recommendations(
@@ -318,9 +334,11 @@ class Repository:
         confidence: float,
         evidence_ids: list[str],
         status: str = "observation",
+        connection: sqlite3.Connection | None = None,
     ) -> None:
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             existing = conn.execute(
                 "SELECT evidence_count,evidence_json FROM memories WHERE key = ?", (key,)
             ).fetchone()
@@ -415,6 +433,7 @@ class Repository:
     ) -> str:
         candidate_id = str(uuid4())
         with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
             duplicate = conn.execute(
                 """
                 SELECT id FROM evolution_candidates
@@ -462,7 +481,9 @@ class Repository:
         expires = now + timedelta(seconds=ttl_seconds)
         with self.connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            row = conn.execute("SELECT holder,expires_at FROM leases WHERE name = ?", (name,)).fetchone()
+            row = conn.execute(
+                "SELECT holder,expires_at FROM leases WHERE name = ?", (name,)
+            ).fetchone()
             if row:
                 expiry = datetime.fromisoformat(row["expires_at"])
                 if expiry > now and row["holder"] != holder:

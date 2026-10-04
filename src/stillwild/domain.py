@@ -1,11 +1,11 @@
-
 from __future__ import annotations
 
+import math
 from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def utcnow() -> datetime:
@@ -19,6 +19,27 @@ class GardenEvent(BaseModel):
     source: str = "unknown"
     observed_at: datetime = Field(default_factory=utcnow)
     payload: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_sensor_readings(self) -> GardenEvent:
+        if self.type == "sensor.soil_moisture":
+            if "percent" in self.payload:
+                value = self.payload["percent"]
+                if not _finite_number(value) or not 0 <= value <= 100:
+                    raise ValueError("soil-moisture percent must be a finite number from 0 to 100")
+            if "forecast_rain_mm_24h" in self.payload:
+                value = self.payload["forecast_rain_mm_24h"]
+                if not _finite_number(value) or value < 0:
+                    raise ValueError("forecast rainfall must be a finite non-negative number")
+        return self
+
+
+def _finite_number(value: Any) -> bool:
+    return (
+        not isinstance(value, bool)
+        and isinstance(value, (int, float))
+        and (isinstance(value, int) or math.isfinite(value))
+    )
 
 
 Decision = Literal["NO_ACTION", "WATCH", "INVESTIGATE", "PROPOSE", "DEFER", "ALLOW"]
