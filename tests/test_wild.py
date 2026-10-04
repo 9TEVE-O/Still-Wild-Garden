@@ -292,3 +292,29 @@ def test_public_simulated_flag_cannot_prepare_a_real_garden_for_the_wild(tmp_pat
                                             "payload": {"condition": "stable", "simulated": True}})
     assert response.status_code == 422
     assert api.repo.list_events() == []
+
+
+def test_cron_tick_grows_the_wild_like_the_worker(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch, wild_sim=True)
+    monkeypatch.setattr(api, "settings", replace(api.settings, wild_days_per_tick=3))
+
+    first = client.post("/tasks/tick").json()
+    second = client.post("/tasks/tick").json()
+
+    assert first["wild"]["day"] == 3
+    assert second["wild"]["day"] == 6
+    assert api.repo.load_world("wild")["day"] == 6
+
+
+def test_cron_tick_leaves_the_wild_alone_when_disabled_or_real(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch, wild_sim=False)
+    assert "wild" not in client.post("/tasks/tick").json()
+    assert api.repo.load_world("wild") is None
+
+    monkeypatch.setattr(api, "settings", replace(api.settings, wild_sim=True))
+    client.post("/events", json={"type": "plant.observation", "zone_id": "bed",
+                                 "payload": {"condition": "stable"}})
+    response = client.post("/tasks/tick")
+    assert response.status_code == 200
+    assert "real garden observations" in response.json()["wild"]["skipped"]
+    assert api.repo.load_world("wild") is None

@@ -95,8 +95,15 @@ def record_outcome(outcome: OutcomeInput) -> dict:
 @app.post("/tasks/tick")
 def tick() -> dict:
     # Suitable for an external cron/scheduler in environments where long-running
-    # worker processes are unavailable.
-    return engine.tick(source="api-cron")
+    # worker processes are unavailable, so it grows the Wild just as the worker does.
+    result = engine.tick(source="api-cron")
+    if settings.wild_sim:
+        try:
+            grown = Wild(repo, engine, seed=settings.wild_seed).advance(settings.wild_days_per_tick)
+            result["wild"] = {"day": grown["day"], "date": grown["date"], "events": grown["events"]}
+        except (RealGardenError, WildBusyError) as exc:
+            result["wild"] = {"skipped": str(exc)}
+    return result
 
 
 @app.get("/wild")

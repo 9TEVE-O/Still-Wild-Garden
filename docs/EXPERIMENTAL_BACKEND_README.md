@@ -123,7 +123,8 @@ http://localhost:8000/garden
 
 ![The Wild in a drought summer](images/wild-garden.png)
 
-The worker grows the garden by `STILLWILD_WILD_DAYS_PER_TICK` simulated days on each tick.
+The worker grows the garden by `STILLWILD_WILD_DAYS_PER_TICK` simulated days on each tick. On
+hosts without a permanent worker, a scheduled `POST /tasks/tick` grows it the same way.
 To fast-forward a season, use:
 
 ```bash
