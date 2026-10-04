@@ -1,7 +1,7 @@
 
 from fastapi.testclient import TestClient
 
-import stillwild.api as api
+from stillwild import api
 from stillwild.db import Repository
 from stillwild.engine import GardenEngine
 

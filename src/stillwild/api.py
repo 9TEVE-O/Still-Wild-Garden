@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from collections.abc import AsyncIterator
+import json
 
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
