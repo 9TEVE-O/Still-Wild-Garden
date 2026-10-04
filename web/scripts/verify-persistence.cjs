@@ -1,0 +1,31 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const ts = require('typescript');
+const { DatabaseSync } = require('node:sqlite');
+const dir = path.resolve('.sites-runtime/verification'); fs.mkdirSync(dir, { recursive: true });
+const databasePath = path.join(dir, `test-${Date.now()}.sqlite`);
+let sql = new DatabaseSync(databasePath);
+sql.exec(fs.readFileSync('drizzle/0000_superb_krista_starr.sql', 'utf8'));
+const env = { DB: { prepare(query) { return { bind(...params) { return { async first() { return sql.prepare(query).get(...params) ?? null; }, async run() { return sql.prepare(query).run(...params); } }; } }; } } };
+function load(file, imports) { const source = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText; const exports = {}; vm.runInNewContext(source, { exports, require: name => { if (!(name in imports)) throw new Error('Unexpected dependency ' + name); return imports[name]; }, crypto: globalThis.crypto, Date, Response, Request, URL, console }); return exports; }
+const db = load('db/garden.ts', { 'cloudflare:workers': { env } });
+const api = load('app/api/garden/route.ts', { '@/db/garden': db });
+const request = (origin, body = '{}', type = 'application/json') => new Request('https://garden.example/api/garden', { method: 'POST', headers: { origin, 'content-type': type }, body });
+(async () => {
+  assert.equal((await (await api.GET()).json()).garden, null);
+  assert.equal((await api.POST(request('https://elsewhere.example'))).status, 403);
+  assert.equal((await api.POST(request('https://garden.example', '{"seed":7}'))).status, 400);
+  assert.equal((await api.POST(request('https://garden.example', '{}', 'text/plain'))).status, 415);
+  const first = await (await api.POST(request('https://garden.example'))).json();
+  const repeats = await Promise.all(Array.from({ length: 5 }, async () => (await api.POST(request('https://garden.example'))).json()));
+  repeats.forEach(result => assert.deepEqual(result.garden, first.garden));
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM gardens').get().n, 1);
+  sql.close(); sql = new DatabaseSync(databasePath);
+  const after = await (await api.GET()).json(); assert.deepEqual(after.garden, first.garden);
+  assert.equal(after.garden.version, 1); assert.ok(after.garden.seed >= 0 && after.garden.seed <= 4294967295);
+  sql.close();
+  const evidence = { status: 'PASS', schemaMigration: 'executed against SQLite', firstReadEmpty: true, plantIdempotent: true, concurrentRepeatCount: 5, rowCount: 1, survivesConnectionReopen: true, wrongOrigin: 403, invalidMutation: 400, wrongContentType: 415, scope: 'Actual repository query and route code using a SQLite-backed D1 adapter; production cloud runtime not exercised.' };
+  fs.writeFileSync('project_docs/persistence-evidence.json', JSON.stringify(evidence, null, 2) + '\n'); console.log(JSON.stringify(evidence));
+})().catch(e => { console.error(e); process.exitCode = 1; });
