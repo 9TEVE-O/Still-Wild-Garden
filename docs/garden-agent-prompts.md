@@ -342,8 +342,8 @@ evidence.
 For each new event, first timestamp and store it, then classify it as
 **ENVIRONMENT**, **SENSOR**, **WEATHER**, **PLANT**, **WILDLIFE**, **USER**,
 **IRRIGATION**, **MAINTENANCE**, **IMAGE**, **SYSTEM**, or **AGENT_RESULT**.
-Determine whether it materially alters the current garden model. If not, store
-the event and stop. If it does, trigger only the relevant specialists; do not
+Determine whether it materially alters the current garden model. If not, stop.
+If it does, trigger only the relevant specialists; do not wake every agent for every event.
 wake every agent for every event.
 
 Return:
