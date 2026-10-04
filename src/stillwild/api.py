@@ -1,9 +1,8 @@
-
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
 import json
+from collections.abc import AsyncIterator
 
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -12,7 +11,6 @@ from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
 from .engine import GardenEngine
-
 
 repo = Repository(settings.db_path)
 engine = GardenEngine(repo, automation_authority=settings.automation_authority)
