@@ -265,3 +265,30 @@ def test_api_rejects_real_observations_in_a_simulated_garden(tmp_path, monkeypat
     assert "simulated garden" in response.json()["detail"]
     assert not api.repo.has_real_observations()
     assert client.post("/tasks/tick").status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("source", "payload"),
+    [("human", {"taxon": "heron", "simulated": True}),
+     ("human", {"taxon": "heron", "simulated": False}),
+     ("wild-sim", {"taxon": "heron"})],
+)
+def test_public_events_cannot_claim_to_be_simulated(tmp_path, monkeypatch, source, payload):
+    client = make_client(tmp_path, monkeypatch, wild_sim=True)
+    assert client.post("/wild/advance?days=1").status_code == 200
+    before = len(api.repo.list_events(limit=1000))
+
+    response = client.post("/events", json={"type": "wildlife.observation", "zone_id": "pond",
+                                            "source": source, "payload": payload})
+
+    assert response.status_code == 422
+    assert "reserved" in response.json()["detail"]
+    assert len(api.repo.list_events(limit=1000)) == before
+
+
+def test_public_simulated_flag_cannot_prepare_a_real_garden_for_the_wild(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch, wild_sim=True)
+    response = client.post("/events", json={"type": "plant.observation", "zone_id": "bed",
+                                            "payload": {"condition": "stable", "simulated": True}})
+    assert response.status_code == 422
+    assert api.repo.list_events() == []

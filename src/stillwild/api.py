@@ -12,6 +12,7 @@ from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
 from .engine import GardenEngine, SimulatedGardenError
+from .wild import SOURCE as WILD_SOURCE
 from .wild import RealGardenError, Wild, WildBusyError
 
 repo = Repository(settings.db_path)
@@ -35,6 +36,14 @@ def health() -> dict:
 
 @app.post("/events", status_code=201)
 def ingest_event(event: GardenEvent) -> dict:
+    # Events from the public API are always real observations. Only the in-process Wild may
+    # mark an event as simulated, so clients cannot disguise real evidence as simulated.
+    if "simulated" in event.payload or event.source == WILD_SOURCE:
+        raise HTTPException(
+            status_code=422,
+            detail="The 'simulated' payload flag and the wild-sim source are reserved for the "
+            "in-process Wild simulation; events posted here are real observations.",
+        )
     try:
         return engine.ingest(event)
     except SimulatedGardenError as exc:

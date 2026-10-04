@@ -79,7 +79,9 @@ agents years of experience in minutes:
 - **Guards.** A `wild-sim` lease stops two processes advancing the same world. A new world
   claims its database in the same write transaction that confirms no real observation exists.
   After that, `GardenEngine.ingest` rejects real observations inside its own transaction, so
-  real and simulated evidence can never mix, whichever side writes first.
+  real and simulated evidence can never mix, whichever side writes first. Simulation status is
+  trusted only from the in-process Wild: `POST /events` rejects the `simulated` payload flag and
+  the `wild-sim` source, so clients cannot disguise real observations as simulated.
 
 `GET /garden` renders the world live from `GET /wild` and `/stream`.
 
