@@ -156,7 +156,7 @@ CONFIDENCE
 NEXT CHECK
 ```
 
-Never report watering as completed unless execution telemetry confirms it.
+Never report watering as completed unless execution telemetry or a confirmed human record establishes it.
 
 ### 6. Microclimate Agent
 
