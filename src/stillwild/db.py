@@ -296,6 +296,9 @@ class Repository:
         notes: str | None,
         connection: sqlite3.Connection | None = None,
     ) -> str:
+        """Resolve a recommendation and return its outcome ID, optionally in a shared transaction.
+
+        Raise KeyError for a missing recommendation or ValueError if already resolved."""
         outcome_id = str(uuid4())
         with self.connection(connection) as conn:
             if not conn.in_transaction:
@@ -321,6 +324,7 @@ class Repository:
         return outcome_id
 
     def outcomes_for(self, recommendation_ids: list[str]) -> dict[str, dict[str, Any]]:
+        """Return recorded outcomes and utility scores keyed by the requested recommendation IDs."""
         if not recommendation_ids:
             return {}
         marks = ",".join("?" for _ in recommendation_ids)
@@ -375,6 +379,10 @@ class Repository:
         status: str = "observation",
         connection: sqlite3.Connection | None = None,
     ) -> None:
+        """Update a memory, retaining its evidence tally and the most recent evidence IDs.
+
+        Only IDs absent from the retained window increase an existing tally.
+        Join the supplied connection when provided."""
         with self.connection(connection) as conn:
             if not conn.in_transaction:
                 conn.execute("BEGIN IMMEDIATE")
@@ -524,6 +532,9 @@ class Repository:
         ttl_seconds: int,
         connection: sqlite3.Connection | None = None,
     ) -> bool:
+        """Acquire or renew a lease unless another holder has an unexpired claim.
+
+        Return whether acquisition succeeded, optionally using the supplied connection."""
         now = datetime.now(UTC)
         expires = now + timedelta(seconds=ttl_seconds)
         with self.connection(connection) as conn:
@@ -546,12 +557,14 @@ class Repository:
             return True
 
     def release_lease(self, name: str, holder: str) -> None:
+        """Delete a lease only if it still belongs to the specified holder."""
         with self.connection() as conn:
             conn.execute("DELETE FROM leases WHERE name = ? AND holder = ?", (name, holder))
 
     def has_real_observations(self, connection: sqlite3.Connection | None = None) -> bool:
         # Anything other than periodic ticks and events whose payload says "simulated": true
         # is treated as a real-world observation.
+        """Return whether any non-tick event lacks a literal JSON true simulation flag."""
         with self.connection(connection) as conn:
             row = conn.execute(
                 """
@@ -564,6 +577,7 @@ class Repository:
             return row is not None
 
     def has_world(self, connection: sqlite3.Connection | None = None) -> bool:
+        """Return whether any simulated world exists, optionally within a shared transaction."""
         with self.connection(connection) as conn:
             return conn.execute("SELECT 1 FROM worlds LIMIT 1").fetchone() is not None
 
@@ -572,6 +586,10 @@ class Repository:
     ) -> bool:
         # Claiming happens under the same write lock as event ingestion, so a real
         # observation and a new simulated garden can never both land in one database.
+        """Create a world if absent under a write lock, refusing real observations.
+
+        Return False for a real garden; otherwise preserve any existing world and return True.
+        Join the supplied connection when provided."""
         with self.connection(connection) as conn:
             if not conn.in_transaction:
                 conn.execute("BEGIN IMMEDIATE")
@@ -584,6 +602,7 @@ class Repository:
             return True
 
     def load_world(self, name: str) -> dict[str, Any] | None:
+        """Return the decoded state of a named world, or None if it does not exist."""
         with self.connection() as conn:
             row = conn.execute(
                 "SELECT state_json FROM worlds WHERE name = ?", (name,)
@@ -612,6 +631,7 @@ class Repository:
     def save_world(
         self, name: str, state: dict[str, Any], connection: sqlite3.Connection | None = None
     ) -> None:
+        """Insert or replace a named world state, optionally within a shared transaction."""
         with self.connection(connection) as conn:
             conn.execute(
                 """

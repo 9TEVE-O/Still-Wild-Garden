@@ -187,6 +187,7 @@ def test_concurrent_candidate_checks_create_one_candidate(tmp_path):
 
 
 def test_memory_keeps_full_tally_but_bounded_evidence(tmp_path):
+    """Verify evidence trimming preserves the total count and most recent observation ID."""
     from stillwild.db import MAX_MEMORY_EVIDENCE_IDS
 
     repo = Repository(str(tmp_path / "garden.db"))
@@ -201,6 +202,7 @@ def test_memory_keeps_full_tally_but_bounded_evidence(tmp_path):
 
 
 def test_species_records_accumulate_in_memory(tmp_path):
+    """Verify repeated wildlife observations update one taxon memory with zone and evidence."""
     repo = Repository(str(tmp_path / "garden.db"))
     engine = GardenEngine(repo)
     for _ in range(2):
@@ -224,6 +226,7 @@ def test_species_records_accumulate_in_memory(tmp_path):
     [("germinating", "WATCH"), ("died back", "WATCH"), ("dormant", "NO_ACTION")],
 )
 def test_natural_plant_stages_are_recognised(tmp_path, condition, decision):
+    """Verify natural life stages yield the expected decision without classification unknowns."""
     repo = Repository(str(tmp_path / "garden.db"))
     engine = GardenEngine(repo)
     result = engine.ingest(

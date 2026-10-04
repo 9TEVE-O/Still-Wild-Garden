@@ -108,6 +108,7 @@ class PlantAgent:
         return event.type == "plant.observation"
 
     def run(self, event: GardenEvent, repo: Repository) -> AgentOutput:
+        """Classify plant condition and propose inspection when stress warrants diagnosis."""
         condition = str(event.payload.get("condition", "unknown")).lower()
         if condition in {"declining", "stressed", "wilting", "yellowing"}:
             return AgentOutput(

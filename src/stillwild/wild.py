@@ -76,6 +76,7 @@ class Species:
 
     @property
     def woody(self) -> bool:
+        """Return whether this species is a shrub, tree or climber in the canopy model."""
         return self.form in {"shrub", "tree", "climber"}
 
 
@@ -216,10 +217,12 @@ INITIAL_SEEDBANK = {"north-bed": {"common-poppy": 60.0}}
 
 
 def _clamp(value: float, low: float, high: float) -> float:
+    """Bound a value to the inclusive interval from low to high."""
     return max(low, min(high, value))
 
 
 def _poisson(rng: random.Random, lam: float) -> int:
+    """Draw a nonnegative count, using a Gaussian approximation for rates above 30."""
     if lam <= 0:
         return 0
     if lam > 30:
@@ -234,16 +237,19 @@ def _poisson(rng: random.Random, lam: float) -> int:
 
 
 def _season(month: int) -> str:
+    """Map a calendar month to its northern-hemisphere meteorological season."""
     return {12: "winter", 1: "winter", 2: "winter", 3: "spring", 4: "spring", 5: "spring",
             6: "summer", 7: "summer", 8: "summer"}.get(month, "autumn")
 
 
 def _mean_temp(day: date) -> float:
+    """Return the seasonal mean temperature in Celsius for a simulated date."""
     doy = day.timetuple().tm_yday
     return 10.5 - 6.5 * math.cos(2 * math.pi * (doy - 20) / 365.25)
 
 
 def _draw_weather(rng: random.Random, day: date, wet_today: bool) -> dict[str, Any]:
+    """Sample wet/dry persistence, rainfall and an imperfect forecast for the given day."""
     p_wet = WET_DAY_PROBABILITY[day.month] + (0.18 if wet_today else -0.12)
     wet = rng.random() < p_wet
     rain = 0.0
@@ -262,11 +268,13 @@ def _draw_weather(rng: random.Random, day: date, wet_today: bool) -> dict[str, A
 
 
 def _stress_line(sp: Species) -> float:
+    """Return the soil moisture threshold for drought stress, accounting for plant form."""
     line = sp.wet[0] * (1 - 0.6 * sp.drought)
     return line * 0.6 if sp.form in {"shrub", "tree"} else line
 
 
 def _moisture_fit(sp: Species, moisture: float) -> float:
+    """Return a growth suitability factor from zero to one for the species and moisture."""
     low, high = sp.wet
     if moisture < low:
         return max(0.0, 1 - (low - moisture) / (low * (0.5 + sp.drought)))
@@ -277,6 +285,7 @@ def _moisture_fit(sp: Species, moisture: float) -> float:
 
 class Wild:
     def __init__(self, repo: Repository, engine: GardenEngine, seed: int = 7):
+        """Bind the repository, engine and seed used when creating a simulated world."""
         self.repo = repo
         self.engine = engine
         self.seed = seed
@@ -284,6 +293,11 @@ class Wild:
     # ------------------------------------------------------------------ public API
 
     def advance(self, days: int = 1) -> dict[str, Any]:
+        """Advance at least one simulated day and return growth, outcome and journal summaries.
+
+        Create the world if absent and commit each day atomically under a renewed lease.
+        Raise ValueError for nonpositive days, RealGardenError for real observations,
+        or WildBusyError if the lease cannot be acquired or renewed."""
         if days < 1:
             raise ValueError("days must be at least 1")
         holder = f"wild:{uuid4()}"
@@ -341,6 +355,7 @@ class Wild:
             self.repo.release_lease(LEASE, holder)
 
     def snapshot(self) -> dict[str, Any] | None:
+        """Return a dashboard snapshot of persisted world state, or None before creation."""
         state = self.repo.load_world(WORLD)
         if state is None:
             return None
@@ -419,6 +434,7 @@ class Wild:
 
     def _council_digest(self, window: int = 200) -> dict[str, Any]:
         # Most council decisions are quiet watching; surface the ones that asked for attention.
+        """Summarize recent decision counts and notable recommendations with their outcomes."""
         recent = self.repo.list_recommendations(window)
         counts: dict[str, int] = {}
         for rec in recent:
@@ -446,6 +462,7 @@ class Wild:
     # ------------------------------------------------------------------ world setup
 
     def _new_world(self) -> dict[str, Any]:
+        """Build the seeded initial world state and baseline history without persisting it."""
         rng = random.Random(f"{self.seed}:genesis")
         zones: dict[str, Any] = {}
         for zone in ZONES:
@@ -492,6 +509,7 @@ class Wild:
         return state
 
     def _initial_survey(self, state: dict[str, Any]) -> list[GardenEvent]:
+        """Create baseline simulated plant observations for every initial population."""
         return [
             self._event(state, "plant.observation", zone_id, {
                 "species": name, "common": SPECIES[name].common, "condition": "stable",
@@ -504,6 +522,7 @@ class Wild:
     # ------------------------------------------------------------------ one simulated day
 
     def _step(self, state: dict[str, Any]) -> list[GardenEvent]:
+        """Mutate the world through one seeded day and return its unpersisted observations."""
         state["day"] += 1
         today = self._date(state)
         rng = random.Random(f"{state['seed']}:{state['day']}")
@@ -551,6 +570,7 @@ class Wild:
         return sensor_events + bio_events
 
     def _update_moisture(self, zone: Zone, zs: dict[str, Any], temp: float, rain: float) -> None:
+        """Update zone soil water for rain, evapotranspiration, drainage and groundwater."""
         _, woody_canopy = self._canopy(zs)
         cover = min(1.0, sum(pop["cover"] for pop in zs["plants"].values()))
         moisture = zs["moisture"]
@@ -568,6 +588,7 @@ class Wild:
         zs["moisture"] = _clamp(moisture + infiltration - et - drainage + recharge, 3.0, 58.0)
 
     def _canopy(self, zs: dict[str, Any]) -> tuple[float, float]:
+        """Return the capped tree and total woody shade fractions for a zone."""
         tree = sum(
             pop["cover"] * SPECIES[name].shade
             for name, pop in zs["plants"].items()
@@ -589,6 +610,7 @@ class Wild:
         temp: float,
         month: int,
     ) -> list[GardenEvent]:
+        """Age and grow zone populations, returning observations of life stages and health changes."""
         events: list[GardenEvent] = []
         day = state["day"]
         year = self._date(state).year
@@ -716,6 +738,7 @@ class Wild:
         return events
 
     def _disperse_seeds(self, state: dict[str, Any], rng: random.Random) -> None:
+        """Distribute seeds from fruiting plants and decay each zone seed bank in place."""
         zone_ids = [zone.id for zone in ZONES]
         for zone in ZONES:
             zs = state["zones"][zone.id]
@@ -741,6 +764,7 @@ class Wild:
 
     @staticmethod
     def _add_seeds(zs: dict[str, Any], name: str, amount: float) -> None:
+        """Add a positive seed amount to a zone, capping the species bank at 600."""
         if amount <= 0:
             return
         zs["seedbank"][name] = min(600.0, zs["seedbank"].get(name, 0.0) + amount)
@@ -748,6 +772,7 @@ class Wild:
     def _germinate(
         self, state: dict[str, Any], rng: random.Random, zone: Zone, temp: float, month: int
     ) -> list[GardenEvent]:
+        """Recruit plants from a zone seed bank and return observations of new populations."""
         events: list[GardenEvent] = []
         zs = state["zones"][zone.id]
         moisture = zs["moisture"]
@@ -782,6 +807,7 @@ class Wild:
         return events
 
     def _colonise(self, state: dict[str, Any], rng: random.Random) -> None:
+        """Occasionally add seeds from outside the garden and journal their arrival."""
         if rng.random() >= 0.035:
             return
         names = sorted(SPECIES)
@@ -794,6 +820,7 @@ class Wild:
                    f"in the {zone.name.lower()} {carrier[SPECIES[name].dispersal]}.")
 
     def _zone_resources(self, zs: dict[str, Any]) -> dict[str, float]:
+        """Calculate wildlife food and cover supplies from plant cover and life stages."""
         res = {"nectar": 0.0, "ivy": 0.0, "seeds": 0.0, "berries": 0.0, "acorns": 0.0,
                "woody": 0.0, "herb": 0.0}
         for name, pop in zs["plants"].items():
@@ -819,6 +846,7 @@ class Wild:
     def _wildlife(
         self, state: dict[str, Any], rng: random.Random, temp: float, rain: float, month: int
     ) -> list[GardenEvent]:
+        """Update wildlife sightings and return first-zone records and weekly survey events."""
         events: list[GardenEvent] = []
         day = state["day"]
         garden_cover: dict[str, float] = {}
@@ -900,6 +928,7 @@ class Wild:
         return events
 
     def _fungi(self, state: dict[str, Any], rng: random.Random, month: int) -> list[GardenEvent]:
+        """Record seasonal fruiting where rain, moisture and hosts permit, returning observations."""
         events: list[GardenEvent] = []
         if sum(state["recent_rain"]) < 6:
             return events
@@ -938,6 +967,7 @@ class Wild:
     # ------------------------------------------------------------------ outcomes and learning
 
     def _renew(self, holder: str, conn: sqlite3.Connection) -> None:
+        """Renew the simulation lease in the supplied transaction or raise WildBusyError."""
         if not self.repo.try_acquire_lease(LEASE, holder, LEASE_TTL_SECONDS, connection=conn):
             raise WildBusyError(LOST_LEASE_MESSAGE)
 
@@ -955,12 +985,14 @@ class Wild:
         events: list[GardenEvent],
         conn: sqlite3.Connection | None = None,
     ) -> int:
+        """Ingest observations, register advice for judging and return the number processed."""
         for event in events:
             result = self.engine.ingest(event, connection=conn)
             self._register(state, event, result)
         return len(events)
 
     def _register(self, state: dict[str, Any], event: GardenEvent, result: dict) -> None:
+        """Queue irrigation or inspection advice with its due day and relevant baseline evidence."""
         action = result.get("proposed_action") or {}
         pending = state["judgements"]["pending"]
         if result["decision"] == "PROPOSE" and action.get("type") == "irrigate" and event.zone_id:
@@ -988,6 +1020,7 @@ class Wild:
             })
 
     def _verdict(self, state: dict[str, Any], item: dict[str, Any]) -> tuple[str, float]:
+        """Return outcome text and utility for advice based on subsequent simulated conditions."""
         zs = state["zones"][item["zone"]]
         if item["kind"] == "irrigate":
             damage = zs["damage_total"] - item["damage"]
@@ -1015,6 +1048,9 @@ class Wild:
         return f"Simulated ground truth: {common} is still stressed.", 0.1
 
     def _judge(self, state: dict[str, Any], conn: sqlite3.Connection | None = None) -> int:
+        """Record due verdicts and update judgement totals, returning the number resolved.
+
+        Use the supplied connection when present and skip missing or already resolved advice."""
         judgements = state["judgements"]
         due = [item for item in judgements["pending"] if item["due"] <= state["day"]]
         judgements["pending"] = [
@@ -1046,6 +1082,7 @@ class Wild:
         return resolved
 
     def _evolve(self, state: dict[str, Any]) -> list[dict[str, Any]]:
+        """Evaluate agent scores and journal and return evolution candidates not previously seen."""
         self.engine.propose_agent_evolution()
         created = []
         for candidate in self.repo.list_evolution_candidates(500):
@@ -1061,6 +1098,7 @@ class Wild:
     # ------------------------------------------------------------------ helpers
 
     def _metrics(self, state: dict[str, Any]) -> dict[str, Any]:
+        """Summarize plant diversity, recent wildlife, recorded taxa and mean cover."""
         totals: dict[str, float] = {}
         for zs in state["zones"].values():
             for name, pop in zs["plants"].items():
@@ -1084,12 +1122,15 @@ class Wild:
         }
 
     def _history_point(self, state: dict[str, Any]) -> dict[str, Any]:
+        """Pair the current simulated day with biodiversity and cover metrics."""
         return {"day": state["day"], **self._metrics(state)}
 
     def _date(self, state: dict[str, Any]) -> date:
+        """Return the simulated date from the world start date and elapsed days."""
         return date.fromisoformat(state["start"]) + timedelta(days=state["day"])
 
     def _note(self, state: dict[str, Any], kind: str, text: str) -> None:
+        """Append a dated journal entry and retain only the configured recent-entry limit."""
         state["journal"].append({
             "day": state["day"],
             "date": self._date(state).isoformat(),
@@ -1101,6 +1142,7 @@ class Wild:
     def _event(
         self, state: dict[str, Any], event_type: str, zone_id: str | None, payload: dict[str, Any]
     ) -> GardenEvent:
+        """Create an observation stamped with the simulation source, flag, day and date."""
         return GardenEvent(
             type=event_type,
             zone_id=zone_id,

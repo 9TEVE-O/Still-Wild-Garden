@@ -38,6 +38,7 @@ def health() -> dict:
 def ingest_event(event: GardenEvent) -> dict:
     # Events from the public API are always real observations. Only the in-process Wild may
     # mark an event as simulated, so clients cannot disguise real evidence as simulated.
+    """Ingest a public observation, rejecting simulation markers and simulated gardens."""
     if "simulated" in event.payload or event.source == WILD_SOURCE:
         raise HTTPException(
             status_code=422,
@@ -96,6 +97,7 @@ def record_outcome(outcome: OutcomeInput) -> dict:
 def tick() -> dict:
     # Suitable for an external cron/scheduler in environments where long-running
     # worker processes are unavailable, so it grows the Wild just as the worker does.
+    """Run a scheduled engine tick and advance the Wild when enabled and available."""
     result = engine.tick(source="api-cron")
     if settings.wild_sim:
         try:
@@ -108,6 +110,7 @@ def tick() -> dict:
 
 @app.get("/wild")
 def wild_state() -> dict:
+    """Return the persisted simulation snapshot, or raise HTTP 404 if none exists."""
     snapshot = Wild(repo, engine, seed=settings.wild_seed).snapshot()
     if snapshot is None:
         raise HTTPException(
@@ -120,6 +123,7 @@ def wild_state() -> dict:
 
 @app.post("/wild/advance")
 def wild_advance(days: int = Query(default=1, ge=1, le=730)) -> dict:
+    """Advance the enabled simulation, reporting disabled or conflicting state via HTTP."""
     if not settings.wild_sim:
         raise HTTPException(
             status_code=403,
@@ -136,6 +140,7 @@ def wild_advance(days: int = Query(default=1, ge=1, le=730)) -> dict:
 
 @app.get("/garden", response_class=HTMLResponse)
 def garden_page() -> HTMLResponse:
+    """Serve the packaged HTML dashboard for the experimental backend garden."""
     page = resources.files("stillwild").joinpath("static/garden.html").read_text("utf-8")
     return HTMLResponse(page)
 

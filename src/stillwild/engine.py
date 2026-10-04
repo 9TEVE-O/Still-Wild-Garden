@@ -15,6 +15,7 @@ class SimulatedGardenError(RuntimeError):
 
 
 def is_real_observation(event: GardenEvent) -> bool:
+    """Identify non-tick events whose simulated payload flag is not the boolean True."""
     return event.type != "system.tick" and event.payload.get("simulated") is not True
 
 
@@ -27,12 +28,16 @@ class GardenEngine:
         self.council = CouncilAgent()
 
     def ingest(self, event: GardenEvent, connection: sqlite3.Connection | None = None) -> dict:
+        """Store and process an event atomically, joining a supplied transaction when provided.
+
+        Raise SimulatedGardenError if a real observation would enter a simulated garden."""
         if connection is not None:
             return self._ingest(event, connection)
         with self.repo.transaction() as conn:
             return self._ingest(event, conn)
 
     def _ingest(self, event: GardenEvent, conn: sqlite3.Connection) -> dict:
+        """Enforce the real/simulated boundary, then store and process using the given connection."""
         if is_real_observation(event) and self.repo.has_world(connection=conn):
             raise SimulatedGardenError(
                 "this database hosts a simulated garden; record real observations in a "
@@ -124,6 +129,7 @@ class GardenEngine:
         final: AgentOutput,
         conn: sqlite3.Connection | None = None,
     ) -> None:
+        """Update event, taxon and soil memories from observed evidence and the council decision."""
         zone = event.zone_id or "garden"
         self.repo.upsert_memory(
             key=f"last_event:{zone}:{event.type}",
