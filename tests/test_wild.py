@@ -318,3 +318,57 @@ def test_cron_tick_leaves_the_wild_alone_when_disabled_or_real(tmp_path, monkeyp
     assert response.status_code == 200
     assert "real garden observations" in response.json()["wild"]["skipped"]
     assert api.repo.load_world("wild") is None
+
+
+def _events_on_day(repo, day):
+    return [event for event in repo.list_events(limit=1000)
+            if event["payload"].get("sim_day") == day]
+
+
+def test_an_interrupted_day_rolls_back_and_resumes_without_duplicates(tmp_path):
+    repo, engine, wild = make_wild(tmp_path, "interrupted.db")
+    reference_repo, _, reference = make_wild(tmp_path, "reference.db")
+    reference.advance(3)
+    wild.advance(2)
+
+    original_ingest = engine.ingest
+    seen = []
+
+    def power_cut(event, *args, **kwargs):
+        if event.payload.get("sim_day") == 3:
+            seen.append(event.id)
+            if len(seen) == 4:
+                raise RuntimeError("power cut")
+        return original_ingest(event, *args, **kwargs)
+
+    engine.ingest = power_cut
+    with pytest.raises(RuntimeError):
+        wild.advance(1)
+    assert repo.load_world("wild")["day"] == 2
+    assert _events_on_day(repo, 3) == []
+
+    engine.ingest = original_ingest
+    wild.advance(1)
+    assert len(_events_on_day(repo, 3)) == len(_events_on_day(reference_repo, 3))
+    assert repo.load_world("wild")["zones"] == reference_repo.load_world("wild")["zones"]
+    assert repo.try_acquire_lease(LEASE, "next", ttl_seconds=60), "lease released after failure"
+
+
+def test_an_advance_that_loses_its_lease_stops_without_saving(tmp_path):
+    repo, _, wild = make_wild(tmp_path)
+    original_step = wild._step
+
+    def step_while_another_process_takes_over(state):
+        if state["day"] == 2:  # about to simulate day 3
+            with repo.connection() as conn:
+                conn.execute(
+                    "UPDATE leases SET holder = 'other', expires_at = '2999-01-01T00:00:00+00:00'"
+                )
+        return original_step(state)
+
+    wild._step = step_while_another_process_takes_over
+    with pytest.raises(WildBusyError, match="took over"):
+        wild.advance(5)
+
+    assert repo.load_world("wild")["day"] == 2
+    assert _events_on_day(repo, 3) == []

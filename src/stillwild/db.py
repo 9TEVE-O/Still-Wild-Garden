@@ -289,11 +289,17 @@ class Repository:
             return [self._recommendation(row) for row in rows]
 
     def add_outcome(
-        self, recommendation_id: str, outcome: str, utility_score: float, notes: str | None
+        self,
+        recommendation_id: str,
+        outcome: str,
+        utility_score: float,
+        notes: str | None,
+        connection: sqlite3.Connection | None = None,
     ) -> str:
         outcome_id = str(uuid4())
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             recommendation = conn.execute(
                 "SELECT status FROM recommendations WHERE id = ?", (recommendation_id,)
             ).fetchone()
@@ -511,11 +517,18 @@ class Repository:
             ).fetchall()
             return [dict(row) for row in rows]
 
-    def try_acquire_lease(self, name: str, holder: str, ttl_seconds: int) -> bool:
+    def try_acquire_lease(
+        self,
+        name: str,
+        holder: str,
+        ttl_seconds: int,
+        connection: sqlite3.Connection | None = None,
+    ) -> bool:
         now = datetime.now(UTC)
         expires = now + timedelta(seconds=ttl_seconds)
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             row = conn.execute(
                 "SELECT holder,expires_at FROM leases WHERE name = ?", (name,)
             ).fetchone()
@@ -554,10 +567,14 @@ class Repository:
         with self.connection(connection) as conn:
             return conn.execute("SELECT 1 FROM worlds LIMIT 1").fetchone() is not None
 
-    def claim_world(self, name: str, state: dict[str, Any]) -> bool:
+    def claim_world(
+        self, name: str, state: dict[str, Any], connection: sqlite3.Connection | None = None
+    ) -> bool:
         # Claiming happens under the same write lock as event ingestion, so a real
         # observation and a new simulated garden can never both land in one database.
-        with self.transaction() as conn:
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             if self.has_real_observations(connection=conn):
                 return False
             conn.execute(
@@ -573,8 +590,10 @@ class Repository:
             ).fetchone()
             return json.loads(row["state_json"]) if row else None
 
-    def save_world(self, name: str, state: dict[str, Any]) -> None:
-        with self.connection() as conn:
+    def save_world(
+        self, name: str, state: dict[str, Any], connection: sqlite3.Connection | None = None
+    ) -> None:
+        with self.connection(connection) as conn:
             conn.execute(
                 """
                 INSERT INTO worlds(name,state_json,updated_at) VALUES (?,?,?)

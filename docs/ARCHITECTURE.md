@@ -68,6 +68,9 @@ agents years of experience in minutes:
 
 - World state lives in the `worlds` table and advances one simulated day at a time. Each day
   uses its own seeded random stream, so a world grows identically however its days are batched.
+  A day's events, judgements and world state commit in one transaction that also renews the
+  `wild-sim` lease, so a crash rolls the whole day back and a process that lost the lease
+  cannot commit.
 - Each simulated day emits ordinary events (`sensor.temperature`, `weather.rain`,
   `sensor.soil_moisture` with a forecast, `plant.observation`, `wildlife.observation`,
   `fungi.observation`). They all go through `GardenEngine.ingest`, with source `wild-sim` and

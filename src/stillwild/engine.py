@@ -26,15 +26,20 @@ class GardenEngine:
         self.wildness = WildnessAgent()
         self.council = CouncilAgent()
 
-    def ingest(self, event: GardenEvent) -> dict:
+    def ingest(self, event: GardenEvent, connection: sqlite3.Connection | None = None) -> dict:
+        if connection is not None:
+            return self._ingest(event, connection)
         with self.repo.transaction() as conn:
-            if is_real_observation(event) and self.repo.has_world(connection=conn):
-                raise SimulatedGardenError(
-                    "this database hosts a simulated garden; record real observations in a "
-                    "separate garden database"
-                )
-            seq = self.repo.add_event(event, connection=conn)
-            return self.process(event, seq=seq, conn=conn)
+            return self._ingest(event, conn)
+
+    def _ingest(self, event: GardenEvent, conn: sqlite3.Connection) -> dict:
+        if is_real_observation(event) and self.repo.has_world(connection=conn):
+            raise SimulatedGardenError(
+                "this database hosts a simulated garden; record real observations in a "
+                "separate garden database"
+            )
+        seq = self.repo.add_event(event, connection=conn)
+        return self.process(event, seq=seq, conn=conn)
 
     def process(
         self, event: GardenEvent, seq: int | None = None, conn: sqlite3.Connection | None = None

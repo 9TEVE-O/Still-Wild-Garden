@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import math
 import random
+import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -33,6 +34,8 @@ IRRIGATE_HORIZON_DAYS = 3
 INSPECT_HORIZON_DAYS = 10
 JOURNAL_LIMIT = 200
 HISTORY_LIMIT = 600
+LEASE_TTL_SECONDS = 120
+LOST_LEASE_MESSAGE = "another process took over the Wild; this advance stopped without saving"
 REAL_GARDEN_MESSAGE = (
     "this database holds real garden observations; run the Wild against a dedicated "
     "simulated-garden database"
@@ -283,10 +286,9 @@ class Wild:
         if days < 1:
             raise ValueError("days must be at least 1")
         holder = f"wild:{uuid4()}"
-        # A simulated day takes well under a second; keep the lease short so a killed process
-        # does not stall the garden for long. The world is saved after every day, so a crash
-        # can at worst replay the events of one partially ingested day.
-        if not self.repo.try_acquire_lease(LEASE, holder, ttl_seconds=max(60, days * 2)):
+        # The lease is short and renewed inside every day's transaction, so a killed process
+        # does not stall the garden for long and a process that lost the lease cannot commit.
+        if not self.repo.try_acquire_lease(LEASE, holder, ttl_seconds=LEASE_TTL_SECONDS):
             raise WildBusyError("another process is already advancing the Wild")
         try:
             # Once a world exists the engine refuses real observations, so checking here and
@@ -297,20 +299,31 @@ class Wild:
             events = outcomes = 0
             if state is None:
                 state = self._new_world()
-                if not self.repo.claim_world(WORLD, state):
-                    raise RealGardenError(REAL_GARDEN_MESSAGE)
-                events += self._ingest_all(state, self._initial_survey(state))
-                self.repo.save_world(WORLD, state)
+                with self.repo.transaction() as conn:
+                    self._renew(holder, conn)
+                    if not self.repo.claim_world(WORLD, state, connection=conn):
+                        raise RealGardenError(REAL_GARDEN_MESSAGE)
+                    events += self._ingest_all(state, self._initial_survey(state), conn)
+                    self.repo.save_world(WORLD, state, connection=conn)
             first_day = state["day"]
             evolution: list[dict[str, Any]] = []
             for _ in range(days):
                 day_events = self._step(state)
-                events += self._ingest_all(state, day_events)
-                resolved = self._judge(state)
+                # A day's events, judgements and world state commit together: a crash rolls the
+                # whole day back, so resuming never duplicates observations.
+                with self.repo.transaction() as conn:
+                    self._renew(holder, conn)
+                    events += self._ingest_all(state, day_events, conn)
+                    resolved = self._judge(state, conn)
+                    self.repo.save_world(WORLD, state, connection=conn)
                 outcomes += resolved
                 if resolved:
-                    evolution.extend(self._evolve(state))
-                self.repo.save_world(WORLD, state)
+                    created = self._evolve(state)
+                    if created:
+                        with self.repo.transaction() as conn:
+                            self._renew(holder, conn)
+                            self.repo.save_world(WORLD, state, connection=conn)
+                    evolution.extend(created)
             new_notes = [note for note in state["journal"] if note["day"] > first_day]
             return {
                 "days": days,
@@ -922,9 +935,18 @@ class Wild:
 
     # ------------------------------------------------------------------ outcomes and learning
 
-    def _ingest_all(self, state: dict[str, Any], events: list[GardenEvent]) -> int:
+    def _renew(self, holder: str, conn: sqlite3.Connection) -> None:
+        if not self.repo.try_acquire_lease(LEASE, holder, LEASE_TTL_SECONDS, connection=conn):
+            raise WildBusyError(LOST_LEASE_MESSAGE)
+
+    def _ingest_all(
+        self,
+        state: dict[str, Any],
+        events: list[GardenEvent],
+        conn: sqlite3.Connection | None = None,
+    ) -> int:
         for event in events:
-            result = self.engine.ingest(event)
+            result = self.engine.ingest(event, connection=conn)
             self._register(state, event, result)
         return len(events)
 
@@ -982,7 +1004,7 @@ class Wild:
             return f"Simulated ground truth: {common} recovered without intervention.", -0.2
         return f"Simulated ground truth: {common} is still stressed.", 0.1
 
-    def _judge(self, state: dict[str, Any]) -> int:
+    def _judge(self, state: dict[str, Any], conn: sqlite3.Connection | None = None) -> int:
         judgements = state["judgements"]
         due = [item for item in judgements["pending"] if item["due"] <= state["day"]]
         judgements["pending"] = [
@@ -1001,6 +1023,7 @@ class Wild:
                         f"wild-sim ground truth after {horizon} simulated days; "
                         "the recommended action was never executed"
                     ),
+                    connection=conn,
                 )
             except (KeyError, ValueError):
                 continue  # resolved elsewhere, for example by a human reviewer
