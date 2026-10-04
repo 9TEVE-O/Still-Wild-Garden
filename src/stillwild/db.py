@@ -320,6 +320,7 @@ class Repository:
         status: str = "observation",
     ) -> None:
         with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
             existing = conn.execute(
                 "SELECT evidence_count,evidence_json FROM memories WHERE key = ?", (key,)
             ).fetchone()
