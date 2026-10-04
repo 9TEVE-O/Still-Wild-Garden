@@ -72,6 +72,8 @@ def record_outcome(outcome: OutcomeInput) -> dict:
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="recommendation not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail="recommendation already resolved") from exc
     candidates = engine.propose_agent_evolution()
     return {"id": outcome_id, "evolution_candidates_created": candidates}
 
