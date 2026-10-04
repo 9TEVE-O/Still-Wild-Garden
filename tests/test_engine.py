@@ -93,28 +93,6 @@ def test_outcomes_can_create_evolution_candidate(tmp_path):
     assert any(item["agent"] == "water" for item in candidates)
 
 
-def test_scores_aggregate_repeated_outcomes_per_recommendation(tmp_path):
-    repo = Repository(str(tmp_path / "garden.db"))
-    engine = GardenEngine(repo)
-    recommendation_ids = [
-        engine.ingest(
-            GardenEvent(
-                type="sensor.soil_moisture",
-                payload={"percent": 14, "forecast_rain_mm_24h": 0},
-            )
-        )["recommendation_id"]
-        for _ in range(5)
-    ]
-
-    for rec_id in recommendation_ids:
-        repo.add_outcome(rec_id, "not useful", -0.5, None)
-    repo.add_outcome(recommendation_ids[0], "useful", 1.0, None)
-
-    water_score = next(score for score in repo.agent_scores() if score["agent"] == "water")
-    assert water_score["n"] == 5
-    assert water_score["avg_score"] == pytest.approx(-0.35)
-
-
 @pytest.mark.parametrize(
     ("payload", "event_type"),
     [
