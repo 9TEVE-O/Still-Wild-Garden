@@ -3,14 +3,16 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
+from importlib import resources
 
 from fastapi import FastAPI, Header, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 
 from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
 from .engine import GardenEngine
+from .wild import RealGardenError, Wild, WildBusyError
 
 repo = Repository(settings.db_path)
 engine = GardenEngine(repo, automation_authority=settings.automation_authority)
@@ -83,6 +85,40 @@ def tick() -> dict:
     # Suitable for an external cron/scheduler in environments where long-running
     # worker processes are unavailable.
     return engine.tick(source="api-cron")
+
+
+@app.get("/wild")
+def wild_state() -> dict:
+    snapshot = Wild(repo, engine, seed=settings.wild_seed).snapshot()
+    if snapshot is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No simulated garden exists yet. Enable STILLWILD_WILD_SIM on a dedicated "
+            "database and advance it.",
+        )
+    return snapshot
+
+
+@app.post("/wild/advance")
+def wild_advance(days: int = Query(default=1, ge=1, le=730)) -> dict:
+    if not settings.wild_sim:
+        raise HTTPException(
+            status_code=403,
+            detail="The Wild simulation is disabled. Set STILLWILD_WILD_SIM=true on a dedicated "
+            "simulated-garden database.",
+        )
+    try:
+        return Wild(repo, engine, seed=settings.wild_seed).advance(days)
+    except RealGardenError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except WildBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get("/garden", response_class=HTMLResponse)
+def garden_page() -> HTMLResponse:
+    page = resources.files("stillwild").joinpath("static/garden.html").read_text("utf-8")
+    return HTMLResponse(page)
 
 
 @app.get("/stream")

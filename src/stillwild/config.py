@@ -19,6 +19,9 @@ class Settings:
     sse_poll_seconds: float = float(os.getenv("STILLWILD_SSE_POLL_SECONDS", "2"))
     automation_authority: bool = _bool("STILLWILD_AUTOMATION_AUTHORITY", False)
     worker_id: str = os.getenv("STILLWILD_WORKER_ID", "worker-1")
+    wild_sim: bool = _bool("STILLWILD_WILD_SIM", False)
+    wild_seed: int = int(os.getenv("STILLWILD_WILD_SEED", "7"))
+    wild_days_per_tick: int = int(os.getenv("STILLWILD_WILD_DAYS_PER_TICK", "1"))
 
 
 settings = Settings()

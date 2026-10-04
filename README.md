@@ -84,6 +84,55 @@ POST /tasks/tick
 
 from the host's cron/scheduler.
 
+## The Wild: a garden that grows on its own
+
+Real outcomes take seasons to arrive, so an agent that waits for a real garden learns slowly.
+The Wild is a seeded, persistent ecosystem the agents can live in while they learn:
+
+- **Seasons and weather.** Temperature follows the year, rain falls in wet and dry spells, and
+  the 24-hour forecast is usually but not always right.
+- **Soil water.** Each zone gains moisture from rain and the water table, and loses it to
+  drainage and to evapotranspiration, which slows as the soil dries.
+- **Plants.** 14 native species germinate from the seed bank, compete for light and space,
+  flower, set seed, spread on the wind or with birds, wilt in drought and die back. New species
+  drift in from outside, and shrubs and trees slowly shade the ground beneath them.
+- **Wildlife and fungi.** Bees follow the nectar, goldfinches the seed heads, blackbirds the
+  berries, jays the acorns, and frogs and dragonflies the pond. Fungi fruit after rain where
+  their hosts grow.
+
+Its readings flow through the normal engine, so agents, the council, memory and the event
+stream all see the garden change. After a fixed horizon, the Wild judges each irrigation or
+inspection recommendation against what actually happened next, records the outcome, and lets
+poor advice raise agent evolution candidates. Advice is judged on what the garden did without
+it, because the recommended action is never executed.
+
+Run a dedicated simulated garden (the `-p` project name gives it its own data volume):
+
+```bash
+STILLWILD_WILD_SIM=true docker compose -p stillwild-wild up --build
+```
+
+Then open the live garden at:
+
+```text
+http://localhost:8000/garden
+```
+
+![The Wild in a drought summer](docs/images/wild-garden.png)
+
+The worker grows the garden by `STILLWILD_WILD_DAYS_PER_TICK` simulated days on each tick.
+To fast-forward a season, use:
+
+```bash
+curl -X POST "http://localhost:8000/wild/advance?days=91"
+```
+
+The simulation is deterministic for a given `STILLWILD_WILD_SEED`.
+
+A simulated garden is never a real one. Every event it emits carries `"simulated": true` and
+the source `wild-sim`. The Wild refuses to run against a database that already holds real
+observations, and it is off unless `STILLWILD_WILD_SIM=true`.
+
 ## Authority
 
 Automatic physical action is **off by default**.
@@ -121,6 +170,9 @@ Unknown event types are still durably stored and observed. New agents can be add
 - `POST /experiments`
 - `POST /outcomes`
 - `POST /tasks/tick`
+- `GET /wild` (simulated garden snapshot)
+- `POST /wild/advance?days=N` (requires `STILLWILD_WILD_SIM=true`)
+- `GET /garden` (live garden page)
 
 ## Principle
 

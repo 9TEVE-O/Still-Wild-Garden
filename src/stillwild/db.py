@@ -113,7 +113,17 @@ CREATE TABLE IF NOT EXISTS leases (
     holder TEXT NOT NULL,
     expires_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS worlds (
+    name TEXT PRIMARY KEY,
+    state_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
+
+# Memories keep a full evidence tally but only the most recent evidence ids, so a
+# long-lived garden does not rewrite an ever-growing list on every observation.
+MAX_MEMORY_EVIDENCE_IDS = 50
 
 
 def _now() -> str:
@@ -304,6 +314,26 @@ class Repository:
             )
         return outcome_id
 
+    def outcomes_for(self, recommendation_ids: list[str]) -> dict[str, dict[str, Any]]:
+        if not recommendation_ids:
+            return {}
+        marks = ",".join("?" for _ in recommendation_ids)
+        with self.connection() as conn:
+            rows = conn.execute(
+                f"""
+                SELECT recommendation_id, outcome, utility_score FROM outcomes
+                WHERE recommendation_id IN ({marks})
+                """,
+                recommendation_ids,
+            ).fetchall()
+            return {
+                row["recommendation_id"]: {
+                    "outcome": row["outcome"],
+                    "utility_score": row["utility_score"],
+                }
+                for row in rows
+            }
+
     def agent_scores(self, limit_per_agent: int = 20) -> list[dict[str, Any]]:
         # Outcomes belong to council recommendations. Attribution uses the agent runs that
         # contributed to the same triggering event; this intentionally measures usefulness,
@@ -349,8 +379,10 @@ class Repository:
             count = len(evidence)
             if existing:
                 old = json.loads(existing["evidence_json"])
+                added = [item for item in evidence if item not in old]
                 evidence = list(dict.fromkeys(old + evidence))
-                count = max(int(existing["evidence_count"]), len(evidence))
+                count = max(int(existing["evidence_count"]) + len(added), len(evidence))
+            evidence = evidence[-MAX_MEMORY_EVIDENCE_IDS:]
             conn.execute(
                 """
                 INSERT INTO memories(key,value_json,confidence,evidence_count,evidence_json,status,last_verified)
@@ -499,6 +531,43 @@ class Repository:
                 (name, holder, expires.isoformat()),
             )
             return True
+
+    def release_lease(self, name: str, holder: str) -> None:
+        with self.connection() as conn:
+            conn.execute("DELETE FROM leases WHERE name = ? AND holder = ?", (name, holder))
+
+    def has_real_observations(self) -> bool:
+        # Anything other than periodic ticks and explicitly simulated events is treated
+        # as a real-world observation.
+        with self.connection() as conn:
+            row = conn.execute(
+                """
+                SELECT 1 FROM events
+                WHERE type != 'system.tick'
+                  AND COALESCE(json_extract(payload_json, '$.simulated'), 0) != 1
+                LIMIT 1
+                """
+            ).fetchone()
+            return row is not None
+
+    def load_world(self, name: str) -> dict[str, Any] | None:
+        with self.connection() as conn:
+            row = conn.execute(
+                "SELECT state_json FROM worlds WHERE name = ?", (name,)
+            ).fetchone()
+            return json.loads(row["state_json"]) if row else None
+
+    def save_world(self, name: str, state: dict[str, Any]) -> None:
+        with self.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO worlds(name,state_json,updated_at) VALUES (?,?,?)
+                ON CONFLICT(name) DO UPDATE SET
+                    state_json=excluded.state_json,
+                    updated_at=excluded.updated_at
+                """,
+                (name, json.dumps(state, separators=(",", ":")), _now()),
+            )
 
     @staticmethod
     def _event(row: sqlite3.Row) -> dict[str, Any]:

@@ -7,6 +7,8 @@ from .agents import CouncilAgent, WildnessAgent, default_agents
 from .db import Repository
 from .domain import AgentOutput, GardenEvent
 
+TAXON_EVENT_TYPES = {"plant.observation", "wildlife.observation", "fungi.observation"}
+
 
 class GardenEngine:
     def __init__(self, repo: Repository, automation_authority: bool = False):
@@ -120,6 +122,24 @@ class GardenEngine:
             status="observation",
             connection=conn,
         )
+
+        if event.type in TAXON_EVENT_TYPES:
+            taxon = event.payload.get("taxon") or event.payload.get("species")
+            if isinstance(taxon, str) and taxon.strip():
+                kind = event.type.split(".", 1)[0]
+                self.repo.upsert_memory(
+                    key=f"taxon_record:{kind}:{taxon.strip().lower()}",
+                    value={
+                        "taxon": taxon.strip(),
+                        "kind": kind,
+                        "last_zone": event.zone_id,
+                        "last_observed_at": event.observed_at.isoformat(),
+                    },
+                    confidence=0.9,
+                    evidence_ids=[event.id],
+                    status="observation",
+                    connection=conn,
+                )
 
         if event.type == "sensor.soil_moisture":
             value = event.payload.get("percent")
