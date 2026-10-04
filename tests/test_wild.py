@@ -12,12 +12,14 @@ from stillwild.wild import LEASE, SOURCE, RealGardenError, Wild, WildBusyError
 
 
 def make_wild(tmp_path, name="wild.db", seed=7):
+    """Create an isolated repository, engine and seeded simulation in the temporary directory."""
     repo = Repository(str(tmp_path / name))
     engine = GardenEngine(repo)
     return repo, engine, Wild(repo, engine, seed=seed)
 
 
 def test_wild_grows_through_spring_with_only_simulated_events(tmp_path):
+    """Verify spring growth emits simulated evidence, attracts wildlife and updates memories."""
     repo, _, wild = make_wild(tmp_path)
 
     summary = wild.advance(100)
@@ -47,6 +49,7 @@ def test_wild_grows_through_spring_with_only_simulated_events(tmp_path):
 
 
 def test_wild_is_deterministic_however_days_are_batched(tmp_path):
+    """Verify the same seed produces identical world state across different advance batches."""
     repo_a, _, wild_a = make_wild(tmp_path, "a.db", seed=3)
     repo_b, _, wild_b = make_wild(tmp_path, "b.db", seed=3)
 
@@ -60,6 +63,7 @@ def test_wild_is_deterministic_however_days_are_batched(tmp_path):
 
 
 def test_different_seeds_grow_different_gardens(tmp_path):
+    """Verify distinct seeds produce different zone states after the same elapsed days."""
     repo_a, _, wild_a = make_wild(tmp_path, "a.db", seed=1)
     repo_b, _, wild_b = make_wild(tmp_path, "b.db", seed=2)
     wild_a.advance(20)
@@ -68,6 +72,7 @@ def test_different_seeds_grow_different_gardens(tmp_path):
 
 
 def test_wild_refuses_to_mix_with_real_observations(tmp_path):
+    """Verify a real observation blocks world creation and the simulation lease is released."""
     repo, engine, wild = make_wild(tmp_path)
     engine.ingest(GardenEvent(type="wildlife.observation", zone_id="pond", source="human",
                               payload={"taxon": "heron"}))
@@ -80,6 +85,7 @@ def test_wild_refuses_to_mix_with_real_observations(tmp_path):
 
 
 def test_periodic_ticks_do_not_count_as_real_observations(tmp_path):
+    """Verify worker ticks allow subsequent simulation growth in the same database."""
     repo, engine, wild = make_wild(tmp_path)
     engine.tick(source="worker-1")
     wild.advance(1)
@@ -87,6 +93,7 @@ def test_periodic_ticks_do_not_count_as_real_observations(tmp_path):
 
 
 def test_wild_will_not_advance_concurrently(tmp_path):
+    """Verify an existing simulation lease prevents a competing advance."""
     repo, _, wild = make_wild(tmp_path)
     assert repo.try_acquire_lease(LEASE, "other-process", ttl_seconds=60)
     with pytest.raises(WildBusyError):
@@ -94,6 +101,7 @@ def test_wild_will_not_advance_concurrently(tmp_path):
 
 
 def _dry_reading(wild, state, zone="south-meadow"):
+    """Ingest a simulated dry reading and register its irrigation proposal for judging."""
     event = wild._event(state, "sensor.soil_moisture", zone,
                         {"percent": 9.0, "forecast_rain_mm_24h": 0.0})
     result = wild.engine.ingest(event)
@@ -103,6 +111,7 @@ def _dry_reading(wild, state, zone="south-meadow"):
 
 
 def test_irrigation_advice_is_judged_against_simulated_ground_truth(tmp_path):
+    """Verify later drought damage and rain yield the expected irrigation utilities."""
     repo, _, wild = make_wild(tmp_path)
     state = wild._new_world()
     justified = _dry_reading(wild, state)
@@ -127,6 +136,7 @@ def test_irrigation_advice_is_judged_against_simulated_ground_truth(tmp_path):
 
 
 def test_judging_skips_recommendations_already_resolved_by_a_human(tmp_path):
+    """Verify simulation judging leaves an existing human outcome unchanged."""
     repo, _, wild = make_wild(tmp_path)
     state = wild._new_world()
     recommendation_id = _dry_reading(wild, state)
@@ -138,6 +148,7 @@ def test_judging_skips_recommendations_already_resolved_by_a_human(tmp_path):
 
 
 def test_repeated_poor_advice_raises_evolution_candidates(tmp_path):
+    """Verify poor irrigation outcomes produce evolution candidates journaled only once."""
     _, _, wild = make_wild(tmp_path)
     state = wild._new_world()
     for _ in range(5):
@@ -155,6 +166,7 @@ def test_repeated_poor_advice_raises_evolution_candidates(tmp_path):
 
 
 def make_client(tmp_path, monkeypatch, wild_sim):
+    """Configure the API with a temporary database and the requested simulation flag."""
     api.repo = Repository(str(tmp_path / "api.db"))
     api.engine = GardenEngine(api.repo, automation_authority=False)
     monkeypatch.setattr(api, "settings", replace(settings, wild_sim=wild_sim, wild_seed=7))
@@ -162,6 +174,7 @@ def make_client(tmp_path, monkeypatch, wild_sim):
 
 
 def test_wild_api_is_disabled_by_default(tmp_path, monkeypatch):
+    """Verify disabled simulation rejects advances and creates no observations."""
     client = make_client(tmp_path, monkeypatch, wild_sim=False)
     assert client.get("/wild").status_code == 404
     assert client.post("/wild/advance?days=5").status_code == 403
@@ -169,6 +182,7 @@ def test_wild_api_is_disabled_by_default(tmp_path, monkeypatch):
 
 
 def test_wild_api_advances_and_reports_the_garden(tmp_path, monkeypatch):
+    """Verify enabled simulation advances, exposes all zones and rejects zero-day requests."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
 
     grown = client.post("/wild/advance?days=10")
@@ -185,6 +199,7 @@ def test_wild_api_advances_and_reports_the_garden(tmp_path, monkeypatch):
 
 
 def test_wild_api_refuses_a_real_garden(tmp_path, monkeypatch):
+    """Verify advancing a database with real observations returns HTTP 409."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
     client.post("/events", json={"type": "plant.observation", "zone_id": "bed",
                                  "payload": {"condition": "thriving"}})
@@ -194,6 +209,7 @@ def test_wild_api_refuses_a_real_garden(tmp_path, monkeypatch):
 
 
 def test_garden_page_is_served(tmp_path, monkeypatch):
+    """Verify the garden endpoint serves the HTML dashboard with stream support."""
     client = make_client(tmp_path, monkeypatch, wild_sim=False)
     response = client.get("/garden")
     assert response.status_code == 200
@@ -202,12 +218,15 @@ def test_garden_page_is_served(tmp_path, monkeypatch):
 
 
 def test_worker_stops_simulating_when_garden_is_real(monkeypatch):
+    """Verify the worker drops a real-garden simulation but retains one with a busy lease."""
     class RealWild:
         def advance(self, days):
+            """Simulate an advance rejected because the database contains real observations."""
             raise RealGardenError("real")
 
     class BusyWild:
         def advance(self, days):
+            """Simulate an advance rejected because another process holds the lease."""
             raise WildBusyError("busy")
 
     assert worker._grow_wild(RealWild()) is None
@@ -216,11 +235,13 @@ def test_worker_stops_simulating_when_garden_is_real(monkeypatch):
 
 
 def test_real_observation_cannot_slip_in_while_the_wild_advances(tmp_path):
+    """Verify a real observation attempted mid-advance is rejected while ticks remain allowed."""
     repo, engine, wild = make_wild(tmp_path)
     original_step = wild._step
     attempts = []
 
     def step_with_intruder(state):
+        """Attempt a real observation before the third simulated day and record its rejection."""
         if state["day"] == 2:
             try:
                 engine.ingest(GardenEvent(type="plant.observation", zone_id="bed", source="human",
@@ -239,6 +260,7 @@ def test_real_observation_cannot_slip_in_while_the_wild_advances(tmp_path):
 
 
 def test_world_claim_refuses_a_database_with_real_observations(tmp_path):
+    """Verify an atomic world claim refuses a database that already has real evidence."""
     repo, engine, wild = make_wild(tmp_path)
     engine.ingest(GardenEvent(type="sensor.temperature", source="sensor", payload={"celsius": 9}))
     assert repo.claim_world("wild", wild._new_world()) is False
@@ -247,6 +269,7 @@ def test_world_claim_refuses_a_database_with_real_observations(tmp_path):
 
 @pytest.mark.parametrize(("flag", "real"), [(True, False), (1, True), ("true", True), (None, True)])
 def test_python_and_sql_agree_on_what_is_real(tmp_path, flag, real):
+    """Verify Python and SQL accept only a literal boolean True as the simulation flag."""
     repo = Repository(str(tmp_path / "garden.db"))
     payload = {} if flag is None else {"simulated": flag}
     event = GardenEvent(type="plant.observation", source="x", payload=payload)
@@ -256,6 +279,7 @@ def test_python_and_sql_agree_on_what_is_real(tmp_path, flag, real):
 
 
 def test_api_rejects_real_observations_in_a_simulated_garden(tmp_path, monkeypatch):
+    """Verify the API blocks real observations in a simulated world while allowing ticks."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
     assert client.post("/wild/advance?days=1").status_code == 200
 
@@ -274,6 +298,7 @@ def test_api_rejects_real_observations_in_a_simulated_garden(tmp_path, monkeypat
      ("wild-sim", {"taxon": "heron"})],
 )
 def test_public_events_cannot_claim_to_be_simulated(tmp_path, monkeypatch, source, payload):
+    """Verify reserved simulation flags and sources are rejected without storing events."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
     assert client.post("/wild/advance?days=1").status_code == 200
     before = len(api.repo.list_events(limit=1000))
@@ -287,6 +312,7 @@ def test_public_events_cannot_claim_to_be_simulated(tmp_path, monkeypatch, sourc
 
 
 def test_public_simulated_flag_cannot_prepare_a_real_garden_for_the_wild(tmp_path, monkeypatch):
+    """Verify clients cannot seed an empty database with a forged simulation event."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
     response = client.post("/events", json={"type": "plant.observation", "zone_id": "bed",
                                             "payload": {"condition": "stable", "simulated": True}})
@@ -295,6 +321,7 @@ def test_public_simulated_flag_cannot_prepare_a_real_garden_for_the_wild(tmp_pat
 
 
 def test_cron_tick_grows_the_wild_like_the_worker(tmp_path, monkeypatch):
+    """Verify consecutive cron ticks advance by the configured simulation days per tick."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
     monkeypatch.setattr(api, "settings", replace(api.settings, wild_days_per_tick=3))
 
@@ -307,6 +334,7 @@ def test_cron_tick_grows_the_wild_like_the_worker(tmp_path, monkeypatch):
 
 
 def test_cron_tick_leaves_the_wild_alone_when_disabled_or_real(tmp_path, monkeypatch):
+    """Verify cron skips simulation when disabled or when the database holds real evidence."""
     client = make_client(tmp_path, monkeypatch, wild_sim=False)
     assert "wild" not in client.post("/tasks/tick").json()
     assert api.repo.load_world("wild") is None
@@ -321,11 +349,13 @@ def test_cron_tick_leaves_the_wild_alone_when_disabled_or_real(tmp_path, monkeyp
 
 
 def _events_on_day(repo, day):
+    """Select observations from the event ledger carrying the requested simulated day."""
     return [event for event in repo.list_events(limit=1000)
             if event["payload"].get("sim_day") == day]
 
 
 def test_an_interrupted_day_rolls_back_and_resumes_without_duplicates(tmp_path):
+    """Verify a partial day rolls back, releases its lease and resumes without duplicate events."""
     repo, engine, wild = make_wild(tmp_path, "interrupted.db")
     reference_repo, _, reference = make_wild(tmp_path, "reference.db")
     reference.advance(3)
@@ -335,6 +365,7 @@ def test_an_interrupted_day_rolls_back_and_resumes_without_duplicates(tmp_path):
     seen = []
 
     def power_cut(event, *args, **kwargs):
+        """Interrupt the fourth observation on day three to exercise transactional rollback."""
         if event.payload.get("sim_day") == 3:
             seen.append(event.id)
             if len(seen) == 4:
@@ -355,10 +386,12 @@ def test_an_interrupted_day_rolls_back_and_resumes_without_duplicates(tmp_path):
 
 
 def test_an_advance_that_loses_its_lease_stops_without_saving(tmp_path):
+    """Verify lease takeover prevents the third day from persisting world state or events."""
     repo, _, wild = make_wild(tmp_path)
     original_step = wild._step
 
     def step_while_another_process_takes_over(state):
+        """Transfer the lease before day three to simulate a competing process taking over."""
         if state["day"] == 2:  # about to simulate day 3
             with repo.connection() as conn:
                 conn.execute(

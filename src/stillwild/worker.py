@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 
 def work_forever() -> None:
+    """Run periodic engine ticks and optional simulation growth while holding the worker lease."""
     repo = Repository(settings.db_path)
     engine = GardenEngine(repo, automation_authority=settings.automation_authority)
     wild = Wild(repo, engine, seed=settings.wild_seed) if settings.wild_sim else None
@@ -33,6 +34,7 @@ def work_forever() -> None:
 
 
 def _grow_wild(wild: Wild) -> Wild | None:
+    """Advance the Wild, retaining it when busy and returning None for a real garden."""
     try:
         wild.advance(settings.wild_days_per_tick)
     except WildBusyError:
@@ -44,6 +46,7 @@ def _grow_wild(wild: Wild) -> Wild | None:
 
 
 def run() -> None:
+    """Configure worker logging and enter the background tick loop."""
     logging.basicConfig(level=logging.INFO)
     work_forever()
 
