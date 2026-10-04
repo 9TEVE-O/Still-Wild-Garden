@@ -292,12 +292,17 @@ class Repository:
         with self.connection() as conn:
             rows = conn.execute(
                 """
-                SELECT ar.agent AS agent, COUNT(*) AS n, AVG(o.utility_score) AS avg_score
-                FROM outcomes o
-                JOIN recommendations r ON r.id = o.recommendation_id
-                JOIN agent_runs ar ON ar.event_id = r.event_id
-                WHERE ar.agent != 'council'
-                GROUP BY ar.agent
+                SELECT agent, COUNT(*) AS n, AVG(utility_score) AS avg_score
+                FROM (
+                    SELECT ar.agent AS agent, r.id AS recommendation_id,
+                           AVG(o.utility_score) AS utility_score
+                    FROM outcomes o
+                    JOIN recommendations r ON r.id = o.recommendation_id
+                    JOIN agent_runs ar ON ar.event_id = r.event_id
+                    WHERE ar.agent != 'council'
+                    GROUP BY ar.agent, r.id
+                ) AS recommendation_scores
+                GROUP BY agent
                 ORDER BY n DESC
                 """
             ).fetchall()
