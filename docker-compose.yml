@@ -1,0 +1,26 @@
+
+services:
+  api:
+    build: .
+    command: uvicorn stillwild.api:app --host 0.0.0.0 --port 8000
+    environment:
+      STILLWILD_DB_PATH: /data/stillwild.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - stillwild-data:/data
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: python -m stillwild.worker
+    environment:
+      STILLWILD_DB_PATH: /data/stillwild.db
+      STILLWILD_TICK_SECONDS: "300"
+      STILLWILD_WORKER_ID: worker-1
+    volumes:
+      - stillwild-data:/data
+    restart: unless-stopped
+
+volumes:
+  stillwild-data:
