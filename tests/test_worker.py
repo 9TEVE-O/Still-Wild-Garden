@@ -6,6 +6,7 @@ from stillwild import worker
 
 
 def test_worker_uses_unique_lease_token_and_keeps_source_label(monkeypatch):
+    """Verify worker runs use distinct lease holders while retaining the configured event source."""
     holders = []
     sources = []
 
@@ -40,6 +41,7 @@ def test_worker_uses_unique_lease_token_and_keeps_source_label(monkeypatch):
             automation_authority=False,
             tick_seconds=1,
             worker_id="worker-1",
+            wild_sim=False,
         ),
     )
     monkeypatch.setattr(worker.time, "sleep", stop_sleep)

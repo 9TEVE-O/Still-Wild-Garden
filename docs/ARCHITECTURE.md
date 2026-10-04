@@ -26,10 +26,11 @@ If the hosting platform does not support a continuously running worker, schedule
 - `agent_runs`: what each agent concluded and why
 - `recommendations`: council decisions
 - `outcomes`: delayed evaluation supplied by telemetry or a human
-- `memories`: evidence-linked garden memory
+- `memories`: evidence-linked garden memory (keeps the full evidence count but only the 50 most recent evidence ids)
 - `experiments`: bounded ecological experiments
 - `evolution_candidates`: proposed agent changes, never silent self-modification
 - `leases`: background worker coordination
+- `worlds`: persistent state of simulated gardens (the Wild)
 
 ## Authority boundary
 
@@ -59,6 +60,34 @@ source.addEventListener("garden_event", (event) => {
   console.log(gardenEvent);
 });
 ```
+
+## The Wild (simulated garden)
+
+`stillwild.wild` is an opt-in (`STILLWILD_WILD_SIM=true`), seeded ecosystem that gives the
+agents years of experience in minutes:
+
+- World state lives in the `worlds` table and advances one simulated day at a time. Each day
+  uses its own seeded random stream, so a world grows identically however its days are batched.
+  A day's events, judgements and world state commit in one transaction that also renews the
+  `wild-sim` lease, so a crash rolls the whole day back. Each save is fenced on a world
+  revision, so an advance that was overtaken (even one that later re-acquired the lease)
+  cannot commit stale state.
+- Each simulated day emits ordinary events (`sensor.temperature`, `weather.rain`,
+  `sensor.soil_moisture` with a forecast, `plant.observation`, `wildlife.observation`,
+  `fungi.observation`). They all go through `GardenEngine.ingest`, with source `wild-sim` and
+  `"simulated": true`.
+- **Ground-truth judging.** Irrigation proposals are judged 3 simulated days later and plant
+  inspections 10 days later. Each is scored on whether drought damage, rain or recovery followed,
+  and the result is recorded as a normal outcome, which can raise evolution candidates. The
+  outcome notes say the action was never executed.
+- **Guards.** A `wild-sim` lease stops two processes advancing the same world. A new world
+  claims its database in the same write transaction that confirms no real observation exists.
+  After that, `GardenEngine.ingest` rejects real observations inside its own transaction, so
+  real and simulated evidence can never mix, whichever side writes first. Simulation status is
+  trusted only from the in-process Wild: `POST /events` rejects the `simulated` payload flag and
+  the `wild-sim` source, so clients cannot disguise real observations as simulated.
+
+`GET /garden` renders the world live from `GET /wild` and `/stream`.
 
 ## Agent evolution
 

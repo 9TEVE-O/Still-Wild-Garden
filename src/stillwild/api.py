@@ -3,14 +3,17 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
+from importlib import resources
 
 from fastapi import FastAPI, Header, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 
 from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
-from .engine import GardenEngine
+from .engine import GardenEngine, SimulatedGardenError
+from .wild import SOURCE as WILD_SOURCE
+from .wild import RealGardenError, Wild, WildBusyError
 
 repo = Repository(settings.db_path)
 engine = GardenEngine(repo, automation_authority=settings.automation_authority)
@@ -33,7 +36,19 @@ def health() -> dict:
 
 @app.post("/events", status_code=201)
 def ingest_event(event: GardenEvent) -> dict:
-    return engine.ingest(event)
+    # Events from the public API are always real observations. Only the in-process Wild may
+    # mark an event as simulated, so clients cannot disguise real evidence as simulated.
+    """Ingest a public observation, rejecting simulation markers and simulated gardens."""
+    if "simulated" in event.payload or event.source == WILD_SOURCE:
+        raise HTTPException(
+            status_code=422,
+            detail="The 'simulated' payload flag and the wild-sim source are reserved for the "
+            "in-process Wild simulation; events posted here are real observations.",
+        )
+    try:
+        return engine.ingest(event)
+    except SimulatedGardenError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.get("/events")
@@ -81,8 +96,53 @@ def record_outcome(outcome: OutcomeInput) -> dict:
 @app.post("/tasks/tick")
 def tick() -> dict:
     # Suitable for an external cron/scheduler in environments where long-running
-    # worker processes are unavailable.
-    return engine.tick(source="api-cron")
+    # worker processes are unavailable, so it grows the Wild just as the worker does.
+    """Run a scheduled engine tick and advance the Wild when enabled and available."""
+    result = engine.tick(source="api-cron")
+    if settings.wild_sim:
+        try:
+            grown = Wild(repo, engine, seed=settings.wild_seed).advance(settings.wild_days_per_tick)
+            result["wild"] = {"day": grown["day"], "date": grown["date"], "events": grown["events"]}
+        except (RealGardenError, WildBusyError) as exc:
+            result["wild"] = {"skipped": str(exc)}
+    return result
+
+
+@app.get("/wild")
+def wild_state() -> dict:
+    """Return the persisted simulation snapshot, or raise HTTP 404 if none exists."""
+    snapshot = Wild(repo, engine, seed=settings.wild_seed).snapshot()
+    if snapshot is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No simulated garden exists yet. Enable STILLWILD_WILD_SIM on a dedicated "
+            "database and advance it.",
+        )
+    return snapshot
+
+
+@app.post("/wild/advance")
+def wild_advance(days: int = Query(default=1, ge=1, le=730)) -> dict:
+    """Advance the enabled simulation, reporting disabled or conflicting state via HTTP."""
+    if not settings.wild_sim:
+        raise HTTPException(
+            status_code=403,
+            detail="The Wild simulation is disabled. Set STILLWILD_WILD_SIM=true on a dedicated "
+            "simulated-garden database.",
+        )
+    try:
+        return Wild(repo, engine, seed=settings.wild_seed).advance(days)
+    except RealGardenError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except WildBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get("/garden", response_class=HTMLResponse)
+def garden_page() -> HTMLResponse:
+    """Serve the packaged HTML dashboard for the experimental backend garden."""
+    page = resources.files("stillwild").joinpath("static/garden.html").read_text("utf-8")
+    return HTMLResponse(page)
 
 
 @app.get("/stream")

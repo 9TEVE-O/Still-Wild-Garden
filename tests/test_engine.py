@@ -184,3 +184,59 @@ def test_concurrent_candidate_checks_create_one_candidate(tmp_path):
 
     assert candidate_ids[0] == candidate_ids[1]
     assert len(repo.list_evolution_candidates()) == 1
+
+
+def test_memory_keeps_full_tally_but_bounded_evidence(tmp_path):
+    """Verify evidence trimming preserves the total count and most recent observation ID."""
+    from stillwild.db import MAX_MEMORY_EVIDENCE_IDS
+
+    repo = Repository(str(tmp_path / "garden.db"))
+    total = MAX_MEMORY_EVIDENCE_IDS + 10
+    for index in range(total):
+        repo.upsert_memory("busy", {"n": index}, 0.8, [f"event-{index}"])
+
+    memory = repo.list_memories()[0]
+    assert memory["evidence_count"] == total
+    assert len(memory["evidence_event_ids"]) == MAX_MEMORY_EVIDENCE_IDS
+    assert memory["evidence_event_ids"][-1] == f"event-{total - 1}"
+
+
+def test_species_records_accumulate_in_memory(tmp_path):
+    """Verify repeated wildlife observations update one taxon memory with zone and evidence."""
+    repo = Repository(str(tmp_path / "garden.db"))
+    engine = GardenEngine(repo)
+    for _ in range(2):
+        engine.ingest(
+            GardenEvent(
+                type="wildlife.observation",
+                zone_id="pond",
+                source="human",
+                payload={"taxon": "Dragonfly"},
+            )
+        )
+
+    memory = {item["key"]: item for item in repo.list_memories()}
+    record = memory["taxon_record:wildlife:dragonfly"]
+    assert record["evidence_count"] == 2
+    assert record["value"]["last_zone"] == "pond"
+
+
+@pytest.mark.parametrize(
+    ("condition", "decision"),
+    [("germinating", "WATCH"), ("died back", "WATCH"), ("dormant", "NO_ACTION")],
+)
+def test_natural_plant_stages_are_recognised(tmp_path, condition, decision):
+    """Verify natural life stages yield the expected decision without classification unknowns."""
+    repo = Repository(str(tmp_path / "garden.db"))
+    engine = GardenEngine(repo)
+    result = engine.ingest(
+        GardenEvent(
+            type="plant.observation",
+            zone_id="bed-1",
+            source="human",
+            payload={"condition": condition},
+        )
+    )
+    plant = next(item for item in result["agents"] if item["agent"] == "plant")
+    assert plant["decision"] == decision
+    assert plant["unknowns"] == []
