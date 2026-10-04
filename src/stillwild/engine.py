@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .agents import CouncilAgent, WildnessAgent, default_agents
 from .db import Repository
@@ -61,7 +61,7 @@ class GardenEngine:
         event = GardenEvent(
             type="system.tick",
             source=source,
-            observed_at=datetime.now(timezone.utc),
+            observed_at=datetime.now(UTC),
             payload={"purpose": "periodic background evaluation"},
         )
         result = self.ingest(event)

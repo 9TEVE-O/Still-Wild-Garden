@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 from uuid import uuid4
 
-from .domain import AgentOutput, GardenEvent, ExperimentInput
+from .domain import AgentOutput, ExperimentInput, GardenEvent
 
 
 SCHEMA = """
@@ -118,7 +119,7 @@ CREATE TABLE IF NOT EXISTS leases (
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class Repository:
@@ -451,7 +452,7 @@ class Repository:
             return [dict(row) for row in rows]
 
     def try_acquire_lease(self, name: str, holder: str, ttl_seconds: int) -> bool:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires = now + timedelta(seconds=ttl_seconds)
         with self.connection() as conn:
             conn.execute("BEGIN IMMEDIATE")

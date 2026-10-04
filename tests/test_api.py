@@ -1,24 +1,26 @@
 
-import os
-import tempfile
+from fastapi.testclient import TestClient
 
-os.environ["STILLWILD_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "api.db")
-
-from fastapi.testclient import TestClient  # noqa: E402
-
-from stillwild.api import app  # noqa: E402
+import stillwild.api as api
+from stillwild.db import Repository
+from stillwild.engine import GardenEngine
 
 
-client = TestClient(app)
+def make_client(tmp_path) -> TestClient:
+    api.repo = Repository(str(tmp_path / "api.db"))
+    api.engine = GardenEngine(api.repo, automation_authority=False)
+    return TestClient(api.app)
 
 
-def test_health():
+def test_health(tmp_path):
+    client = make_client(tmp_path)
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 
 
-def test_event_ingest_and_state():
+def test_event_ingest_and_state(tmp_path):
+    client = make_client(tmp_path)
     response = client.post(
         "/events",
         json={
