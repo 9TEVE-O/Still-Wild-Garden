@@ -101,7 +101,7 @@ async def stream(
         nonlocal cursor
         quiet_cycles = 0
         while True:
-            items = repo.list_events(after=cursor, limit=200)
+            items = await asyncio.to_thread(repo.list_events, after=cursor, limit=200)
             if items:
                 quiet_cycles = 0
                 for item in items:
