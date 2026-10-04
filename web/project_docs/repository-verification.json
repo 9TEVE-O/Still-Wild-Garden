@@ -1,0 +1,144 @@
+{
+  "status": "PASS_SOURCE_IMPORT_CHECKS",
+  "recordedAtUtc": "2026-10-04T07:26:16.903538+00:00",
+  "sourceCommit": "bcf2d5210282e3683502be5066d745f920ffb191",
+  "savedSiteVersion": 2,
+  "nodeVersion": "24.19.0",
+  "pnpmVersion": "11.25.0",
+  "checks": {
+    "dependencySetup": {
+      "command": "npm run install:ci",
+      "status": "PASS",
+      "frozenLockfile": true,
+      "dependencyChanges": false
+    },
+    "typeCheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+      "status": "PASS"
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "status": "PASS",
+      "output": "Vinext/Vite Worker, client and SSR"
+    },
+    "persistence": {
+      "status": "PASS",
+      "schemaMigration": "executed against SQLite",
+      "firstReadEmpty": true,
+      "plantIdempotent": true,
+      "concurrentRepeatCount": 5,
+      "rowCount": 1,
+      "survivesConnectionReopen": true,
+      "wrongOrigin": 403,
+      "invalidMutation": 400,
+      "wrongContentType": 415,
+      "scope": "Actual repository query and route code using a SQLite-backed D1 adapter; production cloud runtime not exercised."
+    },
+    "renderer": {
+      "status": "PASS",
+      "width": 800,
+      "height": 320,
+      "frames": 60,
+      "durationMs": 6000,
+      "bytes": 121484,
+      "maxChangedPixelFraction": 0.0178359375,
+      "maxChangedIndexedFraction": 0.0041796875,
+      "exactPeriodicBoundary": true,
+      "decodedFrames": 60,
+      "decodedLoopReset": true,
+      "growthFixtures": "passed",
+      "offlineRuntimeSyntax": "passed",
+      "note": "Actual shared renderer and encoder executed with a Node canvas; not a browser or phone-device test."
+    },
+    "androidScene": {
+      "status": "PASS",
+      "sameGardenExportBytes": 146,
+      "sceneBytes": 394947,
+      "growthAndPixelParityAges": 5,
+      "boundedImportFormat": "Java unit tests run separately",
+      "pauseResume": "PASS",
+      "embeddedArt": 2,
+      "internetPermission": false,
+      "scope": "Node VM with actual generated JS and Node canvas; not Android WebView or physical-device execution",
+      "provenance": {
+        "sources": {
+          "lib/garden.ts": "cfa6f32dc9b043743a89d6c704993a60e0229fcabeb6467cb4d03a8829172c4e",
+          "lib/render-garden.ts": "9b291dc80a347dfdac99bb9126958c3578302bf07f8a9001d2172e700fcba272",
+          "android/scene.ts": "f0d3aa02c480081bd5cd30869ddb4b7ce5da2a9e4c4f1a6a8057fe2cef3d73f2",
+          "public/art/island.png": "e22fdb4f24dec8b07ff7949100b1ec73a3925abaf826d1f647b4c2bd9985cda8",
+          "public/art/sapling.png": "6e60f391e4153b8b15fc2f442493ec8894c997f4ff31c324c658553286be095a"
+        },
+        "htmlSha256": "5ddad57be843d12337e07cc4fcfc0b9e84e05b5da86c5193a7a901388442b64e"
+      }
+    },
+    "localWorker": {
+      "status": "PASS",
+      "scope": "Built Worker under Wrangler with local D1 only; no production request",
+      "initialEmpty": true,
+      "plantIdempotent": true,
+      "savedReadMatches": true,
+      "homeStatus": 200,
+      "wrongOrigin": 403
+    },
+    "sourceIntegrity": {
+      "status": "PASS",
+      "unchangedImportedFiles": 156,
+      "updatedDocumentationFiles": [
+        ".gitignore",
+        "AGENTS.md",
+        "README.md",
+        "android/README.md",
+        "project_docs/CURRENT_BUILD_STATE.md",
+        "project_docs/PRODUCT_AND_CONTRACTS.md",
+        "project_docs/PROJECT_INDEX.md",
+        "project_docs/VALIDATION.md"
+      ],
+      "v02ByteIdenticalToLatestSource": true,
+      "androidCandidateHashMatches": true,
+      "pathsRelativeTo": "web"
+    }
+  },
+  "notExecuted": [
+    "scheduled_pixel_garden_updater",
+    "recurring_weather_ingestion",
+    "24_hour_absence_proof",
+    "separate_user_ownership_isolation",
+    "pixel_garden_SSE",
+    "native_compilation_repeat",
+    "physical_android_device_acceptance"
+  ],
+  "liveSiteModified": false,
+  "productionGardenModified": false,
+  "decisions": {
+    "D-01": "CONFIRMED_SCHEDULED_EXECUTION",
+    "D-02": "APPROVED_RECORDED_IN_LATEST_SOURCE_BRIEF",
+    "approvalProvenance": "Latest supplied v0.2 records owner /approved / action on 4 October 2026; updated during this sync",
+    "sse": "DEFERRED",
+    "fourteenAgentPromptSet": "PARKED_UNINSPECTED",
+    "futureLLMUse": "UNDECIDED"
+  },
+  "applicationDirectory": "web",
+  "experimentalBackend": {
+    "commit": "d123b97cbf86a1a0d989ccce8a5d6be561f11734",
+    "runtimeSourceUnchanged": true,
+    "originalReadmeArchivedByteExactly": true,
+    "pytest": {
+      "status": "PASS",
+      "testsPassed": 21,
+      "warnings": 1,
+      "command": "python -m pytest -q"
+    },
+    "ruff": {
+      "status": "PASS",
+      "command": "python -m ruff check src tests"
+    },
+    "connectedToPixelGarden": false,
+    "deploymentNotExecutedByThisSync": true
+  },
+  "preservedPromptCatalog": {
+    "path": "docs/garden-agent-prompts.md",
+    "mergeCommit": "e3572850912d3d2acca50f1f6a4fd48001d4b831",
+    "status": "PARKED_REFERENCE",
+    "runtimePromotion": false
+  }
+}

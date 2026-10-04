@@ -18,3 +18,10 @@ build/
 .idea/
 .vscode/
 .DS_Store/
+
+# Published web source uses build/ for source tooling.
+!web/build/
+!web/build/**
+*.keystore
+*.jks
+*.tsbuildinfo

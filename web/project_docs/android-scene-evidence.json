@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "sameGardenExportBytes": 146,
+  "sceneBytes": 394947,
+  "growthAndPixelParityAges": 5,
+  "boundedImportFormat": "Java unit tests run separately",
+  "pauseResume": "PASS",
+  "embeddedArt": 2,
+  "internetPermission": false,
+  "scope": "Node VM with actual generated JS and Node canvas; not Android WebView or physical-device execution",
+  "provenance": {
+    "sources": {
+      "lib/garden.ts": "cfa6f32dc9b043743a89d6c704993a60e0229fcabeb6467cb4d03a8829172c4e",
+      "lib/render-garden.ts": "9b291dc80a347dfdac99bb9126958c3578302bf07f8a9001d2172e700fcba272",
+      "android/scene.ts": "f0d3aa02c480081bd5cd30869ddb4b7ce5da2a9e4c4f1a6a8057fe2cef3d73f2",
+      "public/art/island.png": "e22fdb4f24dec8b07ff7949100b1ec73a3925abaf826d1f647b4c2bd9985cda8",
+      "public/art/sapling.png": "6e60f391e4153b8b15fc2f442493ec8894c997f4ff31c324c658553286be095a"
+    },
+    "htmlSha256": "5ddad57be843d12337e07cc4fcfc0b9e84e05b5da86c5193a7a901388442b64e"
+  }
+}

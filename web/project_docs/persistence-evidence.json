@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "schemaMigration": "executed against SQLite",
+  "firstReadEmpty": true,
+  "plantIdempotent": true,
+  "concurrentRepeatCount": 5,
+  "rowCount": 1,
+  "survivesConnectionReopen": true,
+  "wrongOrigin": 403,
+  "invalidMutation": 400,
+  "wrongContentType": 415,
+  "scope": "Actual repository query and route code using a SQLite-backed D1 adapter; production cloud runtime not exercised."
+}
