@@ -297,7 +297,8 @@ class Wild:
 
         Create the world if absent and commit each day atomically under a renewed lease.
         Raise ValueError for nonpositive days, RealGardenError for real observations,
-        or WildBusyError if the lease cannot be acquired or renewed."""
+        or WildBusyError if the lease cannot be acquired or renewed, or if the world's
+        revision changed because another advance overtook this one."""
         if days < 1:
             raise ValueError("days must be at least 1")
         holder = f"wild:{uuid4()}"
@@ -972,6 +973,7 @@ class Wild:
             raise WildBusyError(LOST_LEASE_MESSAGE)
 
     def _save(self, state: dict[str, Any], conn: sqlite3.Connection) -> None:
+        """Save the world fenced on its revision, or raise WildBusyError if it moved on."""
         # The lease keeps advances from overlapping; the revision is the fence. Even an advance
         # that lost its lease and later re-acquired it cannot commit over newer state.
         expected = state.get("revision", 0)

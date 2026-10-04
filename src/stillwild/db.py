@@ -616,6 +616,7 @@ class Repository:
         expected_revision: int,
         connection: sqlite3.Connection | None = None,
     ) -> bool:
+        """Replace a world's state only if its stored revision matches, returning success."""
         # A fencing check: the save only lands if nobody else has saved the world since the
         # caller loaded it, so a stale writer can never overwrite newer state.
         with self.connection(connection) as conn:
