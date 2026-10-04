@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import json
+import secrets
 from collections.abc import AsyncIterator
 from importlib import resources
+from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from .background import ScheduleConflict, run_due
 from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
@@ -24,6 +28,38 @@ app = FastAPI(
     description="Persistent ecological garden state, agents, experiments, memory and SSE events.",
 )
 
+operator_bearer = HTTPBearer(auto_error=False, scheme_name="OperatorToken")
+task_bearer = HTTPBearer(auto_error=False, scheme_name="TaskToken")
+
+
+def _check_token(
+    credentials: HTTPAuthorizationCredentials | None, expected: str, other: str, scope: str,
+) -> None:
+    if len(expected) < 32 or (other and expected == other):
+        raise HTTPException(
+            status_code=503,
+            detail=f"{scope} writes require a distinct configured token of at least 32 characters.",
+        )
+    if credentials is None or not secrets.compare_digest(
+        credentials.credentials.encode("utf-8"), expected.encode("utf-8"),
+    ):
+        raise HTTPException(
+            status_code=401, detail="Invalid or missing bearer token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def require_operator(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(operator_bearer)],
+) -> None:
+    _check_token(credentials, settings.operator_token, settings.task_token, "Operator")
+
+
+def require_task(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(task_bearer)],
+) -> None:
+    _check_token(credentials, settings.task_token, settings.operator_token, "Scheduled")
+
 
 @app.get("/health")
 def health() -> dict:
@@ -34,7 +70,7 @@ def health() -> dict:
     }
 
 
-@app.post("/events", status_code=201)
+@app.post("/events", status_code=201, dependencies=[Depends(require_operator)])
 def ingest_event(event: GardenEvent) -> dict:
     # Events from the public API are always real observations. Only the in-process Wild may
     # mark an event as simulated, so clients cannot disguise real evidence as simulated.
@@ -70,13 +106,13 @@ def state() -> StateSnapshot:
     )
 
 
-@app.post("/experiments", status_code=201)
+@app.post("/experiments", status_code=201, dependencies=[Depends(require_operator)])
 def create_experiment(experiment: ExperimentInput) -> dict:
     experiment_id = repo.add_experiment(experiment)
     return {"id": experiment_id, "status": "active"}
 
 
-@app.post("/outcomes", status_code=201)
+@app.post("/outcomes", status_code=201, dependencies=[Depends(require_operator)])
 def record_outcome(outcome: OutcomeInput) -> dict:
     try:
         outcome_id = repo.add_outcome(
@@ -93,19 +129,19 @@ def record_outcome(outcome: OutcomeInput) -> dict:
     return {"id": outcome_id, "evolution_candidates_created": candidates}
 
 
-@app.post("/tasks/tick")
+@app.post("/tasks/tick", dependencies=[Depends(require_task)])
 def tick() -> dict:
-    # Suitable for an external cron/scheduler in environments where long-running
-    # worker processes are unavailable, so it grows the Wild just as the worker does.
-    """Run a scheduled engine tick and advance the Wild when enabled and available."""
-    result = engine.tick(source="api-cron")
-    if settings.wild_sim:
-        try:
-            grown = Wild(repo, engine, seed=settings.wild_seed).advance(settings.wild_days_per_tick)
-            result["wild"] = {"day": grown["day"], "date": grown["date"], "events": grown["events"]}
-        except (RealGardenError, WildBusyError) as exc:
-            result["wild"] = {"skipped": str(exc)}
-    return result
+    """Commit due UTC slots; a retry reports the prior result without extra progression."""
+    try:
+        return run_due(repo, engine, settings, trigger="api-cron")
+    except (ScheduleConflict, WildBusyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get("/tasks/runs", dependencies=[Depends(require_operator)])
+def background_runs(limit: int = Query(default=50, ge=1, le=100)) -> list[dict]:
+    """Read attempted and committed background execution separately."""
+    return repo.list_background_runs(limit)
 
 
 @app.get("/wild")
@@ -121,7 +157,7 @@ def wild_state() -> dict:
     return snapshot
 
 
-@app.post("/wild/advance")
+@app.post("/wild/advance", dependencies=[Depends(require_operator)])
 def wild_advance(days: int = Query(default=1, ge=1, le=730)) -> dict:
     """Advance the enabled simulation, reporting disabled or conflicting state via HTTP."""
     if not settings.wild_sim:

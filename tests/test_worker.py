@@ -1,29 +1,22 @@
-from types import SimpleNamespace
+from dataclasses import replace
+from datetime import UTC, datetime
 
 import pytest
 
 from stillwild import worker
+from stillwild.background import run_due
+from stillwild.config import Settings
+from stillwild.db import Repository
 
 
-def test_worker_uses_unique_lease_token_and_keeps_source_label(monkeypatch):
-    """Verify worker runs use distinct lease holders while retaining the configured event source."""
-    holders = []
-    sources = []
-
-    class FakeRepository:
-        def __init__(self, path):
-            pass
-
-        def try_acquire_lease(self, name, holder, ttl_seconds):
-            holders.append(holder)
-            return True
-
-    class FakeEngine:
-        def __init__(self, repo, automation_authority):
-            pass
-
-        def tick(self, source):
-            sources.append(source)
+def test_restarted_worker_reuses_slot_and_keeps_source_label(tmp_path, monkeypatch):
+    config = replace(Settings(), db_path=str(tmp_path / 'worker.db'), wild_sim=True)
+    clock = datetime(2026, 10, 4, 10, tzinfo=UTC)
+    monkeypatch.setattr(worker, 'settings', config)
+    monkeypatch.setattr(
+        worker, 'run_due',
+        lambda repo, engine, settings, trigger: run_due(repo, engine, settings, trigger, clock),
+    )
 
     class StopLoop(Exception):
         pass
@@ -31,25 +24,12 @@ def test_worker_uses_unique_lease_token_and_keeps_source_label(monkeypatch):
     def stop_sleep(_):
         raise StopLoop
 
-    monkeypatch.setattr(worker, "Repository", FakeRepository)
-    monkeypatch.setattr(worker, "GardenEngine", FakeEngine)
-    monkeypatch.setattr(
-        worker,
-        "settings",
-        SimpleNamespace(
-            db_path="unused",
-            automation_authority=False,
-            tick_seconds=1,
-            worker_id="worker-1",
-            wild_sim=False,
-        ),
-    )
-    monkeypatch.setattr(worker.time, "sleep", stop_sleep)
-
+    monkeypatch.setattr(worker.time, 'sleep', stop_sleep)
     for _ in range(2):
         with pytest.raises(StopLoop):
             worker.work_forever()
-
-    assert len(set(holders)) == 2
-    assert all(holder.startswith("worker-1:") for holder in holders)
-    assert sources == ["worker-1", "worker-1"]
+    repo = Repository(config.db_path)
+    assert repo.load_world('wild')['day'] == 1
+    ticks = [e for e in repo.recent_events() if e['type'] == 'system.tick']
+    assert len(ticks) == 1 and ticks[0]['source'] == config.worker_id
+    assert {r['status'] for r in repo.list_background_runs()} == {'completed', 'duplicate'}

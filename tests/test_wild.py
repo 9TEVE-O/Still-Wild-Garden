@@ -1,10 +1,10 @@
 from dataclasses import replace
 
 import pytest
+from conftest import OPERATOR_HEADERS, TASK_HEADERS
 from fastapi.testclient import TestClient
 
-from stillwild import api, worker
-from stillwild.config import settings
+from stillwild import api
 from stillwild.db import Repository
 from stillwild.domain import GardenEvent
 from stillwild.engine import GardenEngine, SimulatedGardenError, is_real_observation
@@ -169,8 +169,8 @@ def make_client(tmp_path, monkeypatch, wild_sim):
     """Configure the API with a temporary database and the requested simulation flag."""
     api.repo = Repository(str(tmp_path / "api.db"))
     api.engine = GardenEngine(api.repo, automation_authority=False)
-    monkeypatch.setattr(api, "settings", replace(settings, wild_sim=wild_sim, wild_seed=7))
-    return TestClient(api.app)
+    monkeypatch.setattr(api, "settings", replace(api.settings, wild_sim=wild_sim, wild_seed=7))
+    return TestClient(api.app, headers=OPERATOR_HEADERS)
 
 
 def test_wild_api_is_disabled_by_default(tmp_path, monkeypatch):
@@ -215,23 +215,6 @@ def test_garden_page_is_served(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert "Stillwild" in response.text and "EventSource" in response.text
-
-
-def test_worker_stops_simulating_when_garden_is_real(monkeypatch):
-    """Verify the worker drops a real-garden simulation but retains one with a busy lease."""
-    class RealWild:
-        def advance(self, days):
-            """Simulate an advance rejected because the database contains real observations."""
-            raise RealGardenError("real")
-
-    class BusyWild:
-        def advance(self, days):
-            """Simulate an advance rejected because another process holds the lease."""
-            raise WildBusyError("busy")
-
-    assert worker._grow_wild(RealWild()) is None
-    busy = BusyWild()
-    assert worker._grow_wild(busy) is busy
 
 
 def test_real_observation_cannot_slip_in_while_the_wild_advances(tmp_path):
@@ -288,7 +271,7 @@ def test_api_rejects_real_observations_in_a_simulated_garden(tmp_path, monkeypat
     assert response.status_code == 409
     assert "simulated garden" in response.json()["detail"]
     assert not api.repo.has_real_observations()
-    assert client.post("/tasks/tick").status_code == 200
+    assert client.post("/tasks/tick", headers=TASK_HEADERS).status_code == 200
 
 
 @pytest.mark.parametrize(
@@ -320,29 +303,31 @@ def test_public_simulated_flag_cannot_prepare_a_real_garden_for_the_wild(tmp_pat
     assert api.repo.list_events() == []
 
 
-def test_cron_tick_grows_the_wild_like_the_worker(tmp_path, monkeypatch):
-    """Verify consecutive cron ticks advance by the configured simulation days per tick."""
+def test_cron_tick_retries_do_not_grow_the_wild_twice(tmp_path, monkeypatch):
+    """Verify repeated requests in one UTC slot reuse the committed progression."""
     client = make_client(tmp_path, monkeypatch, wild_sim=True)
     monkeypatch.setattr(api, "settings", replace(api.settings, wild_days_per_tick=3))
 
-    first = client.post("/tasks/tick").json()
-    second = client.post("/tasks/tick").json()
+    first = client.post("/tasks/tick", headers=TASK_HEADERS).json()
+    second = client.post("/tasks/tick", headers=TASK_HEADERS).json()
 
     assert first["wild"]["day"] == 3
-    assert second["wild"]["day"] == 6
-    assert api.repo.load_world("wild")["day"] == 6
+    assert second["wild"]["day"] == 3
+    assert second["committed_slots"] == 0
+    assert second["duplicate_of"] == first["run_id"]
+    assert api.repo.load_world("wild")["day"] == 3
 
 
 def test_cron_tick_leaves_the_wild_alone_when_disabled_or_real(tmp_path, monkeypatch):
     """Verify cron skips simulation when disabled or when the database holds real evidence."""
     client = make_client(tmp_path, monkeypatch, wild_sim=False)
-    assert "wild" not in client.post("/tasks/tick").json()
+    assert "wild" not in client.post("/tasks/tick", headers=TASK_HEADERS).json()
     assert api.repo.load_world("wild") is None
 
-    monkeypatch.setattr(api, "settings", replace(api.settings, wild_sim=True))
+    client = make_client(tmp_path / "real", monkeypatch, wild_sim=True)
     client.post("/events", json={"type": "plant.observation", "zone_id": "bed",
                                  "payload": {"condition": "stable"}})
-    response = client.post("/tasks/tick")
+    response = client.post("/tasks/tick", headers=TASK_HEADERS)
     assert response.status_code == 200
     assert "real garden observations" in response.json()["wild"]["skipped"]
     assert api.repo.load_world("wild") is None

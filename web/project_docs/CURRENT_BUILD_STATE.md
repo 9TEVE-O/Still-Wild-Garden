@@ -1,5 +1,5 @@
 STATE_SCHEMA_VERSION: 1
-LAST_COMPLETED_STAGE: Existing Site version 2 source imported; local type, build and persistence/renderer/companion checks passed
+LAST_COMPLETED_STAGE: Existing Site source imported; separate Python background foundation checked locally
 CURRENT_ACTIVE_STAGE: Approved background milestone awaiting isolated scheduled-garden implementation
 NEXT_PERMITTED_STAGE: Implement and validate the isolated scheduled-garden proof; preserve the original garden
 
@@ -25,6 +25,13 @@ The Site metadata currently reports a public, active Site at https://stillwild-g
 The imported web application reconstructs growth from a seed and birth time. A separately added Python/FastAPI backend at the repository root is preserved; it contains durable events, recommendations, a worker and SSE, but it is not connected to this pixel garden or a recurring weather adapter. Its keepers are animated simulations; no scheduled pixel-keeper consequences, recurring weather ingestion or 24-hour absence proof are established for the published garden. Snapshot reads do not currently advance a server simulation.
 
 The original Android development APK and build evidence are retained. Node renderer parity and native compilation do not prove actual overlay operation, permission flows or phone lifecycle. Physical-device checks in ../android/README.md remain unexecuted. Version 1 portable garden files retain their original local age-based behaviour.
+
+The repository now also contains the experimental Wild, a seeded saved ecosystem with a
+separate backend dashboard. Its protected scheduler/worker foundation saves UTC slot
+markers and outcomes atomically, bounds restart catch-up, and distinguishes successful
+runs from duplicates and failed attempts. Local tests and a short process smoke are
+recorded in ../../docs/audits/2026-10-04/AUDIT.md. This does not alter the web implementation,
+connect its pixel keepers, collect Darwin weather or establish hosted 24-hour operation.
 
 ## Next bounded work
 

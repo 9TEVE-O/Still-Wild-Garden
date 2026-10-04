@@ -119,6 +119,33 @@ CREATE TABLE IF NOT EXISTS worlds (
     state_json TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS background_schedules (
+    name TEXT PRIMARY KEY,
+    config_json TEXT NOT NULL,
+    last_slot_end_ms INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS background_runs (
+    id TEXT PRIMARY KEY,
+    schedule_name TEXT NOT NULL,
+    through_slot_end_ms INTEGER NOT NULL,
+    trigger TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    result_json TEXT,
+    error TEXT
+);
+
+CREATE TABLE IF NOT EXISTS background_ticks (
+    schedule_name TEXT NOT NULL,
+    slot_end_ms INTEGER NOT NULL,
+    run_id TEXT NOT NULL REFERENCES background_runs(id),
+    result_json TEXT NOT NULL,
+    committed_at TEXT NOT NULL,
+    PRIMARY KEY (schedule_name, slot_end_ms)
+);
 """
 
 # Memories keep a full evidence tally but only the most recent evidence ids, so a
@@ -154,9 +181,12 @@ class Repository:
             conn.close()
 
     @contextmanager
-    def transaction(self) -> Iterator[sqlite3.Connection]:
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+    def transaction(
+        self, existing: sqlite3.Connection | None = None
+    ) -> Iterator[sqlite3.Connection]:
+        with self.connection(existing) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             yield conn
 
     def init(self) -> None:
@@ -344,11 +374,13 @@ class Repository:
                 for row in rows
             }
 
-    def agent_scores(self, limit_per_agent: int = 20) -> list[dict[str, Any]]:
+    def agent_scores(
+        self, limit_per_agent: int = 20, connection: sqlite3.Connection | None = None
+    ) -> list[dict[str, Any]]:
         # Outcomes belong to council recommendations. Attribution uses the agent runs that
         # contributed to the same triggering event; this intentionally measures usefulness,
         # not causal credit.
-        with self.connection() as conn:
+        with self.connection(connection) as conn:
             rows = conn.execute(
                 """
                 SELECT agent, COUNT(*) AS n, AVG(utility_score) AS avg_score
@@ -479,10 +511,12 @@ class Repository:
         expected_improvement: str,
         risk: str,
         test_method: str,
+        connection: sqlite3.Connection | None = None,
     ) -> str:
         candidate_id = str(uuid4())
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             duplicate = conn.execute(
                 """
                 SELECT id FROM evolution_candidates
@@ -514,8 +548,10 @@ class Repository:
             )
         return candidate_id
 
-    def list_evolution_candidates(self, limit: int = 50) -> list[dict[str, Any]]:
-        with self.connection() as conn:
+    def list_evolution_candidates(
+        self, limit: int = 50, connection: sqlite3.Connection | None = None
+    ) -> list[dict[str, Any]]:
+        with self.connection(connection) as conn:
             rows = conn.execute(
                 """
                 SELECT * FROM evolution_candidates
@@ -556,9 +592,11 @@ class Repository:
             )
             return True
 
-    def release_lease(self, name: str, holder: str) -> None:
+    def release_lease(
+        self, name: str, holder: str, connection: sqlite3.Connection | None = None
+    ) -> None:
         """Delete a lease only if it still belongs to the specified holder."""
-        with self.connection() as conn:
+        with self.connection(connection) as conn:
             conn.execute("DELETE FROM leases WHERE name = ? AND holder = ?", (name, holder))
 
     def has_real_observations(self, connection: sqlite3.Connection | None = None) -> bool:
@@ -601,9 +639,11 @@ class Repository:
             )
             return True
 
-    def load_world(self, name: str) -> dict[str, Any] | None:
+    def load_world(
+        self, name: str, connection: sqlite3.Connection | None = None
+    ) -> dict[str, Any] | None:
         """Return the decoded state of a named world, or None if it does not exist."""
-        with self.connection() as conn:
+        with self.connection(connection) as conn:
             row = conn.execute(
                 "SELECT state_json FROM worlds WHERE name = ?", (name,)
             ).fetchone()
@@ -643,6 +683,42 @@ class Repository:
                 """,
                 (name, json.dumps(state, separators=(",", ":")), _now()),
             )
+
+    def start_background_run(self, schedule: str, through_ms: int, trigger: str) -> str:
+        run_id = str(uuid4())
+        with self.connection() as conn:
+            conn.execute(
+                """INSERT INTO background_runs
+                (id,schedule_name,through_slot_end_ms,trigger,status,started_at)
+                VALUES (?,?,?,?,?,?)""",
+                (run_id, schedule, through_ms, trigger, "started", _now()),
+            )
+        return run_id
+
+    def finish_background_run(
+        self, run_id: str, status: str, result: dict | None = None,
+        error: str | None = None, connection: sqlite3.Connection | None = None,
+    ) -> None:
+        with self.connection(connection) as conn:
+            conn.execute(
+                """UPDATE background_runs SET status=?,finished_at=?,result_json=?,error=?
+                WHERE id=?""",
+                (status, _now(), json.dumps(result) if result is not None else None, error, run_id),
+            )
+
+    def list_background_runs(self, limit: int = 50) -> list[dict[str, Any]]:
+        with self.connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM background_runs ORDER BY started_at DESC, id DESC LIMIT ?",
+                (min(limit, 100),),
+            ).fetchall()
+            runs = []
+            for row in rows:
+                run = dict(row)
+                encoded = run.pop("result_json")
+                run["result"] = json.loads(encoded) if encoded else None
+                runs.append(run)
+            return runs
 
     @staticmethod
     def _event(row: sqlite3.Row) -> dict[str, Any]:

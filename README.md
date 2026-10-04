@@ -51,8 +51,22 @@ Open `http://localhost:8000/docs`. The separate worker uses the shared Docker da
 
 The [original backend README](docs/EXPERIMENTAL_BACKEND_README.md) retains its API examples, event types and worker instructions. [Backend architecture](docs/ARCHITECTURE.md) describes its existing scope.
 
+The opt-in Wild now has a protected background foundation. Cron and worker use the same UTC
+slot transaction, catch up in bounded batches and save run receipts with their outcomes.
+Scheduler and operator keys have separate scopes; unconfigured HTTP writes are disabled.
+The Docker API binds to localhost. [Background foundation instructions](docs/BACKGROUND_FOUNDATION.md)
+cover credentials, manual simulation controls, current agent duties and a reproducible
+short process check. The Wild uses simulated conditions and remains separate from the pixel garden.
+
 ## Verification and next work
 
-The imported web app passes TypeScript, production build, persistence, GIF/renderer, Android-scene and local Worker/D1 checks. The preserved Python backend passes all 21 pytest tests and Ruff. [The sync record](web/project_docs/GITHUB_SYNC.md) and [machine-readable evidence](web/project_docs/repository-verification.json) describe their scope and the preserved backend.
+The imported web app's historical checks cover TypeScript, production build, persistence,
+GIF/renderer, Android-scene and local Worker/D1 behavior. [The sync record](web/project_docs/GITHUB_SYNC.md)
+and [import evidence](web/project_docs/repository-verification.json) bind those checks to the import.
+The current Python background slice passes 80 pytest cases and Ruff, including concurrency,
+rollback, restart, authorization and read-only return checks. A short isolated process smoke
+also checks saved growth before a return. [The current audit](docs/audits/2026-10-04/AUDIT.md)
+records the revision, plugin review context, findings and evidence limits. None of these
+checks establishes the required hosted 24-hour absence proof.
 
 The next bounded build is connecting a protected, isolated scheduled pixel-garden updater under v0.2, followed by the 24-hour absence proof. Preserve the original origin, version 1 gifts and Android companion behaviour.

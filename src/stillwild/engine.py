@@ -86,20 +86,20 @@ class GardenEngine:
             "agents": [item.model_dump() for item in outputs] + [wildness.model_dump()],
         }
 
-    def tick(self, source: str = "worker") -> dict:
+    def tick(self, source: str = "worker", connection: sqlite3.Connection | None = None) -> dict:
         event = GardenEvent(
             type="system.tick",
             source=source,
             observed_at=datetime.now(UTC),
             payload={"purpose": "periodic background evaluation"},
         )
-        result = self.ingest(event)
-        self.propose_agent_evolution()
+        result = self.ingest(event, connection=connection)
+        self.propose_agent_evolution(connection=connection)
         return result
 
-    def propose_agent_evolution(self) -> list[str]:
+    def propose_agent_evolution(self, connection: sqlite3.Connection | None = None) -> list[str]:
         created: list[str] = []
-        for score in self.repo.agent_scores():
+        for score in self.repo.agent_scores(connection=connection):
             if score["n"] < 5 or score["avg_score"] is None:
                 continue
             if score["avg_score"] < 0.2:
@@ -118,6 +118,7 @@ class GardenEngine:
                     expected_improvement="Reduce repeated low-utility recommendations.",
                     risk="Historical outcomes may be sparse or confounded by other agents.",
                     test_method="Offline replay against stored events, then bounded live trial.",
+                    connection=connection,
                 )
                 created.append(candidate)
         return created

@@ -292,7 +292,9 @@ class Wild:
 
     # ------------------------------------------------------------------ public API
 
-    def advance(self, days: int = 1) -> dict[str, Any]:
+    def advance(
+        self, days: int = 1, connection: sqlite3.Connection | None = None
+    ) -> dict[str, Any]:
         """Advance at least one simulated day and return growth, outcome and journal summaries.
 
         Create the world if absent and commit each day atomically under a renewed lease.
@@ -304,18 +306,20 @@ class Wild:
         holder = f"wild:{uuid4()}"
         # The lease is short and renewed inside every day's transaction, so a killed process
         # does not stall the garden for long and a process that lost the lease cannot commit.
-        if not self.repo.try_acquire_lease(LEASE, holder, ttl_seconds=LEASE_TTL_SECONDS):
+        if not self.repo.try_acquire_lease(
+            LEASE, holder, ttl_seconds=LEASE_TTL_SECONDS, connection=connection
+        ):
             raise WildBusyError("another process is already advancing the Wild")
         try:
             # Once a world exists the engine refuses real observations, so checking here and
             # claiming atomically below keeps real and simulated evidence apart.
-            if self.repo.has_real_observations():
+            if self.repo.has_real_observations(connection=connection):
                 raise RealGardenError(REAL_GARDEN_MESSAGE)
-            state = self.repo.load_world(WORLD)
+            state = self.repo.load_world(WORLD, connection=connection)
             events = outcomes = 0
             if state is None:
                 state = self._new_world()
-                with self.repo.transaction() as conn:
+                with self.repo.transaction(connection) as conn:
                     self._renew(holder, conn)
                     if not self.repo.claim_world(WORLD, state, connection=conn):
                         raise RealGardenError(REAL_GARDEN_MESSAGE)
@@ -327,16 +331,16 @@ class Wild:
                 day_events = self._step(state)
                 # A day's events, judgements and world state commit together: a crash rolls the
                 # whole day back, so resuming never duplicates observations.
-                with self.repo.transaction() as conn:
+                with self.repo.transaction(connection) as conn:
                     self._renew(holder, conn)
                     events += self._ingest_all(state, day_events, conn)
                     resolved = self._judge(state, conn)
                     self._save(state, conn)
                 outcomes += resolved
                 if resolved:
-                    created = self._evolve(state)
+                    created = self._evolve(state, connection=connection)
                     if created:
-                        with self.repo.transaction() as conn:
+                        with self.repo.transaction(connection) as conn:
                             self._renew(holder, conn)
                             self._save(state, conn)
                     evolution.extend(created)
@@ -344,6 +348,7 @@ class Wild:
             return {
                 "days": days,
                 "day": state["day"],
+                "revision": state["revision"],
                 "date": self._date(state).isoformat(),
                 "season": _season(self._date(state).month),
                 "events": events,
@@ -353,7 +358,7 @@ class Wild:
                 "journal": new_notes[-30:],
             }
         finally:
-            self.repo.release_lease(LEASE, holder)
+            self.repo.release_lease(LEASE, holder, connection=connection)
 
     def snapshot(self) -> dict[str, Any] | None:
         """Return a dashboard snapshot of persisted world state, or None before creation."""
@@ -392,6 +397,8 @@ class Wild:
         latest = self.repo.recent_events(1)
         return {
             "simulated": True,
+            "version": state["version"],
+            "revision": state.get("revision", 0),
             "seed": state["seed"],
             "day": state["day"],
             "date": today.isoformat(),
@@ -1083,11 +1090,13 @@ class Wild:
             kind["utility_sum"] = round(kind["utility_sum"] + utility, 4)
         return resolved
 
-    def _evolve(self, state: dict[str, Any]) -> list[dict[str, Any]]:
+    def _evolve(
+        self, state: dict[str, Any], connection: sqlite3.Connection | None = None
+    ) -> list[dict[str, Any]]:
         """Evaluate agent scores and journal and return evolution candidates not previously seen."""
-        self.engine.propose_agent_evolution()
+        self.engine.propose_agent_evolution(connection=connection)
         created = []
-        for candidate in self.repo.list_evolution_candidates(500):
+        for candidate in self.repo.list_evolution_candidates(500, connection=connection):
             if candidate["id"] in state["evolution_seen"]:
                 continue
             state["evolution_seen"].append(candidate["id"])
