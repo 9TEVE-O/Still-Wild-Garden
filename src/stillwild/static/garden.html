@@ -544,12 +544,32 @@
     source.onerror = () => { $("status").textContent = "Reconnecting…"; };
   }
 
+  function operatorCredential() {
+    return new Promise((resolve) => {
+      const dialog = document.createElement("dialog");
+      dialog.style.cssText = "border:1px solid var(--faint);border-radius:12px;padding:24px;background:var(--paper);color:var(--ink);max-width:90vw";
+      dialog.innerHTML = `<form method="dialog"><p>Operator token</p><p>Needed to change this simulated garden.</p><input type="password" autocomplete="off" required aria-label="Operator token" style="width:100%;box-sizing:border-box"><p><button value="cancel" formnovalidate>Cancel</button> <button value="continue">Continue</button></p></form>`;
+      dialog.addEventListener("close", () => {
+        const token = dialog.returnValue === "continue" ? dialog.querySelector("input").value : null;
+        dialog.remove();
+        resolve(token);
+      }, { once: true });
+      document.body.appendChild(dialog);
+      dialog.showModal();
+      dialog.querySelector("input").focus();
+    });
+  }
+
   async function grow(days) {
+    const token = await operatorCredential();
+    if (!token) return;
     const buttons = document.querySelectorAll(".controls button, #seed");
     buttons.forEach((b) => { b.disabled = true; });
     $("status").textContent = `Growing ${days} day${days === 1 ? "" : "s"}…`;
     try {
-      const res = await fetch(`/wild/advance?days=${days}`, { method: "POST" });
+      const res = await fetch(`/wild/advance?days=${days}`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
       const body = await res.json();
       $("status").textContent = res.ok ? `Grew ${days} day${days === 1 ? "" : "s"}` : (body.detail || "Could not grow");
       if (!res.ok && $("app").hidden) {

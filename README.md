@@ -40,8 +40,21 @@ Open `http://localhost:8000/docs`. The optional [Wild simulation](docs/EXPERIMEN
 
 ## Checks and next work
 
-Current local checks: **56 Python tests and Ruff pass**, legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
+Current local checks: **100 Python tests and Ruff pass**, legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
 
 The [Project Auditor report](docs/audits/2026-10-05/REPORT.md) records the reviewed revisions, findings, remediation and remaining gates. [Native evidence](docs/audits/2026-10-05/background-native-evidence.json) and [correlation](docs/audits/2026-10-05/background-correlation.json) preserve the observed progress without claiming full absence.
+
+The opt-in Python Wild also has a protected background foundation. Cron and worker use the
+same UTC slot transaction, catch up in bounded batches and save run receipts with outcomes.
+Scheduler and operator keys have separate scopes; unconfigured HTTP writes are disabled.
+The Docker API binds to localhost. [Background foundation instructions](docs/BACKGROUND_FOUNDATION.md)
+cover credentials, manual simulation controls, agent duties and a short isolated process check.
+The Wild uses simulated conditions and remains separate from both pixel gardens. Its audit and
+local evidence are retained at [the 4 October audit](docs/audits/2026-10-04/AUDIT.md).
+
+The imported web app's historical checks cover TypeScript, production build, persistence,
+GIF/renderer, Android-scene and local Worker/D1 behavior. [The sync record](web/project_docs/GITHUB_SYNC.md)
+and [import evidence](web/project_docs/repository-verification.json) bind those checks to the import.
+None of these local checks establishes the required hosted 24-hour absence proof.
 
 The next bounded action is the existing absence review, followed by any evidence-led correction it identifies. Preserve both managed Sites and their current data while this test runs.

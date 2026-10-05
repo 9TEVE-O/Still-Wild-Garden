@@ -1,6 +1,11 @@
 
 # Still Wild Garden
 
+Experimental backend only. Its Wild and SSE dashboard are separate from the published pixel
+garden. The current operating contract is [Background foundation v0.1](BACKGROUND_FOUNDATION.md):
+HTTP writes require distinct scheduler/operator bearer tokens, and scheduled retries share
+durable UTC slot identities. Local verification does not establish a hosted absence proof.
+
 **A forever-growing garden that evolves over time with the help of agents.**
 
 Stillwild is a persistent agentic ecological system. It is designed to keep observing, reasoning and accumulating evidence even when nobody has the app open.
@@ -41,6 +46,7 @@ curl http://localhost:8000/health
 
 ```bash
 curl -X POST http://localhost:8000/events \
+  -H "Authorization: Bearer $STILLWILD_OPERATOR_TOKEN" \
   -H "content-type: application/json" \
   -d '{
     "type": "sensor.soil_moisture",
@@ -76,13 +82,15 @@ The `worker` container wakes on a configurable interval and emits a `system.tick
 STILLWILD_TICK_SECONDS=300
 ```
 
-If your host cannot run a permanent worker, schedule:
+The worker and cron share a retry-safe slot transaction. Export the configured task token
+when testing the HTTP route. If your host cannot run a permanent worker, schedule:
 
 ```text
 POST /tasks/tick
 ```
 
-from the host's cron/scheduler.
+from the host's cron/scheduler with `Authorization: Bearer <STILLWILD_TASK_TOKEN>`.
+Setting a token does not create a host schedule. `GET /tasks/runs` requires the operator token.
 
 ## The Wild: a garden that grows on its own
 
@@ -128,7 +136,8 @@ hosts without a permanent worker, a scheduled `POST /tasks/tick` grows it the sa
 To fast-forward a season, use:
 
 ```bash
-curl -X POST "http://localhost:8000/wild/advance?days=91"
+curl -X POST "http://localhost:8000/wild/advance?days=91" \
+  -H "Authorization: Bearer $STILLWILD_OPERATOR_TOKEN"
 ```
 
 The simulation is deterministic for a given `STILLWILD_WILD_SEED`.
