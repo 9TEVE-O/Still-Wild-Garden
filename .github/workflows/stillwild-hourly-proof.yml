@@ -1,0 +1,26 @@
+name: Stillwild hourly proof tick
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7 * * * *"
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke bounded Stillwild evolution tick
+        env:
+          STILLWILD_TICK_URL: ${{ secrets.STILLWILD_TICK_URL }}
+          STILLWILD_TICK_TOKEN: ${{ secrets.STILLWILD_TICK_TOKEN }}
+        run: |
+          if [ -z "$STILLWILD_TICK_URL" ] || [ -z "$STILLWILD_TICK_TOKEN" ]; then
+            echo "Stillwild proof scheduler is present but not configured; no request sent."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $STILLWILD_TICK_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$STILLWILD_TICK_URL"
