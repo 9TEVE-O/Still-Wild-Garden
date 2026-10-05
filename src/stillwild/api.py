@@ -12,17 +12,24 @@ from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
 from .engine import GardenEngine, SimulatedGardenError
+from .realworld import RealWorldError, RealWorldService, build_realworld_router
 from .wild import SOURCE as WILD_SOURCE
 from .wild import RealGardenError, Wild, WildBusyError
 
 repo = Repository(settings.db_path)
 engine = GardenEngine(repo, automation_authority=settings.automation_authority)
+realworld = RealWorldService(
+    repo,
+    engine,
+    weather_timeout_seconds=settings.weather_timeout_seconds,
+)
 
 app = FastAPI(
     title="Stillwild Garden",
     version="0.1.0",
     description="Persistent ecological garden state, agents, experiments, memory and SSE events.",
 )
+app.include_router(build_realworld_router(realworld))
 
 
 @app.get("/health")
@@ -31,6 +38,8 @@ def health() -> dict:
         "status": "ok",
         "automation_authority": settings.automation_authority,
         "db_path": settings.db_path,
+        "weather_collect": settings.weather_collect,
+        "real_garden_id": settings.real_garden_id,
     }
 
 
@@ -97,8 +106,13 @@ def record_outcome(outcome: OutcomeInput) -> dict:
 def tick() -> dict:
     # Suitable for an external cron/scheduler in environments where long-running
     # worker processes are unavailable, so it grows the Wild just as the worker does.
-    """Run a scheduled engine tick and advance the Wild when enabled and available."""
+    """Run a scheduled engine tick plus optional real-weather or Wild work."""
     result = engine.tick(source="api-cron")
+    if settings.weather_collect and settings.real_garden_id:
+        try:
+            result["real_weather"] = realworld.collect_weather(settings.real_garden_id)
+        except RealWorldError as exc:
+            result["real_weather"] = {"skipped": str(exc)}
     if settings.wild_sim:
         try:
             grown = Wild(repo, engine, seed=settings.wild_seed).advance(settings.wild_days_per_tick)
