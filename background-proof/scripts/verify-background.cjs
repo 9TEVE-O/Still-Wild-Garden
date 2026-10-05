@@ -7,7 +7,9 @@ const HOUR = 3_600_000;
 let clock = Date.UTC(2026, 9, 4, 4, 35);
 class ClockDate extends Date { static now() { return clock; } }
 const sql = new DatabaseSync(':memory:');
-sql.exec(fs.readFileSync('drizzle/0000_melodic_lucky_pierre.sql', 'utf8'));
+for (const migration of ['drizzle/0000_melodic_lucky_pierre.sql', 'drizzle/0001_scheduler_provenance.sql']) {
+  sql.exec(fs.readFileSync(migration, 'utf8'));
+}
 sql.exec('PRAGMA foreign_keys = ON');
 let requests = 0, outage = false;
 const fixture = () => {
