@@ -18,9 +18,15 @@ def work_forever() -> None:
     repo = Repository(settings.db_path)
     engine = GardenEngine(repo, automation_authority=settings.automation_authority)
     wild = Wild(repo, engine, seed=settings.wild_seed) if settings.wild_sim else None
+    weather_collect = getattr(settings, "weather_collect", False)
+    real_garden_id = getattr(settings, "real_garden_id", None)
     realworld = (
-        RealWorldService(repo, engine, weather_timeout_seconds=settings.weather_timeout_seconds)
-        if settings.weather_collect and settings.real_garden_id
+        RealWorldService(
+            repo,
+            engine,
+            weather_timeout_seconds=getattr(settings, "weather_timeout_seconds", 10.0),
+        )
+        if weather_collect and real_garden_id
         else None
     )
     lease_ttl = max(settings.tick_seconds * 2, 60)
@@ -34,8 +40,8 @@ def work_forever() -> None:
         )
         if acquired:
             engine.tick(source=settings.worker_id)
-            if realworld is not None and settings.real_garden_id is not None:
-                _collect_weather(realworld, settings.real_garden_id)
+            if realworld is not None and real_garden_id is not None:
+                _collect_weather(realworld, real_garden_id)
             if wild is not None:
                 wild = _grow_wild(wild)
         time.sleep(settings.tick_seconds)
