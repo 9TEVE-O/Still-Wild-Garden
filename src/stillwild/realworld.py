@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
@@ -178,15 +179,15 @@ class RealWorldStore:
         with self.repo.connection() as conn:
             conn.executescript(REALWORLD_SCHEMA)
 
-    def assert_real_database(self) -> None:
-        if self.repo.has_world():
+    def assert_real_database(self, connection: sqlite3.Connection | None = None) -> None:
+        if self.repo.has_world(connection=connection):
             raise RealWorldConflictError(
                 "This database contains The Wild simulation; use a separate database for real evidence."
             )
 
     def create_garden(self, item: RealGardenInput) -> dict[str, Any]:
-        self.assert_real_database()
-        with self.repo.connection() as conn:
+        with self.repo.transaction() as conn:
+            self.assert_real_database(connection=conn)
             try:
                 conn.execute(
                     """
@@ -222,9 +223,9 @@ class RealWorldStore:
         return [dict(row) for row in rows]
 
     def create_zone(self, item: ZoneInput) -> dict[str, Any]:
-        self.assert_real_database()
         self.get_garden(item.garden_id)
-        with self.repo.connection() as conn:
+        with self.repo.transaction() as conn:
+            self.assert_real_database(connection=conn)
             try:
                 conn.execute(
                     """
@@ -248,11 +249,11 @@ class RealWorldStore:
         return [self._zone(row) for row in rows]
 
     def create_organism(self, item: OrganismInput) -> dict[str, Any]:
-        self.assert_real_database()
         self.get_garden(item.garden_id)
         if item.zone_id is not None:
             self._assert_zone_belongs(item.zone_id, item.garden_id)
-        with self.repo.connection() as conn:
+        with self.repo.transaction() as conn:
+            self.assert_real_database(connection=conn)
             try:
                 conn.execute(
                     """
@@ -287,11 +288,11 @@ class RealWorldStore:
         return [self._organism(row) for row in rows]
 
     def create_sensor(self, item: SensorInput) -> dict[str, Any]:
-        self.assert_real_database()
         self.get_garden(item.garden_id)
         if item.zone_id is not None:
             self._assert_zone_belongs(item.zone_id, item.garden_id)
-        with self.repo.connection() as conn:
+        with self.repo.transaction() as conn:
+            self.assert_real_database(connection=conn)
             try:
                 conn.execute(
                     """
@@ -343,56 +344,76 @@ class RealWorldStore:
         source_status: str,
         values: dict[str, Any],
         units: dict[str, Any],
+        connection: sqlite3.Connection | None = None,
     ) -> tuple[dict[str, Any], bool]:
-        self.assert_real_database()
-        self.get_garden(garden_id)
+        if connection is None:
+            with self.repo.transaction() as conn:
+                return self.record_environment_interval(
+                    garden_id=garden_id,
+                    provider=provider,
+                    model=model,
+                    valid_start_utc=valid_start_utc,
+                    valid_end_utc=valid_end_utc,
+                    fetched_at_utc=fetched_at_utc,
+                    source_status=source_status,
+                    values=values,
+                    units=units,
+                    connection=conn,
+                )
+        if not connection.in_transaction:
+            raise ValueError("environment interval writes require an active repository transaction")
+        self.assert_real_database(connection=connection)
+        garden = connection.execute(
+            "SELECT 1 FROM real_gardens WHERE id = ?", (garden_id,)
+        ).fetchone()
+        if garden is None:
+            raise RecordNotFoundError(f"garden '{garden_id}' was not found")
         values_json = _json(values)
         units_json = _json(units)
-        with self.repo.transaction() as conn:
-            row = conn.execute(
-                """
-                SELECT * FROM environment_intervals
-                WHERE garden_id = ? AND provider = ? AND valid_end_utc = ?
-                ORDER BY revision DESC LIMIT 1
-                """,
-                (garden_id, provider, valid_end_utc.isoformat()),
-            ).fetchone()
-            if (
-                row is not None
-                and row["values_json"] == values_json
-                and row["units_json"] == units_json
-                and row["source_status"] == source_status
-            ):
-                return self._environment(row), False
-            revision = int(row["revision"]) + 1 if row is not None else 1
-            interval_id = str(uuid4())
-            conn.execute(
-                """
-                INSERT INTO environment_intervals(
-                    id,garden_id,provider,model,valid_start_utc,valid_end_utc,fetched_at_utc,
-                    source_status,values_json,units_json,revision,created_at
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-                """,
-                (
-                    interval_id,
-                    garden_id,
-                    provider,
-                    model,
-                    valid_start_utc.isoformat(),
-                    valid_end_utc.isoformat(),
-                    fetched_at_utc.isoformat(),
-                    source_status,
-                    values_json,
-                    units_json,
-                    revision,
-                    _now(),
-                ),
-            )
-            saved = conn.execute(
-                "SELECT * FROM environment_intervals WHERE id = ?", (interval_id,)
-            ).fetchone()
-            assert saved is not None
-            return self._environment(saved), True
+        row = connection.execute(
+            """
+            SELECT * FROM environment_intervals
+            WHERE garden_id = ? AND provider = ? AND valid_end_utc = ?
+            ORDER BY revision DESC LIMIT 1
+            """,
+            (garden_id, provider, valid_end_utc.isoformat()),
+        ).fetchone()
+        if (
+            row is not None
+            and row["values_json"] == values_json
+            and row["units_json"] == units_json
+            and row["source_status"] == source_status
+        ):
+            return self._environment(row), False
+        revision = int(row["revision"]) + 1 if row is not None else 1
+        interval_id = str(uuid4())
+        connection.execute(
+            """
+            INSERT INTO environment_intervals(
+                id,garden_id,provider,model,valid_start_utc,valid_end_utc,fetched_at_utc,
+                source_status,values_json,units_json,revision,created_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                interval_id,
+                garden_id,
+                provider,
+                model,
+                valid_start_utc.isoformat(),
+                valid_end_utc.isoformat(),
+                fetched_at_utc.isoformat(),
+                source_status,
+                values_json,
+                units_json,
+                revision,
+                _now(),
+            ),
+        )
+        saved = connection.execute(
+            "SELECT * FROM environment_intervals WHERE id = ?", (interval_id,)
+        ).fetchone()
+        assert saved is not None
+        return self._environment(saved), True
 
     def list_environment(self, garden_id: str, limit: int = 48) -> list[dict[str, Any]]:
         self.get_garden(garden_id)
@@ -474,7 +495,6 @@ class RealWorldService:
         self.fetch_json = fetch_json or _fetch_json
 
     def ingest_sensor(self, reading: SensorReadingInput) -> dict[str, Any]:
-        self.store.assert_real_database()
         sensor = self.store.get_sensor(reading.sensor_id)
         if not sensor["active"]:
             raise RealWorldConflictError(f"sensor '{reading.sensor_id}' is inactive")
@@ -501,7 +521,6 @@ class RealWorldService:
         return {"sensor": sensor, "event": self.repo.get_event(event.id), "decision": result}
 
     def collect_weather(self, garden_id: str, *, now: datetime | None = None) -> dict[str, Any]:
-        self.store.assert_real_database()
         garden = self.store.get_garden(garden_id)
         fetched_at = (now or datetime.now(UTC)).astimezone(UTC)
         tick_end = fetched_at.replace(minute=0, second=0, microsecond=0)
@@ -544,38 +563,40 @@ class RealWorldService:
         values["sunset_utc"] = sunset
         units = dict(data.get("hourly_units") or {})
         units.update({"sunrise_utc": "iso8601 UTC", "sunset_utc": "iso8601 UTC"})
-        interval, created = self.store.record_environment_interval(
-            garden_id=garden_id,
-            provider="open-meteo",
-            model="auto",
-            valid_start_utc=tick_start,
-            valid_end_utc=tick_end,
-            fetched_at_utc=fetched_at,
-            source_status="forecast",
-            values=values,
-            units=units,
-        )
         decision = None
-        if created:
-            event = GardenEvent(
-                type="weather.interval",
-                source="open-meteo",
-                observed_at=tick_end,
-                payload={
-                    "garden_id": garden_id,
-                    "environment_interval_id": interval["id"],
-                    "provider": interval["provider"],
-                    "model": interval["model"],
-                    "revision": interval["revision"],
-                    "valid_start_utc": interval["valid_start_utc"],
-                    "valid_end_utc": interval["valid_end_utc"],
-                    "fetched_at_utc": interval["fetched_at_utc"],
-                    "source_status": interval["source_status"],
-                    "values": values,
-                    "units": units,
-                },
+        with self.repo.transaction() as conn:
+            interval, created = self.store.record_environment_interval(
+                garden_id=garden_id,
+                provider="open-meteo",
+                model="auto",
+                valid_start_utc=tick_start,
+                valid_end_utc=tick_end,
+                fetched_at_utc=fetched_at,
+                source_status="forecast",
+                values=values,
+                units=units,
+                connection=conn,
             )
-            decision = self.engine.ingest(event)
+            if created:
+                event = GardenEvent(
+                    type="weather.interval",
+                    source="open-meteo",
+                    observed_at=tick_end,
+                    payload={
+                        "garden_id": garden_id,
+                        "environment_interval_id": interval["id"],
+                        "provider": interval["provider"],
+                        "model": interval["model"],
+                        "revision": interval["revision"],
+                        "valid_start_utc": interval["valid_start_utc"],
+                        "valid_end_utc": interval["valid_end_utc"],
+                        "fetched_at_utc": interval["fetched_at_utc"],
+                        "source_status": interval["source_status"],
+                        "values": values,
+                        "units": units,
+                    },
+                )
+                decision = self.engine.ingest(event, connection=conn)
         return {"created": created, "interval": interval, "decision": decision}
 
 
