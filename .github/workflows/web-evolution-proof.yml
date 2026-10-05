@@ -1,0 +1,29 @@
+name: web-evolution-proof
+
+on:
+  push:
+    paths:
+      - "web/**"
+      - ".github/workflows/web-evolution-proof.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/workflows/web-evolution-proof.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/verify-evolution.cjs
+      - run: pnpm build
