@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: "7 * * * *"
 
+permissions: {}
+
 jobs:
   tick:
     runs-on: ubuntu-latest

@@ -26,7 +26,7 @@ for (const [name, sha] of Object.entries(provenance.sources)) assert.equal(hash(
 const html = fs.readFileSync(assets + 'garden.html', 'utf8');
 assert.equal(hash(html), provenance.htmlSha256);
 assert.ok(html.includes("connect-src 'none'"));
-const js = html.match(/<script>([\s\S]*)<\/script>/)[1];
+const js = html.match(/<script>([\s\S]*)<\/script>/i)[1];
 assert.ok(!/\b(fetch|XMLHttpRequest|WebSocket)\s*\(/.test(js));
 const manifest = fs.readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8');
 assert.ok(!/android.permission.(INTERNET|READ_EXTERNAL_STORAGE|QUERY_ALL_PACKAGES|BIND_ACCESSIBILITY_SERVICE)/.test(manifest));
