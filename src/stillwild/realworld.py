@@ -279,7 +279,7 @@ class RealWorldStore:
         return self._get_organism(item.id)
 
     def list_organisms(self, garden_id: str) -> list[dict[str, Any]]:
-        self.get_garden(item.garden_id)
+        self.get_garden(garden_id)
         with self.repo.connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM organisms WHERE garden_id = ? ORDER BY zone_id, id", (garden_id,)
