@@ -279,7 +279,7 @@ class RealWorldStore:
         return self._get_organism(item.id)
 
     def list_organisms(self, garden_id: str) -> list[dict[str, Any]]:
-        self.get_garden(garden_id)
+        self.get_garden(item.garden_id)
         with self.repo.connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM organisms WHERE garden_id = ? ORDER BY zone_id, id", (garden_id,)
@@ -516,7 +516,9 @@ class RealWorldService:
             "past_days": 1,
             "forecast_days": 2,
         }
-        data = self.fetch_json(f"{OPEN_METEO_URL}?{urlencode(params)}", self.weather_timeout_seconds)
+        data = self.fetch_json(
+            f"{OPEN_METEO_URL}?{urlencode(params)}", self.weather_timeout_seconds
+        )
         hourly = data.get("hourly") or {}
         times = hourly.get("time") or []
         target = int(tick_end.timestamp())
@@ -657,7 +659,7 @@ def _sensor_event(kind: str) -> tuple[str, str]:
 
 
 def _fetch_json(url: str, timeout: float) -> dict[str, Any]:
-    request = Request(url, headers={"User-Agent": "Stillwild-Garden/0.1"})
+    request = Request(url, headers={"User-Agent": "Stillwild-Garden/0.1"})  # noqa: S310
     try:
         with urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed HTTPS provider
             payload = response.read().decode("utf-8")
