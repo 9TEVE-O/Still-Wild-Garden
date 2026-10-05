@@ -16,6 +16,8 @@ Reality is authoritative. Weather-provider output and sensor values are observat
 
 The real-world registry refuses to write into a database that contains The Wild simulation. Use separate database files or volumes for simulated and real evidence.
 
+Registry writes acquire the database write transaction before checking for a simulated world and keep the check and insert in that transaction. A Wild claim also refuses a database with a registered real garden, so the two claims cannot race into the same database.
+
 The production pixel garden `origin` in `web/` is not read, planted, reset, updated or deleted by this layer.
 
 ## Records
@@ -28,7 +30,7 @@ The layer adds four real-world registries plus archived weather inputs:
 - `sensors`: typed measurement sources with semantic units
 - `environment_intervals`: versioned provider inputs keyed by garden, provider and completed UTC interval
 
-Sensor readings themselves enter the existing immutable event ledger. Weather intervals are archived first and, when a new revision is recorded, a `weather.interval` event enters the same ledger.
+Sensor readings themselves enter the existing immutable event ledger. A new weather interval revision and its `weather.interval` event processing share one transaction; failure rolls back both so collection can retry without leaving an orphaned revision.
 
 ## Weather
 
