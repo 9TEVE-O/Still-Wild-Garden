@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "executedAt": "2026-10-05T06:05:37.741Z",
+  "scope": "Actual simulation, weather parser, database queries and API routes with SQLite transactional D1 adapter and controlled clock/weather; not deployed Cloudflare or 24-hour proof.",
+  "checks": [
+    "snapshot never advances state",
+    "UTC preceding-hour rainfall",
+    "future weather excluded",
+    "input units validated",
+    "overlapping runs commit once",
+    "duplicate same-run tick no-op",
+    "atomic rollback on persistence failure",
+    "keeper planting changes saved world",
+    "outage uses labelled zero-rain fallback",
+    "bounded six-hour recovery",
+    "immutable seed and baseline",
+    "unsupported mutation rejected",
+    "validated scheduler weather relay",
+    "invalid relay payload rejected",
+    "immutable explicit proof start without garden reset"
+  ],
+  "ticks": 13
+}

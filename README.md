@@ -4,55 +4,44 @@ A quiet pixel garden that develops at its own pace. No tasks, score, streaks or 
 
 [Open the published garden](https://stillwild-garden.subzteveo.chatgpt.site/)
 
-The repository contains two working codebases. Their integration is still outstanding.
+The repository now holds three distinct runtimes:
 
-| Location | What it contains | Current boundary |
+| Location | Purpose | Current boundary |
 |---|---|---|
-| [web/](web/README.md) | Published Site version 2: React/TypeScript, Canvas, Cloudflare Worker/D1, portable gifts and Android companion candidate | One shared origin; age-based growth and animated keepers |
-| [src/stillwild/](src/stillwild/) | Experimental Python/FastAPI/SQLite agent backend, worker, event ledger, memory, recommendations and SSE | Separate runtime; not connected to the pixel garden or a deployed weather feed |
-| [docs/](docs/ARCHITECTURE.md) | Existing experimental backend architecture and original backend README | Backend reference; does not establish the approved pixel-garden proof |
-| [web/project_docs/](web/project_docs/PROJECT_INDEX.md) | App contracts, latest brief, checkpoint, source manifest and verification | Records current decisions and what remains unproven |
+| [web/](web/README.md) | Public pixel garden, gifts and Android companion candidate | Site version 2; one shared origin; version 1 age-based growth |
+| [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Private test Site version 3; hourly updater enabled; 24-hour absence proof pending |
+| [src/stillwild/](docs/EXPERIMENTAL_BACKEND_README.md) | Experimental Python agent service and opt-in Wild ecosystem simulation | Separate SQLite runtime; simulated Wild weather; no connection to either pixel app |
 
-The web app was imported from saved Site version 2, commit `bcf2d5210282e3683502be5066d745f920ffb191`. The Python backend added in `d123b97cbf86a1a0d989ccce8a5d6be561f11734`, the uploaded image and the subsequently merged [agent prompt catalog](docs/garden-agent-prompts.md) are preserved. The catalog remains a parked reference for the approved pixel-garden milestone.
+The public app and the original seed and birth time are preserved. GitHub updates do not deploy either managed Site.
 
-## Confirmed direction
+## Current background milestone
 
-The latest [v0.2 brief](web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md) records approved canonical authority for the bounded background milestone, through the owner's `/approved / action` on 4 October 2026.
+The [approved v0.2 brief](web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md) governs this bounded milestone: scheduled jobs must save outcomes before a viewer returns. The first garden uses completed UTC-hour weather intervals, finite-state keeper actions and read-only snapshots with refresh. SSE remains deferred; the prompt catalog remains parked; future LLM use is undecided.
 
-Scheduled server work must save pixel-garden outcomes before a viewer returns. The first proof is one isolated Darwin test garden, hourly weather intervals keyed in UTC, saved keeper consequences, and a read-only snapshot with refresh. Acceptance requires 24 hours with every view closed.
+The private background-test source was recovered from Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, and imported under `background-proof/`. Its D1 database is separate from the public origin.
 
-The backend contains a worker and SSE endpoint, but it does not yet implement that weather-driven pixel-garden milestone. SSE remains deferred for the approved milestone. The fourteen-agent prompt set is parked; future LLM use remains undecided. Neither source code nor passing unit tests establishes deployed unattended operation.
+On 5 October 2026, native database reads showed **22 unique committed hourly ticks, revision 22 and 31 saved consequence events**. All 22 tick run IDs matched successful Worker log entries. Recorded planting, habitat and water changes reconcile with the saved world. This establishes background progress within the observed window.
 
-The current published Site is public and uses one shared garden record. Separate personal ownership is still a release requirement. The Android companion is a development candidate with physical-device acceptance open.
+**The full 24-hour absence proof remains pending.** The immutable checkpoint starts at 4 October 2026, 16:57:51 ACST; its earliest review is 5 October 2026, 16:57:51 ACST. The existing review task is set for 17:12:51 ACST. View-closure confirmation and the first read-only return still need review. Do not open the test garden or restart its checkpoint during that window.
 
-## Run the web app
+Separate personal ownership is a later release gate. The Android candidate still needs physical-device acceptance.
 
-Use Node.js 22.13 or later and the pinned pnpm 11.25.0. From `web/`:
+## Run locally
 
-```sh
-cd web
-pnpm install --frozen-lockfile
-pnpm build
-pnpm exec wrangler d1 execute site-creator-d1 --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_superb_krista_starr.sql
-pnpm start
-```
+For either web app, use Node.js 24 and the pinned `pnpm@11.25.0`. Each directory has its own lockfile, schema and local D1 database. Follow [web instructions](web/README.md) or [background-proof instructions](background-proof/README.md).
 
-The migration and server use local D1 storage. [Web instructions](web/README.md) cover the existing verifiers and continuation. GitHub commits do not deploy the managed Site.
-
-## Run the experimental backend
-
-From the repository root:
+The separate Python service runs from the repository root:
 
 ```sh
 docker compose up --build
 ```
 
-Open `http://localhost:8000/docs`. The separate worker uses the shared Docker data volume and runs independently of connected viewers. Physical action is off by default. No real actuator or weather adapter is connected.
+Open `http://localhost:8000/docs`. The optional [Wild simulation](docs/EXPERIMENTAL_BACKEND_README.md#the-wild-a-garden-that-grows-on-its-own) uses its own Docker project and simulated inputs. Physical actions are off by default.
 
-The [original backend README](docs/EXPERIMENTAL_BACKEND_README.md) retains its API examples, event types and worker instructions. [Backend architecture](docs/ARCHITECTURE.md) describes its existing scope.
+## Checks and next work
 
-## Verification and next work
+Current local checks: **56 Python tests and Ruff pass**, legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
 
-The imported web app passes TypeScript, production build, persistence, GIF/renderer, Android-scene and local Worker/D1 checks. The preserved Python backend passes all 21 pytest tests and Ruff. [The sync record](web/project_docs/GITHUB_SYNC.md) and [machine-readable evidence](web/project_docs/repository-verification.json) describe their scope and the preserved backend.
+The [Project Auditor report](docs/audits/2026-10-05/REPORT.md) records the reviewed revisions, findings, remediation and remaining gates. [Native evidence](docs/audits/2026-10-05/background-native-evidence.json) and [correlation](docs/audits/2026-10-05/background-correlation.json) preserve the observed progress without claiming full absence.
 
-The next bounded build is connecting a protected, isolated scheduled pixel-garden updater under v0.2, followed by the 24-hour absence proof. Preserve the original origin, version 1 gifts and Android companion behaviour.
+The next bounded action is the existing absence review, followed by any evidence-led correction it identifies. Preserve both managed Sites and their current data while this test runs.

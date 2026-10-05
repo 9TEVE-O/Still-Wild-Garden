@@ -1,0 +1,97 @@
+{
+  "status": "PASS",
+  "scope": "One deployed boundary specimen using an independently recorded initial workflow-file push rerun; not a cron or 24-hour absence PASS.",
+  "deployment": {
+    "id": "appgdep_6ac3a3c6bd848191b71e31aaa0be6ef2",
+    "versionId": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2~appgver_f58f743e80f48191a337f140414161bc",
+    "sourceCommit": "9f3a40b74d662d6578fa756c430facc62afa3cd0",
+    "status": "succeeded",
+    "completedAt": "2026-10-05T13:19:23.016956+00:00"
+  },
+  "externalReceipt": {
+    "runId": 37312848020,
+    "attempt": 2,
+    "workflow": ".github/workflows/stillwild-scheduler-receipt.yml",
+    "event": "push",
+    "headBranch": "main",
+    "headSha": "fb97cf6b80e2881e200b5c63a81e55d51e4220b3",
+    "createdAt": "2026-10-05T13:20:09Z",
+    "runStartedAt": "2026-10-05T13:20:07Z",
+    "conclusion": "success",
+    "jobId": 111782748718,
+    "executionId": "github-actions:run:37312848020:attempt:2",
+    "logEmission": "2026-10-05T13:20:13.1101229Z"
+  },
+  "scheduler": {
+    "taskId": "github-actions:stillwild-scheduler-receipt-v0.1",
+    "executionId": "github-actions:run:37312848020:attempt:2",
+    "triggeredAt": 1791206409000
+  },
+  "nativeRun": {
+    "id": "db565618-3d75-4c3e-baab-352a6ab4b85c",
+    "trigger": "schedule",
+    "slot": 497557,
+    "started_at": 1791206559756,
+    "finished_at": 1791206560825,
+    "status": "succeeded",
+    "committed_ticks": 1,
+    "weather_status": "relayed-modelled",
+    "error": null,
+    "scheduler_task_id": "github-actions:stillwild-scheduler-receipt-v0.1",
+    "scheduler_execution_id": "github-actions:run:37312848020:attempt:2",
+    "scheduler_triggered_at": 1791206409000
+  },
+  "nativeTicks": [
+    {
+      "garden_id": "darwin-proof-001",
+      "rules_version": 2,
+      "tick_id": 497557,
+      "input_id": "meteo:1791205200000:1791206559756:8e92ed60-e367-46ee-9537-ca1e18132cd6",
+      "run_id": "db565618-3d75-4c3e-baab-352a6ab4b85c",
+      "revision": 30,
+      "committed_at": 1791206560514
+    }
+  ],
+  "nativeEvents": [
+    {
+      "id": "darwin-proof-001:2:497557:roots-watered",
+      "garden_id": "darwin-proof-001",
+      "tick_id": 497557,
+      "rules_version": 2,
+      "revision": 30,
+      "type": "roots-watered",
+      "keeper": "Dew",
+      "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":0.75}}",
+      "committed_at": 1791206560514,
+      "run_id": "db565618-3d75-4c3e-baab-352a6ab4b85c"
+    }
+  ],
+  "checks": {
+    "singleRun": true,
+    "schedulerTaskMatches": true,
+    "triggerTimeMatches": true,
+    "runSucceeded": true,
+    "oneCommittedTick": true,
+    "revisionMatches": true,
+    "eventMatches": true,
+    "identityPreserved": true,
+    "baselinesPreserved": true
+  },
+  "baseline": {
+    "id": "absence-check-001",
+    "startedAt": 1791098871364,
+    "revision": 0,
+    "preserved": true
+  },
+  "resumedTask": {
+    "id": "Automation_b026bc1a50588191a24a3318127624c5",
+    "isEnabled": true,
+    "timing": "hourly :35 Australia/Darwin"
+  },
+  "limitations": [
+    "API correlation metadata is caller supplied; independent origin was separately checked through GitHub.",
+    "Bootstrap push rerun, not an observed hourly cron run.",
+    "Original absence result remains inconclusive; full-window view closure and historical execution receipts are unestablished.",
+    "Retrieved Worker capture contained a correlated start log; native D1 establishes saved completion."
+  ]
+}
