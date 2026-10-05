@@ -1,4 +1,3 @@
-
 name: test
 
 on:
@@ -17,3 +16,29 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check src tests
       - run: pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            verifier: verify-persistence.cjs
+          - app: background-proof
+            verifier: verify-background.cjs
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: node scripts/${{ matrix.verifier }}
+      - run: pnpm build
