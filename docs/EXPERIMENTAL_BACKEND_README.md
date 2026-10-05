@@ -199,4 +199,4 @@ observe
   -> adapt through tested changes
 ```
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system boundary and next layers.
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the system boundary and next layers.

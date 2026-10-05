@@ -1,0 +1,387 @@
+{
+  "namespace_id": "project-auditor/audit-case",
+  "audit_id": "STILLWILD-2026-10-05",
+  "subject": "9TEVE-O/Still-Wild-Garden and related private background-proof source/evidence",
+  "subject_revision": {
+    "baseline_git_commit": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+    "background_source_commit": "89babb648b5519f6f8545d265171b351d9c47154",
+    "update_manifest": "repository-update-manifest.json",
+    "update_manifest_sha256": "912466b16323d660b2602b16aa83efd5868aa6ee9a265ce7cfaaaaac4a904e0a"
+  },
+  "scope": "Bounded requirement/source/evidence reconciliation, local verification and repository CI coverage for the approved background milestone.",
+  "audit_mode": "WORKING_CONTEXT_WITH_OWNER_AUTHORISED_REMEDIATION",
+  "independence": "The same context audited, applied the requested GitHub update and rechecked it. No independent assurance claim.",
+  "audit_basis": [
+    {
+      "id": "B-01",
+      "classification": "AUTHORITATIVE_REQUIREMENT",
+      "reference": "../../../web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md",
+      "sha256": "2db617e9be359386babd8459c01088916a1cdce3e479d72ea8336b07bbd1e55d",
+      "authority": "Owner approval is recorded in the supplied v0.2 brief; its approval conversation was not independently recovered."
+    },
+    {
+      "id": "B-02",
+      "classification": "AUTHORITATIVE_ARCHITECTURE",
+      "reference": "../../../web/project_docs/PRODUCT_AND_CONTRACTS.md",
+      "applicability": "Legacy seed format, portable modes and preservation."
+    },
+    {
+      "id": "B-03",
+      "classification": "SUPPORTING_EVIDENCE",
+      "reference": "../../../background-proof/project_docs/BACKGROUND_PLAN.md",
+      "applicability": "Implemented test design, not independent promotion of requirements."
+    },
+    {
+      "id": "B-04",
+      "classification": "REFERENCE_ONLY",
+      "reference": "../../../docs/garden-agent-prompts.md",
+      "applicability": "Parked; no runtime requirement adopted."
+    },
+    {
+      "id": "B-05",
+      "classification": "REFERENCE_ONLY",
+      "reference": "../../../docs/ARCHITECTURE.md",
+      "applicability": "Separate Python/Wild architecture; no pixel integration established."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R-01",
+      "requirement": "Use an isolated test garden and preserve the original seed, birth time and v1 portable behavior.",
+      "authority": "B-01/B-02",
+      "trace": "ESTABLISHED",
+      "implementation": [
+        "background-proof/.openai/hosting.json",
+        "background-proof/db/background.ts",
+        "web/"
+      ],
+      "evidence": [
+        "E-01",
+        "E-02",
+        "E-04"
+      ],
+      "limitations": [
+        "No repeated Android/device acceptance; unchanged source retains only prior evidence scope."
+      ]
+    },
+    {
+      "id": "R-02",
+      "requirement": "Scheduled work saves meaningful keeper consequences before a return.",
+      "authority": "B-01",
+      "trace": "PARTIAL",
+      "implementation": [
+        "background-proof/lib/world.ts",
+        "background-proof/db/background.ts",
+        "background-proof/app/api/background/tick/route.ts"
+      ],
+      "evidence": [
+        "E-02",
+        "E-03",
+        "E-04",
+        "E-05"
+      ],
+      "limitations": [
+        "Observed background progress is corroborated; full absence and first return are pending."
+      ]
+    },
+    {
+      "id": "R-03",
+      "requirement": "Completed UTC intervals, pinned units/provenance, no rainfall duplication.",
+      "authority": "B-01",
+      "trace": "ESTABLISHED",
+      "implementation": [
+        "background-proof/lib/weather.ts",
+        "background-proof/db/background.ts"
+      ],
+      "evidence": [
+        "E-03",
+        "E-04"
+      ],
+      "limitations": [
+        "Source/local tests and bounded deployed samples; no provider accuracy claim."
+      ]
+    },
+    {
+      "id": "R-04",
+      "requirement": "Atomic state/event/tick commits, duplicate safety and bounded gap recovery.",
+      "authority": "B-01",
+      "trace": "ESTABLISHED",
+      "implementation": [
+        "background-proof/db/background.ts",
+        "background-proof/scripts/verify-background.cjs"
+      ],
+      "evidence": [
+        "E-03",
+        "E-04"
+      ],
+      "limitations": [
+        "Overlap/failure tests use local SQLite, not injected hosted faults."
+      ]
+    },
+    {
+      "id": "R-05",
+      "requirement": "Snapshot reads never advance state; first return reads saved outcomes.",
+      "authority": "B-01",
+      "trace": "PARTIAL",
+      "implementation": [
+        "background-proof/app/api/snapshot/route.ts",
+        "background-proof/db/background.ts"
+      ],
+      "evidence": [
+        "E-03"
+      ],
+      "limitations": [
+        "Read-only source/local behavior established; first hosted post-window return not executed."
+      ]
+    },
+    {
+      "id": "R-06",
+      "requirement": "24 hours with every view closed, independently corroborated pre-return outcomes.",
+      "authority": "B-01",
+      "trace": "PARTIAL",
+      "implementation": [
+        "background-proof/db/background.ts",
+        "background-proof/app/api/proof/start/route.ts"
+      ],
+      "evidence": [
+        "E-04",
+        "E-05"
+      ],
+      "limitations": [
+        "NOT_ESTABLISHED; earliest check is 2026-10-05T07:27:51.364Z; all-view closure unconfirmed."
+      ]
+    },
+    {
+      "id": "R-07",
+      "requirement": "Snapshot/refresh first; SSE deferred for this milestone.",
+      "authority": "B-01",
+      "trace": "ESTABLISHED",
+      "implementation": [
+        "background-proof/app/page.tsx"
+      ],
+      "evidence": [
+        "E-02"
+      ],
+      "limitations": [
+        "Existing Python SSE belongs to a separate runtime."
+      ]
+    },
+    {
+      "id": "R-08",
+      "requirement": "Authenticated owner isolation before a separate-user release.",
+      "authority": "B-01",
+      "trace": "ABSENT",
+      "implementation": [],
+      "evidence": [],
+      "limitations": [
+        "Later release gate outside this single private proof; privacy alone does not implement ownership."
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Isolated test design implemented and published",
+      "status": "CORROBORATED",
+      "evidence": [
+        "E-02",
+        "E-04"
+      ]
+    },
+    {
+      "claim": "Saved background progress",
+      "status": "CORROBORATED",
+      "evidence": [
+        "E-04",
+        "E-05"
+      ],
+      "observed_revision": 22,
+      "ticks": 22,
+      "events": 31
+    },
+    {
+      "claim": "24-hour absence accepted",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [
+        "E-04",
+        "E-05"
+      ]
+    },
+    {
+      "claim": "Local checks pass",
+      "status": "VERIFIED_FOR_RECORDED_SCOPE",
+      "evidence": [
+        "E-03"
+      ]
+    },
+    {
+      "claim": "Hosted CI passes this update",
+      "status": "NOT_ESTABLISHED"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E-01",
+      "origin": "CONNECTOR",
+      "identity_integrity": "VALIDATED",
+      "verification": "CORROBORATED",
+      "freshness": "CURRENT",
+      "reference_or_content": "repository-update-manifest.json",
+      "sha256": "912466b16323d660b2602b16aa83efd5868aa6ee9a265ce7cfaaaaac4a904e0a",
+      "limitations": [
+        "Bound GitHub tree and file identities; binary visual contents not reviewed."
+      ]
+    },
+    {
+      "evidence_id": "E-02",
+      "origin": "CONNECTOR",
+      "identity_integrity": "VALIDATED",
+      "verification": "CORROBORATED",
+      "freshness": "CURRENT",
+      "reference_or_content": "background-source-manifest.json",
+      "sha256": "dbdb0299f4a53a7ca621ed23841146dd62f4c11ac0859424e74159b5a90fcfe5",
+      "limitations": [
+        "Recovered source and native version bind the commit; source presence is not full acceptance."
+      ]
+    },
+    {
+      "evidence_id": "E-03",
+      "origin": "OBSERVATION",
+      "identity_integrity": "VALIDATED",
+      "verification": "VERIFIED",
+      "freshness": "CURRENT",
+      "reference_or_content": "local-verification.json",
+      "sha256": "1fe93d6ee33372d59d2e71e0d449352b6455e7c38fe97a0f049ea84125465079",
+      "limitations": [
+        "Only recorded local type, build, Python/lint and controlled SQLite behavior."
+      ]
+    },
+    {
+      "evidence_id": "E-04",
+      "origin": "CONNECTOR",
+      "identity_integrity": "VALIDATED",
+      "verification": "CORROBORATED",
+      "freshness": "CURRENT",
+      "reference_or_content": "background-native-evidence.json",
+      "sha256": "194e49f39015985a16effd4175eb320a608594a02122eec38652fabdb4218048",
+      "limitations": [
+        "Point-in-time native reads and bounded Worker logs; not full view absence."
+      ]
+    },
+    {
+      "evidence_id": "E-05",
+      "origin": "DERIVATION",
+      "identity_integrity": "VALIDATED",
+      "verification": "CORROBORATED",
+      "freshness": "CURRENT",
+      "reference_or_content": "background-correlation.json",
+      "sha256": "2aa8845776afa498e46209e6ac490f0fc0cba7fb7b8eae6489bfea83b5d4c012",
+      "limitations": [
+        "Run-ID and consequence reconciliation derives from E-04; trigger labels alone do not prove scheduling."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-01",
+      "subject_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+      "finding_type": "TRACEABILITY_GAP",
+      "severity": "MATERIAL",
+      "affected_requirement": [
+        "R-01",
+        "R-02"
+      ],
+      "finding": "GitHub lacked the implemented private proof source and its current records still described implementation as pending.",
+      "evidence": [
+        "E-01",
+        "E-02",
+        "E-04"
+      ],
+      "status": "RESOLVED",
+      "resolution": "Recovered version 3 source imported; current records reconciled; governing brief and existing runtimes preserved.",
+      "change_impact": "DEFINITELY_AFFECTED",
+      "recheck": "Manifest hashes and exact runtime preservation checked after the user-authorised update."
+    },
+    {
+      "finding_id": "F-02",
+      "subject_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+      "finding_type": "TEST_GAP",
+      "severity": "MINOR",
+      "finding": "Repository CI covered Python only, leaving both pixel app type, SQLite-verifier and build checks outside the workflow.",
+      "evidence": [
+        "E-01",
+        "E-03"
+      ],
+      "status": "NEEDS_RECHECK",
+      "resolution": "Added Node 24/pnpm jobs for both apps; local equivalents pass.",
+      "change_impact": "DEFINITELY_AFFECTED",
+      "recheck_trigger": "Observe a hosted workflow run for the final commit. Renderer and Android tests remain outside this CI scope."
+    },
+    {
+      "finding_id": "F-03",
+      "subject_revision": "89babb648b5519f6f8545d265171b351d9c47154",
+      "finding_type": "RELEASE_BINDING_GAP",
+      "severity": "MATERIAL",
+      "affected_requirement": [
+        "R-02",
+        "R-05",
+        "R-06"
+      ],
+      "finding": "Background progress exists, but the full 24-hour absence and first-return acceptance are not established.",
+      "evidence": [
+        "E-04",
+        "E-05"
+      ],
+      "status": "OPEN",
+      "recommended_resolution": "Use the existing review after checkpoint plus 24 hours; correlate progress/provenance, confirm view absence and record first-return behavior.",
+      "change_impact": "ESTABLISHED_UNAFFECTED",
+      "recheck_trigger": "Existing review at 17:12:51 ACST, 5 October 2026; preserve hosted source, state and checkpoint."
+    }
+  ],
+  "coverage": {
+    "assessed": [
+      "Governing brief and preserved legacy boundaries",
+      "Exact source recovery and GitHub binding",
+      "Native deployment, D1 progress, Worker logs and task metadata",
+      "Current local Python/lint, types, SQLite behavior and both production builds",
+      "CI configuration and current records"
+    ],
+    "not_assessed": [
+      "Full security/privacy audit",
+      "Scientific calibration",
+      "All Wild algorithms",
+      "Public/private app integration",
+      "Adaptive LLM agents",
+      "Android/phone acceptance",
+      "Every closed viewing surface",
+      "Hosted CI before publication"
+    ]
+  },
+  "unresolved_questions": [
+    "Does the scheduled review establish the complete absence window and first return?",
+    "Does the final commit pass the new hosted CI jobs?",
+    "Personal ownership and mobile synchronisation remain later release gates."
+  ],
+  "audit_round": 2,
+  "round_history": [
+    {
+      "round": 1,
+      "subject_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+      "mode": "Read-only assessment of remote subject and recovered source/evidence",
+      "result": "F-01/F-02/F-03 identified before the project update."
+    },
+    {
+      "round": 2,
+      "subject_revision": {
+        "baseline_git_commit": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+        "background_source_commit": "89babb648b5519f6f8545d265171b351d9c47154",
+        "update_manifest": "repository-update-manifest.json",
+        "update_manifest_sha256": "912466b16323d660b2602b16aa83efd5868aa6ee9a265ce7cfaaaaac4a904e0a"
+      },
+      "mode": "Targeted working-context recheck after the user-authorised source/status/CI update",
+      "result": "F-01 resolved; F-02 configured/local pass with hosted run pending; F-03 unchanged/open."
+    }
+  ],
+  "status": "COMPLETE",
+  "status_meaning": "The declared bounded audit is complete with limitations. Full milestone/release readiness is not established.",
+  "updated_at_utc": "2026-10-05T06:22:03.090Z"
+}
