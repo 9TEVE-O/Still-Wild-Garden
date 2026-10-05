@@ -5,9 +5,9 @@
   "files": [
     {
       "path": ".github/workflows/test.yml",
-      "bytes": 1113,
-      "sha256": "53abacf942835a9428fa0fa55c9cdc8e13170353b4d5f6077f02d9e27793ed7c",
-      "git_blob_sha": "df8cca4288555bc9b751ecff492119b300742f0d",
+      "bytes": 1025,
+      "sha256": "cd147acecba073e377ca8b07bf6124dc49a6f3098309fea4698243155df6e986",
+      "git_blob_sha": "ab9ad014b79339a333fb66b953b2c36446907914",
       "base_blob_sha": "f011bcacb8761c2f3b291bbdbe63130fae57f2df"
     },
     {
@@ -26,9 +26,9 @@
     },
     {
       "path": "README.md",
-      "bytes": 3954,
-      "sha256": "8b5560329f653e0d1c8899766e0ba59f45a8d8a732f077719c53967f41addbaa",
-      "git_blob_sha": "99c627a081bf8134c79f819c0c832303ca4a8aea",
+      "bytes": 4019,
+      "sha256": "87a2812cf14b87b8a4e3ac60b0e435688230a8b27285b419ddea8d6c2ae62466",
+      "git_blob_sha": "558307a81a3c095b8d1b855f625c9bb7267b8f13",
       "base_blob_sha": "cedb0c82a9a4d11d51787861e2cbcb624f4734cd"
     },
     {
@@ -1033,5 +1033,7 @@
     "Existing web and Python runtime blobs and both original uploaded images retain baseline identity.",
     "Governing v0.2 briefs are unchanged and byte-identical.",
     "No hosted state, view, checkpoint, audience, schedule or deployment changed."
-  ]
+  ],
+  "updated_at_utc": "2026-10-05T06:30:06.707511+00:00",
+  "ci_correction_commit": "3e9926c4e909552c11e65aa48e08f8df099a4fe2"
 }

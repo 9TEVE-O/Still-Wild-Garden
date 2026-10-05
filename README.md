@@ -40,7 +40,7 @@ Open `http://localhost:8000/docs`. The optional [Wild simulation](docs/EXPERIMEN
 
 ## Checks and next work
 
-Current local checks: **56 Python tests and Ruff pass**, legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. Configuration and local execution are distinct from hosted CI execution.
+Current local checks: **56 Python tests and Ruff pass**, legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
 
 The [Project Auditor report](docs/audits/2026-10-05/REPORT.md) records the reviewed revisions, findings, remediation and remaining gates. [Native evidence](docs/audits/2026-10-05/background-native-evidence.json) and [correlation](docs/audits/2026-10-05/background-correlation.json) preserve the observed progress without claiming full absence.
 

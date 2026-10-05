@@ -9,7 +9,7 @@ This working-context review was followed by the owner's requested GitHub update.
 | Finding | Before this update | Result |
 |---|---|---|
 | F-01, material source/status gap | GitHub lacked the implemented private test app; checkpoint said implementation pending | Verified source imported; current records corrected; resolved for this snapshot |
-| F-02, CI coverage gap | CI checked Python only | Both pixel apps have type, SQLite-verifier and build jobs; local equivalents pass; hosted run needs checking |
+| F-02, CI coverage gap | CI checked Python only | Both pixel apps have type, SQLite-verifier and build jobs; corrected hosted CI passes; resolved |
 | F-03, material acceptance gap | Full 24-hour absence and first return unavailable | Remains open; progress is not full acceptance |
 
 Native D1 reads show 22 unique committed ticks, revision 22 and 31 saved consequences. All 22 tick run IDs match successful Worker log entries. Recorded plant, habitat and water deltas reconcile with the world. Native version/deployment records bind the recovered source to published version 3. Metadata shows one allowed owner, no visitors and enabled hourly/review tasks.
@@ -24,4 +24,6 @@ Separate authenticated personal ownership is a later release gate. Platform priv
 
 Legacy web and Python runtime code, the uploaded image and the Wild image retain baseline identities. Governing requirements are unchanged. The [import manifest](background-source-manifest.json) records source hashes, documentation/evidence changes and the excluded compiler cache. Runtime code matches the recovered Site source.
 
-No full security audit, ecological calibration, complete Wild algorithm review, browser/device acceptance or independent audit was performed. CI configuration is not hosted execution. The next recheck is limited to hosted CI and the existing absence review; unrelated legacy evidence is not globally invalidated.
+No full security audit, ecological calibration, complete Wild algorithm review, browser/device acceptance or independent audit was performed. The next acceptance recheck is the existing absence review; unrelated legacy evidence is not globally invalidated.
+
+The first hosted workflow passed every application check but failed in optional pnpm cache cleanup. Removing the mismatched cache setting fixed that failure. [Hosted CI run 37272473974](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974), bound to commit 3e9926c4e909552c11e65aa48e08f8df099a4fe2, completed successfully for all three jobs. [The CI evidence](hosted-ci-evidence.json) preserves the failure, correction and passing result. Subsequent changes only update audit/README records and leave the tested runtime and workflow unchanged.

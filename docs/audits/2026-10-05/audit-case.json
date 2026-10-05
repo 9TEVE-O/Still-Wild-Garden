@@ -6,7 +6,8 @@
     "baseline_git_commit": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
     "background_source_commit": "89babb648b5519f6f8545d265171b351d9c47154",
     "update_manifest": "repository-update-manifest.json",
-    "update_manifest_sha256": "912466b16323d660b2602b16aa83efd5868aa6ee9a265ce7cfaaaaac4a904e0a"
+    "update_manifest_sha256": "4c47663426ff8a1e2d9d4acda09f9975688893d5359ccca116b8b482a2c13013",
+    "runtime_and_ci_tested_commit": "3e9926c4e909552c11e65aa48e08f8df099a4fe2"
   },
   "scope": "Bounded requirement/source/evidence reconciliation, local verification and repository CI coverage for the approved background milestone.",
   "audit_mode": "WORKING_CONTEXT_WITH_OWNER_AUTHORISED_REMEDIATION",
@@ -215,7 +216,11 @@
     },
     {
       "claim": "Hosted CI passes this update",
-      "status": "NOT_ESTABLISHED"
+      "status": "VERIFIED_FOR_TEST_SURFACE",
+      "subject_commit": "3e9926c4e909552c11e65aa48e08f8df099a4fe2",
+      "evidence": [
+        "E-06"
+      ]
     }
   ],
   "evidence": [
@@ -226,7 +231,7 @@
       "verification": "CORROBORATED",
       "freshness": "CURRENT",
       "reference_or_content": "repository-update-manifest.json",
-      "sha256": "912466b16323d660b2602b16aa83efd5868aa6ee9a265ce7cfaaaaac4a904e0a",
+      "sha256": "4c47663426ff8a1e2d9d4acda09f9975688893d5359ccca116b8b482a2c13013",
       "limitations": [
         "Bound GitHub tree and file identities; binary visual contents not reviewed."
       ]
@@ -278,6 +283,19 @@
       "limitations": [
         "Run-ID and consequence reconciliation derives from E-04; trigger labels alone do not prove scheduling."
       ]
+    },
+    {
+      "evidence_id": "E-06",
+      "origin": "CONNECTOR",
+      "identity_integrity": "VALIDATED",
+      "verification": "VERIFIED",
+      "freshness": "CURRENT",
+      "reference_or_content": "hosted-ci-evidence.json",
+      "sha256": "fad2c0855dfb7dd6788e68e1993a1928093df73cce0cb40ffb26d7fc7e3a4e86",
+      "limitations": [
+        "Binds the corrected runtime/CI test surface; later edits are documentation/audit only.",
+        "Does not establish absence or device acceptance."
+      ]
     }
   ],
   "findings": [
@@ -309,12 +327,13 @@
       "finding": "Repository CI covered Python only, leaving both pixel app type, SQLite-verifier and build checks outside the workflow.",
       "evidence": [
         "E-01",
-        "E-03"
+        "E-03",
+        "E-06"
       ],
-      "status": "NEEDS_RECHECK",
-      "resolution": "Added Node 24/pnpm jobs for both apps; local equivalents pass.",
+      "status": "RESOLVED",
+      "resolution": "Both web jobs and Python passed hosted CI run 37272473974 after correcting optional cache cleanup.",
       "change_impact": "DEFINITELY_AFFECTED",
-      "recheck_trigger": "Observe a hosted workflow run for the final commit. Renderer and Android tests remain outside this CI scope."
+      "recheck_trigger": "Changes to runtime, dependencies, tests or CI workflow."
     },
     {
       "finding_id": "F-03",
@@ -358,10 +377,9 @@
   },
   "unresolved_questions": [
     "Does the scheduled review establish the complete absence window and first return?",
-    "Does the final commit pass the new hosted CI jobs?",
     "Personal ownership and mobile synchronisation remain later release gates."
   ],
-  "audit_round": 2,
+  "audit_round": 3,
   "round_history": [
     {
       "round": 1,
@@ -378,10 +396,17 @@
         "update_manifest_sha256": "912466b16323d660b2602b16aa83efd5868aa6ee9a265ce7cfaaaaac4a904e0a"
       },
       "mode": "Targeted working-context recheck after the user-authorised source/status/CI update",
-      "result": "F-01 resolved; F-02 configured/local pass with hosted run pending; F-03 unchanged/open."
+      "result": "F-01 resolved; F-02 configured/local pass with hosted run pending; F-03 unchanged/open.",
+      "saved_repository_commit": "690b63eb0b13f1b187ca30eb7242adabc49df464"
+    },
+    {
+      "round": 3,
+      "subject_commit": "3e9926c4e909552c11e65aa48e08f8df099a4fe2",
+      "mode": "Targeted hosted CI recheck",
+      "result": "F-02 resolved. Python, both app type/SQLite/build jobs and cleanup passed. F-03 remains open."
     }
   ],
   "status": "COMPLETE",
   "status_meaning": "The declared bounded audit is complete with limitations. Full milestone/release readiness is not established.",
-  "updated_at_utc": "2026-10-05T06:22:03.090Z"
+  "updated_at_utc": "2026-10-05T06:30:06.719797+00:00"
 }
