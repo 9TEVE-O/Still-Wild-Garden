@@ -55,6 +55,8 @@ This records model-derived environmental evidence. It does not claim site-level 
 
 ## API
 
+All mutating `/real/*` POST routes require the API write-configuration gate and the operator bearer token. The separate task token grants only scheduled `/tasks/tick` authority and cannot mutate real-world records. `STILLWILD_WEATHER_TIMEOUT_SECONDS` must be finite and positive; enabling background collection also requires `STILLWILD_REAL_GARDEN_ID`.
+
 Create an isolated real garden:
 
 ```http
@@ -134,7 +136,7 @@ GET /real/gardens/darwin-test/environment?limit=48
 
 ## Background collection
 
-The existing worker and `/tasks/tick` can collect weather when explicitly configured:
+The protected worker and `/tasks/tick` use the same `run_due(...)` UTC-slot scheduler. When configured, they request weather only after a newly committed slot ends on a UTC hour boundary, and only for that completed interval. The provider request occurs after the background transaction commits; a bounded weather error is reported without undoing the slot. The authenticated manual collection route remains available for retrying a failed weather collection.
 
 ```text
 STILLWILD_WEATHER_COLLECT=true
@@ -142,7 +144,7 @@ STILLWILD_REAL_GARDEN_ID=darwin-test
 STILLWILD_WEATHER_TIMEOUT_SECONDS=10
 ```
 
-This only establishes a code path. A deployed recurring schedule and the pixel garden's 24-hour closed-view proof remain separate evidence requirements.
+This establishes code paths and local transaction behaviour only. It does not establish a deployed recurring schedule, production sensor hardware, actuator execution, a connection to the pixel garden, or the pixel garden's 24-hour closed-view proof.
 
 ## Next boundary
 

@@ -19,9 +19,16 @@ background-proof/ now contains the recovered private Darwin test-app source from
 
 Native observations on 5 October show revision 22, 22 unique committed ticks and 31 saved events. Each tick's run ID matches successful Worker logs; recorded plant, habitat and water changes reconcile. This establishes observed background progress in that separate test app. It does not change the behaviour of this public legacy app.
 
-The Python service, including the opt-in Wild simulation, is a third separate runtime. The Wild uses simulated weather and is not evidence for the real-weather pixel proof. Current local backend checks pass: 56 tests and Ruff.
+The Python service, including the opt-in Wild simulation, is a third separate runtime. The Wild uses simulated weather and is not evidence for the real-weather pixel proof. Current local backend checks pass: 100 tests and Ruff.
 
 ## Remaining gates
+
+The experimental Python Wild remains separate from both pixel apps. Its protected
+scheduler/worker foundation saves UTC slot markers and outcomes atomically, bounds restart
+catch-up, and distinguishes successful runs from duplicates and failed attempts. Local tests
+and a short process smoke are recorded in ../../docs/audits/2026-10-04/AUDIT.md. This does
+not alter the web implementation, connect its pixel keepers, collect Darwin weather or
+establish hosted 24-hour operation.
 
 The private proof checkpoint is 2026-10-04T07:27:51.364Z. Its earliest 24-hour review is 5 October 2026, 16:57:51 ACST; the existing review task is enabled for 17:12:51 ACST. Full absence, all-view closure and the first read-only return are pending. Keep the hosted test view closed and do not reset, redeploy or alter its tasks during the test.
 

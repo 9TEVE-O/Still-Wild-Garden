@@ -2,78 +2,67 @@ from __future__ import annotations
 
 import logging
 import time
-from uuid import uuid4
+from datetime import UTC, datetime
 
+from .background import ScheduleConflict, run_due
 from .config import settings
 from .db import Repository
 from .engine import GardenEngine
 from .realworld import RealWorldError, RealWorldService
-from .wild import RealGardenError, Wild, WildBusyError
 
 log = logging.getLogger(__name__)
 
 
 def work_forever() -> None:
-    """Run periodic engine ticks and optional real-weather or simulation work."""
+    """Run due UTC slots without viewers; cron uses the same transaction and slot identity."""
     repo = Repository(settings.db_path)
     engine = GardenEngine(repo, automation_authority=settings.automation_authority)
-    wild = Wild(repo, engine, seed=settings.wild_seed) if settings.wild_sim else None
-    weather_collect = getattr(settings, "weather_collect", False)
-    real_garden_id = getattr(settings, "real_garden_id", None)
     realworld = (
-        RealWorldService(
-            repo,
-            engine,
-            weather_timeout_seconds=getattr(settings, "weather_timeout_seconds", 10.0),
-        )
-        if weather_collect and real_garden_id
+        RealWorldService(repo, engine, weather_timeout_seconds=settings.weather_timeout_seconds)
+        if settings.weather_collect
         else None
     )
-    lease_ttl = max(settings.tick_seconds * 2, 60)
-    lease_holder = f"{settings.worker_id}:{uuid4()}"
-
     while True:
-        acquired = repo.try_acquire_lease(
-            name="background-tick",
-            holder=lease_holder,
-            ttl_seconds=lease_ttl,
-        )
-        if acquired:
-            engine.tick(source=settings.worker_id)
-            if realworld is not None and real_garden_id is not None:
-                _collect_weather(realworld, real_garden_id)
-            if wild is not None:
-                wild = _grow_wild(wild)
+        try:
+            receipt = run_due(repo, engine, settings, trigger=settings.worker_id)
+            if realworld is not None and settings.real_garden_id:
+                _collect_due_weather(realworld, settings.real_garden_id, receipt)
+        except ScheduleConflict as exc:
+            log.critical(
+                "Background worker is quiescent until an operator resolves the pinned "
+                "schedule conflict and restarts it: %s",
+                exc,
+            )
+            while True:
+                time.sleep(settings.tick_seconds)
+        except Exception:
+            log.exception("Background work failed; uncommitted slots will be retried.")
         time.sleep(settings.tick_seconds)
 
 
-def _collect_weather(realworld: RealWorldService, garden_id: str) -> None:
-    """Collect the latest completed weather interval without stopping the worker on feed failure."""
-    try:
-        result = realworld.collect_weather(garden_id)
-    except RealWorldError as exc:
-        log.warning("Real-world weather collection skipped: %s", exc)
-        return
-    if result["created"]:
-        interval = result["interval"]
-        log.info(
-            "Recorded %s weather interval ending %s for %s.",
-            interval["provider"],
-            interval["valid_end_utc"],
-            garden_id,
-        )
-
-
-def _grow_wild(wild: Wild) -> Wild | None:
-    """Advance the Wild, retaining it when busy and returning None for a real garden."""
-    try:
-        wild.advance(settings.wild_days_per_tick)
-    except WildBusyError:
-        log.info("The Wild is already being advanced elsewhere; skipping this tick.")
-    except RealGardenError as exc:
-        log.warning("The Wild simulation stopped: %s", exc)
-        return None
-    return wild
+def _collect_due_weather(
+    realworld: RealWorldService, garden_id: str, receipt: dict
+) -> None:
+    """Collect model weather after committed hourly UTC slots, outside the slot transaction."""
+    for slot in receipt.get("slots", []):
+        slot_end_ms = int(slot["slot_end_ms"])
+        if slot_end_ms % 3_600_000:
+            continue
+        try:
+            result = realworld.collect_weather(
+                garden_id, now=datetime.fromtimestamp(slot_end_ms / 1000, UTC)
+            )
+        except RealWorldError as exc:
+            log.warning("Real-world weather collection failed: %s", exc)
+            continue
+        if result["created"]:
+            interval = result["interval"]
+            log.info(
+                "Recorded %s weather interval ending %s for %s.",
+                interval["provider"],
+                interval["valid_end_utc"],
+                garden_id,
+            )
 
 
 def run() -> None:

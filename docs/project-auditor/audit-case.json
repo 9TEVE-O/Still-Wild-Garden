@@ -1,0 +1,392 @@
+{
+  "namespace_id": "project-auditor/audit-case",
+  "audit_id": "SWG-2026-10-04-001",
+  "schema_version": 1,
+  "subject": "9TEVE-O/Still-Wild-Garden",
+  "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+  "baseline_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+  "source_snapshot_sha256": "1488cf09597c6ddb8fd3147a24c71e19b157f183d4322835da74cc0648abf91d",
+  "scope": "Current repo requirements, backend agent/authority/recovery boundaries, baseline execution and targeted background-foundation re-audit",
+  "audit_mode": "ORDINARY_ADVISORY",
+  "review_context": "SAME_CONTEXT_ADVISORY",
+  "audit_round": 2,
+  "status": "COMPLETE",
+  "project_readiness": "NOT_ASSERTED",
+  "audit_basis": [
+    {
+      "classification": "AUTHORITATIVE_REQUIREMENT",
+      "ref": "web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md",
+      "authority": "Owner approval recorded in supplied source brief; governs bounded background milestone, not all prototype features"
+    },
+    {
+      "classification": "AUTHORITATIVE_ARCHITECTURE",
+      "ref": "AGENTS.md and web/AGENTS.md",
+      "authority": "Repository continuation boundaries"
+    },
+    {
+      "classification": "ACCEPTANCE_CRITERIA",
+      "ref": "v0.2 brief: acceptance table",
+      "authority": "24-hour/read-only/retry/outage/restart/compatibility/owner tests"
+    },
+    {
+      "classification": "AUTHORITATIVE_ARCHITECTURE",
+      "ref": "docs/ARCHITECTURE.md and docs/BACKGROUND_FOUNDATION.md",
+      "authority": "Experimental backend design and this scoped implementation contract"
+    },
+    {
+      "classification": "PROJECT_CLAIM",
+      "ref": "README.md and web/project_docs/CURRENT_BUILD_STATE.md"
+    },
+    {
+      "classification": "SUPPORTING_EVIDENCE",
+      "ref": "docs/audits/2026-10-04/validation.json and local-process-smoke.json"
+    },
+    {
+      "classification": "REFERENCE_ONLY",
+      "ref": "docs/garden-agent-prompts.md",
+      "authority": "Parked; not adopted as runtime requirements"
+    }
+  ],
+  "requirements": [
+    {
+      "requirement_id": "R01",
+      "requirement": "Preserve original identity and portable v1 compatibility",
+      "trace": "Web runtime/assets unchanged; no production mutation",
+      "status": "ESTABLISHED_UNAFFECTED",
+      "evidence": [
+        "E05"
+      ],
+      "limits": "No phone or production retest"
+    },
+    {
+      "requirement_id": "R02",
+      "requirement": "Archived hourly Darwin intervals with provenance and outage policy",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "E04",
+        "E05"
+      ]
+    },
+    {
+      "requirement_id": "R03",
+      "requirement": "Protected bounded updater with unique intervals and atomic outcomes",
+      "status": "PARTIAL",
+      "trace": "Implemented and executed in experimental Python backend; pixel updater absent",
+      "evidence": [
+        "E02",
+        "E05"
+      ]
+    },
+    {
+      "requirement_id": "R04",
+      "requirement": "Meaningful persisted keeper events and accurate return summary",
+      "status": "PARTIAL",
+      "trace": "Wild persists modeled ecosystem changes; animated pixel keepers remain unconnected",
+      "evidence": [
+        "E03",
+        "E05"
+      ]
+    },
+    {
+      "requirement_id": "R05",
+      "requirement": "Read-only pixel snapshot and refresh",
+      "status": "PARTIAL",
+      "trace": "Backend read-only return checked; pixel refresh adapter absent",
+      "evidence": [
+        "E02",
+        "E03",
+        "E05"
+      ]
+    },
+    {
+      "requirement_id": "R06",
+      "requirement": "24-hour absence with independently corroborated pre-return commits",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [
+        "E03",
+        "E04"
+      ]
+    },
+    {
+      "requirement_id": "R07",
+      "requirement": "Authenticated separate-user release gate",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "E04",
+        "E05"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Experimental background foundation is implemented and locally checked",
+      "status": "SUPPORTED_WITHIN_SCOPE",
+      "evidence": [
+        "E02",
+        "E03",
+        "E05"
+      ]
+    },
+    {
+      "claim": "Approved unattended pixel-garden milestone is delivered",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [
+        "E04",
+        "E05"
+      ]
+    },
+    {
+      "claim": "Agents improve themselves or act physically",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [
+        "E05"
+      ],
+      "note": "Candidates remain proposals; no actuator or promotion path exists"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "SWG-F01",
+      "severity": "MATERIAL",
+      "finding_type": "MISSING_IMPLEMENTATION",
+      "affected_requirement": "protected updater and mutation authority",
+      "finding": "Backend mutation routes accepted anonymous calls.",
+      "baseline_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "RESOLVED",
+      "evidence": [
+        "E01",
+        "E02"
+      ],
+      "resolution": "Distinct task/operator bearer scopes, configured-token checks and localhost Docker binding; authorization tests execute without side effects."
+    },
+    {
+      "finding_id": "SWG-F02",
+      "severity": "MATERIAL",
+      "finding_type": "MISSING_IMPLEMENTATION",
+      "affected_requirement": "unique applied intervals and atomic background state",
+      "finding": "Retrying cron advanced the Wild again; cron and worker did not share a durable slot identity.",
+      "baseline_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "RESOLVED",
+      "evidence": [
+        "E01",
+        "E02",
+        "E03"
+      ],
+      "resolution": "Pinned schedule, UTC high-water cursor, unique slot key, atomic state/outcome/candidate/receipt transaction, bounded catch-up and concurrent/restart/crash checks."
+    },
+    {
+      "finding_id": "SWG-F03",
+      "severity": "MATERIAL",
+      "finding_type": "MISSING_IMPLEMENTATION",
+      "affected_requirement": "approved Darwin pixel-garden milestone",
+      "finding": "No archived Darwin inputs, saved pixel-keeper consequences or Python-to-web snapshot adapter is implemented. The existing Wild is a separate simulated ecosystem.",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "OPEN",
+      "evidence": [
+        "E04",
+        "E05"
+      ],
+      "recommended_resolution": "Implement one isolated hourly Darwin garden with pinned environment intervals and versioned keeper events; keep origin and portable v1 behavior intact.",
+      "recheck_trigger": "Pixel updater, weather collector or snapshot adapter is added."
+    },
+    {
+      "finding_id": "SWG-F04",
+      "severity": "MATERIAL",
+      "finding_type": "TEST_GAP",
+      "affected_requirement": "24-hour absence acceptance",
+      "finding": "A hosted schedule and meaningful pre-return pixel changes during 24 hours with all views closed are NOT_ESTABLISHED. The local three-second simulation smoke cannot establish that claim.",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "OPEN",
+      "evidence": [
+        "E03",
+        "E04"
+      ],
+      "recommended_resolution": "Run the approved acceptance procedure only after the isolated pixel/runtime connection exists, with host logs and baseline/return evidence.",
+      "recheck_trigger": "Actual host procedure executes."
+    },
+    {
+      "finding_id": "SWG-F05",
+      "severity": "MATERIAL",
+      "finding_type": "MISSING_IMPLEMENTATION",
+      "affected_requirement": "separate-user release gate",
+      "finding": "Authenticated owner mapping and cross-garden read/write rejection are absent. Service tokens do not establish private personal gardens. Public Site access is recorded in the import; it was not freshly queried in this audit.",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "OPEN",
+      "evidence": [
+        "E04",
+        "E05"
+      ],
+      "recommended_resolution": "Add and execute two-owner isolation checks before a multi-user promise or release.",
+      "recheck_trigger": "Ownership layer or hosting audience changes."
+    },
+    {
+      "finding_id": "SWG-F06",
+      "severity": "MINOR",
+      "finding_type": "STALE_EVIDENCE",
+      "finding": "Root README retained the pre-Wild 21-test backend count.",
+      "baseline_revision": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "RESOLVED",
+      "evidence": [
+        "E01",
+        "E02"
+      ],
+      "resolution": "Current evidence now reports 80 cases; historical import records remain explicitly historical."
+    },
+    {
+      "finding_id": "SWG-F07",
+      "severity": "MINOR",
+      "finding_type": "TRACEABILITY_GAP",
+      "finding": "agent_scores(limit_per_agent=20) still aggregates all scored recommendations; the parameter does not select a historical window. Contribution scores are not causal or real-world agent performance.",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "OPEN",
+      "evidence": [
+        "E05"
+      ],
+      "recommended_resolution": "Choose and document score-window semantics before implementing candidate comparison or promotion.",
+      "recheck_trigger": "Agent replay, trial or promotion is implemented."
+    },
+    {
+      "finding_id": "SWG-F08",
+      "severity": "MINOR",
+      "finding_type": "TRACEABILITY_GAP",
+      "finding": "The Wild dashboard snapshot reads world state, event cursor and agent summaries in separate queries; concurrent progression can mix summary revisions.",
+      "subject_revision": "31af17f7711224219d0378c99f9068f4570ab339",
+      "status": "OPEN",
+      "evidence": [
+        "E05"
+      ],
+      "recommended_resolution": "Use one consistent read snapshot in the future pixel adapter; current read-only behavior remains verified.",
+      "recheck_trigger": "A coherent pixel snapshot contract or active-update dashboard consistency becomes required."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E01",
+      "origin": "OBSERVATION",
+      "identity_integrity": "VALIDATED",
+      "verification": "VERIFIED",
+      "freshness": "CURRENT",
+      "reference_or_content": {
+        "commit": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+        "tests_passed": 56,
+        "ruff": "pass",
+        "anonymous_tick_status": 200,
+        "first_day": 1,
+        "retry_day": 2,
+        "read_mutated_world": false
+      },
+      "limitations": [
+        "Local isolated baseline execution; not a deployed result"
+      ]
+    },
+    {
+      "evidence_id": "E02",
+      "origin": "OBSERVATION",
+      "identity_integrity": "VALIDATED",
+      "verification": "VERIFIED",
+      "freshness": "CURRENT",
+      "reference_or_content": "docs/audits/2026-10-04/validation.json",
+      "limitations": [
+        "No Docker container or production host was launched.",
+        "No 24-hour proof, Darwin collector, pixel adapter, owner-isolation test or phone acceptance executed.",
+        "Web runtime code and assets unchanged; historical web check results were not rerun."
+      ]
+    },
+    {
+      "evidence_id": "E03",
+      "origin": "OBSERVATION",
+      "identity_integrity": "VALIDATED",
+      "verification": "CORROBORATED",
+      "freshness": "CURRENT",
+      "reference_or_content": "docs/audits/2026-10-04/local-process-smoke.json",
+      "limitations": [
+        "Three-second local window, one-second accelerated model cadence; no hosted or 24-hour claim",
+        "Worker stdout corroborates SQLite receipts on the same local host; this is not isolated independent review"
+      ]
+    },
+    {
+      "evidence_id": "E04",
+      "origin": "ARTIFACT",
+      "identity_integrity": "VALIDATED",
+      "verification": "UNVERIFIED",
+      "freshness": "CURRENT",
+      "reference_or_content": "Approved v0.2 brief and recorded import/checkpoint",
+      "limitations": [
+        "Authority is recorded by the supplied artifact; approval is not implementation or runtime evidence",
+        "No fresh Site metadata or production database query performed"
+      ]
+    },
+    {
+      "evidence_id": "E05",
+      "origin": "ARTIFACT",
+      "identity_integrity": "VALIDATED",
+      "verification": "VERIFIED",
+      "freshness": "CURRENT",
+      "reference_or_content": {
+        "commit": "31af17f7711224219d0378c99f9068f4570ab339",
+        "source_manifest": "docs/audits/2026-10-04/source-manifest.json"
+      },
+      "limitations": [
+        "Source inspection does not establish deployment, scientific calibration or physical execution"
+      ]
+    },
+    {
+      "evidence_id": "E06",
+      "origin": "CONNECTOR",
+      "identity_integrity": "VALIDATED",
+      "verification": "CORROBORATED",
+      "freshness": "CURRENT",
+      "reference_or_content": {
+        "commit": "edd4fec25c6835fe305a3896d3391fa039ea48b5",
+        "workflow_run": "https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37196900998",
+        "conclusion": "success"
+      },
+      "limitations": [
+        "This workflow result belongs to the starting commit, not the new PR head"
+      ]
+    }
+  ],
+  "change_impact": {
+    "DEFINITELY_AFFECTED": [
+      "SWG-F01",
+      "SWG-F02",
+      "SWG-F06"
+    ],
+    "POTENTIALLY_AFFECTED": [
+      "SWG-F07",
+      "SWG-F08"
+    ],
+    "ESTABLISHED_UNAFFECTED": [
+      "SWG-F03",
+      "SWG-F04",
+      "SWG-F05"
+    ]
+  },
+  "coverage": {
+    "assessed": [
+      "Approved requirements and prototype distinctions",
+      "HTTP write scopes",
+      "Scheduled atomicity, duplicate/concurrent calls and restart/failure behavior",
+      "Read-only return and exact local evidence",
+      "Deterministic agent duties and proposal-only evolution"
+    ],
+    "not_assessed": [
+      "Live Site audience/database",
+      "24-hour cloud scheduling",
+      "Darwin feed integration",
+      "Physical Android/device behavior",
+      "Visual-export fidelity repair",
+      "Scientific calibration or real agent causal performance"
+    ]
+  },
+  "unresolved_questions": [
+    "Which supported host/authentication path will run the isolated pixel proof?",
+    "What exact Darwin input, fallback and keeper rules will the pixel adapter use?",
+    "What score-window/replay/trial rules precede any agent promotion?"
+  ],
+  "next_bounded_build": "Connect one isolated Darwin environment/keeper-state adapter under the approved brief, then run the hosted absence acceptance. Keep the shared origin untouched.",
+  "closure": "Audit complete for the declared scope and code revision; material milestone and release findings remain open. Not an independent review or overall project PASS."
+}

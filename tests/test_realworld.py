@@ -1,10 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from datetime import UTC, datetime
 from threading import Event
 from time import sleep
 
 import pytest
+from conftest import OPERATOR_HEADERS, OPERATOR_TOKEN, TASK_HEADERS
+from fastapi import Depends, FastAPI
+from fastapi.testclient import TestClient
 
+from stillwild import api
 from stillwild.db import Repository
 from stillwild.engine import GardenEngine
 from stillwild.realworld import (
@@ -16,6 +21,7 @@ from stillwild.realworld import (
     SensorReadingInput,
     WeatherUnavailableError,
     ZoneInput,
+    build_realworld_router,
 )
 
 
@@ -190,6 +196,79 @@ def test_realworld_refuses_simulation_database(tmp_path):
                 longitude=130.8456,
             )
         )
+
+
+def test_realworld_mutations_require_write_gate_and_operator_token(tmp_path, monkeypatch):
+    repo, service = _service(tmp_path)
+    _register(service)
+    service.store.create_sensor(
+        SensorInput(
+            id="soil-1",
+            garden_id="darwin-test",
+            kind="soil_moisture",
+            unit="%",
+            source="soil-probe",
+        )
+    )
+    app = FastAPI()
+    app.include_router(
+        build_realworld_router(
+            service,
+            mutation_dependencies=(Depends(api.require_write_tokens), Depends(api.require_operator)),
+        )
+    )
+    client = TestClient(app)
+    configured_settings = api.settings
+    requests = (
+        ("/gardens", {"id": "other", "name": "Other", "latitude": 0, "longitude": 0}),
+        ("/zones", {"id": "other-zone", "garden_id": "darwin-test", "name": "Other"}),
+        (
+            "/organisms",
+            {"id": "bird-1", "garden_id": "darwin-test", "kind": "animal", "common_name": "Bird"},
+        ),
+        (
+            "/sensors",
+            {
+                "id": "temperature-1",
+                "garden_id": "darwin-test",
+                "kind": "temperature",
+                "unit": "C",
+                "source": "probe",
+            },
+        ),
+        ("/sensor-readings", {"sensor_id": "soil-1", "value": 20}),
+        ("/gardens/darwin-test/weather/collect", {}),
+    )
+    before_events = repo.list_events()
+    before_gardens = service.store.list_gardens()
+    for path, payload in requests:
+        assert client.post("/real" + path, json=payload).status_code == 401
+        assert client.post("/real" + path, json=payload, headers=TASK_HEADERS).status_code == 401
+
+    monkeypatch.setattr(
+        api,
+        "settings",
+        replace(api.settings, task_token="", operator_token=OPERATOR_TOKEN),
+    )
+    assert (
+        client.post(
+            "/real/gardens",
+            json={"id": "blocked", "name": "Blocked", "latitude": 0, "longitude": 0},
+            headers=OPERATOR_HEADERS,
+        ).status_code
+        == 503
+    )
+    assert repo.list_events() == before_events
+    assert service.store.list_gardens() == before_gardens
+    monkeypatch.setattr(api, "settings", configured_settings)
+    assert (
+        client.post(
+            "/real/gardens",
+            json={"id": "operator-garden", "name": "Operator", "latitude": 0, "longitude": 0},
+            headers=OPERATOR_HEADERS,
+        ).status_code
+        == 201
+    )
 
 
 def test_weather_archive_and_event_rollback_then_retry_and_revise(tmp_path, monkeypatch):

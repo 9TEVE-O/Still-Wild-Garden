@@ -18,7 +18,8 @@ The API and worker are separate processes.
 - **API** accepts observations, exposes state, records experiments/outcomes, and streams durable events with Server-Sent Events.
 - **Worker** continues periodic evaluation while no user is connected.
 - **SQLite/WAL** is the first durable state store. It is intentionally replaceable with PostgreSQL later.
-- **Lease** prevents multiple workers from performing the same periodic tick concurrently.
+- **Scheduled slot transaction** prevents cron retries and multiple workers from duplicating
+  a completed UTC slot. A separate lease and revision fence protect manual Wild advances.
 
 If the hosting platform does not support a continuously running worker, schedule `POST /tasks/tick` with an external cron. Browser presence is never required.
 
@@ -33,6 +34,21 @@ If the hosting platform does not support a continuously running worker, schedule
 - `evolution_candidates`: proposed agent changes, never silent self-modification
 - `leases`: background worker coordination
 - `worlds`: persistent state of simulated gardens (the Wild)
+- `background_schedules`: pinned configuration and the last committed UTC slot
+- `background_ticks`: unique committed slots linked to their originating run
+- `background_runs`: started, completed, duplicate and failed execution attempts
+
+## Protected background progression
+
+The worker and `POST /tasks/tick` share `stillwild.background.run_due`. Each bounded batch
+commits evaluation, optional simulated growth, slot markers and its completed receipt in
+one transaction. Retries do not create another tick. Restart recovery processes a bounded
+backlog from the saved cursor. Reads do not invoke this updater.
+
+The task endpoint requires a scheduler bearer token. Other mutation routes and run-history
+reads require a separate operator token. Unconfigured API writes are disabled. This is
+service authorization, not authenticated personal garden ownership. See
+[the background foundation](BACKGROUND_FOUNDATION.md) for configuration and evidence limits.
 
 ## Authority boundary
 
@@ -70,8 +86,10 @@ agents years of experience in minutes:
 
 - World state lives in the `worlds` table and advances one simulated day at a time. Each day
   uses its own seeded random stream, so a world grows identically however its days are batched.
-  A day's events, judgements and world state commit in one transaction that also renews the
-  `wild-sim` lease, so a crash rolls the whole day back. Each save is fenced on a world
+  A manual advance commits each day's events, judgements and world state in a transaction
+  that also renews the `wild-sim` lease. Scheduled advances join their enclosing bounded
+  batch transaction, including outcomes and evolution candidates. A crash rolls back
+  the uncommitted transaction. Each save is fenced on a world
   revision, so an advance that was overtaken (even one that later re-acquired the lease)
   cannot commit stale state.
 - Each simulated day emits ordinary events (`sensor.temperature`, `weather.rain`,

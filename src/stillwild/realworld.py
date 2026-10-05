@@ -586,10 +586,14 @@ class RealWorldService:
         return {"created": created, "interval": interval, "decision": decision}
 
 
-def build_realworld_router(service: RealWorldService) -> APIRouter:
+def build_realworld_router(
+    service: RealWorldService, mutation_dependencies: tuple[Any, ...]
+) -> APIRouter:
     router = APIRouter(prefix="/real", tags=["real-world"])
 
-    @router.post("/gardens", status_code=201)
+    @router.post(
+        "/gardens", status_code=201, dependencies=list(mutation_dependencies)
+    )
     def create_garden(item: RealGardenInput) -> dict[str, Any]:
         return _api_call(lambda: service.store.create_garden(item))
 
@@ -601,7 +605,7 @@ def build_realworld_router(service: RealWorldService) -> APIRouter:
     def get_garden(garden_id: str) -> dict[str, Any]:
         return _api_call(lambda: service.store.get_garden(garden_id))
 
-    @router.post("/zones", status_code=201)
+    @router.post("/zones", status_code=201, dependencies=list(mutation_dependencies))
     def create_zone(item: ZoneInput) -> dict[str, Any]:
         return _api_call(lambda: service.store.create_zone(item))
 
@@ -609,7 +613,7 @@ def build_realworld_router(service: RealWorldService) -> APIRouter:
     def list_zones(garden_id: str) -> list[dict[str, Any]]:
         return _api_call(lambda: service.store.list_zones(garden_id))
 
-    @router.post("/organisms", status_code=201)
+    @router.post("/organisms", status_code=201, dependencies=list(mutation_dependencies))
     def create_organism(item: OrganismInput) -> dict[str, Any]:
         return _api_call(lambda: service.store.create_organism(item))
 
@@ -617,7 +621,7 @@ def build_realworld_router(service: RealWorldService) -> APIRouter:
     def list_organisms(garden_id: str) -> list[dict[str, Any]]:
         return _api_call(lambda: service.store.list_organisms(garden_id))
 
-    @router.post("/sensors", status_code=201)
+    @router.post("/sensors", status_code=201, dependencies=list(mutation_dependencies))
     def create_sensor(item: SensorInput) -> dict[str, Any]:
         return _api_call(lambda: service.store.create_sensor(item))
 
@@ -625,11 +629,16 @@ def build_realworld_router(service: RealWorldService) -> APIRouter:
     def list_sensors(garden_id: str) -> list[dict[str, Any]]:
         return _api_call(lambda: service.store.list_sensors(garden_id))
 
-    @router.post("/sensor-readings", status_code=201)
+    @router.post(
+        "/sensor-readings", status_code=201, dependencies=list(mutation_dependencies)
+    )
     def sensor_reading(item: SensorReadingInput) -> dict[str, Any]:
         return _api_call(lambda: service.ingest_sensor(item))
 
-    @router.post("/gardens/{garden_id}/weather/collect")
+    @router.post(
+        "/gardens/{garden_id}/weather/collect",
+        dependencies=list(mutation_dependencies),
+    )
     def collect_weather(garden_id: str) -> dict[str, Any]:
         return _api_call(lambda: service.collect_weather(garden_id))
 
