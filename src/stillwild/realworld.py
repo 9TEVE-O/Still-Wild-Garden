@@ -332,7 +332,7 @@ class RealWorldStore:
             ).fetchall()
         return [self._sensor(row) for row in rows]
 
-    def record_environment_interval(
+    def _record_environment_interval(
         self,
         *,
         garden_id: str,
@@ -344,22 +344,8 @@ class RealWorldStore:
         source_status: str,
         values: dict[str, Any],
         units: dict[str, Any],
-        connection: sqlite3.Connection | None = None,
+        connection: sqlite3.Connection,
     ) -> tuple[dict[str, Any], bool]:
-        if connection is None:
-            with self.repo.transaction() as conn:
-                return self.record_environment_interval(
-                    garden_id=garden_id,
-                    provider=provider,
-                    model=model,
-                    valid_start_utc=valid_start_utc,
-                    valid_end_utc=valid_end_utc,
-                    fetched_at_utc=fetched_at_utc,
-                    source_status=source_status,
-                    values=values,
-                    units=units,
-                    connection=conn,
-                )
         if not connection.in_transaction:
             raise ValueError("environment interval writes require an active repository transaction")
         self.assert_real_database(connection=connection)
@@ -565,7 +551,7 @@ class RealWorldService:
         units.update({"sunrise_utc": "iso8601 UTC", "sunset_utc": "iso8601 UTC"})
         decision = None
         with self.repo.transaction() as conn:
-            interval, created = self.store.record_environment_interval(
+            interval, created = self.store._record_environment_interval(
                 garden_id=garden_id,
                 provider="open-meteo",
                 model="auto",
