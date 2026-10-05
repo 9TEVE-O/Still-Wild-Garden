@@ -11,7 +11,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from .background import ScheduleConflict, run_due
+from .background import ScheduleConflict, ensure_schedule_compatible, run_due
 from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
@@ -33,12 +33,13 @@ task_bearer = HTTPBearer(auto_error=False, scheme_name="TaskToken")
 
 
 def _check_token(
-    credentials: HTTPAuthorizationCredentials | None, expected: str, other: str, scope: str,
+    credentials: HTTPAuthorizationCredentials | None, expected: str, scope: str,
 ) -> None:
-    if len(expected) < 32 or (other and expected == other):
+    """Authenticate one role after confirming its credential is configured."""
+    if len(expected) < 32:
         raise HTTPException(
             status_code=503,
-            detail=f"{scope} writes require a distinct configured token of at least 32 characters.",
+            detail=f"{scope} authentication requires a configured token of at least 32 characters.",
         )
     if credentials is None or not secrets.compare_digest(
         credentials.credentials.encode("utf-8"), expected.encode("utf-8"),
@@ -49,16 +50,34 @@ def _check_token(
         )
 
 
+def require_write_tokens() -> None:
+    """Disable all HTTP mutations unless both distinct service keys are configured."""
+    if (
+        len(settings.task_token) < 32
+        or len(settings.operator_token) < 32
+        or settings.task_token == settings.operator_token
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "API writes require distinct configured task and operator tokens "
+                "of at least 32 characters."
+            ),
+        )
+
+
 def require_operator(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(operator_bearer)],
 ) -> None:
-    _check_token(credentials, settings.operator_token, settings.task_token, "Operator")
+    """Require the operator credential without imposing the HTTP-write configuration gate."""
+    _check_token(credentials, settings.operator_token, "Operator")
 
 
 def require_task(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(task_bearer)],
 ) -> None:
-    _check_token(credentials, settings.task_token, settings.operator_token, "Scheduled")
+    """Require the scheduler credential without granting operator authority."""
+    _check_token(credentials, settings.task_token, "Scheduled")
 
 
 @app.get("/health")
@@ -70,7 +89,10 @@ def health() -> dict:
     }
 
 
-@app.post("/events", status_code=201, dependencies=[Depends(require_operator)])
+@app.post(
+    "/events", status_code=201,
+    dependencies=[Depends(require_write_tokens), Depends(require_operator)],
+)
 def ingest_event(event: GardenEvent) -> dict:
     # Events from the public API are always real observations. Only the in-process Wild may
     # mark an event as simulated, so clients cannot disguise real evidence as simulated.
@@ -106,13 +128,19 @@ def state() -> StateSnapshot:
     )
 
 
-@app.post("/experiments", status_code=201, dependencies=[Depends(require_operator)])
+@app.post(
+    "/experiments", status_code=201,
+    dependencies=[Depends(require_write_tokens), Depends(require_operator)],
+)
 def create_experiment(experiment: ExperimentInput) -> dict:
     experiment_id = repo.add_experiment(experiment)
     return {"id": experiment_id, "status": "active"}
 
 
-@app.post("/outcomes", status_code=201, dependencies=[Depends(require_operator)])
+@app.post(
+    "/outcomes", status_code=201,
+    dependencies=[Depends(require_write_tokens), Depends(require_operator)],
+)
 def record_outcome(outcome: OutcomeInput) -> dict:
     try:
         outcome_id = repo.add_outcome(
@@ -129,7 +157,9 @@ def record_outcome(outcome: OutcomeInput) -> dict:
     return {"id": outcome_id, "evolution_candidates_created": candidates}
 
 
-@app.post("/tasks/tick", dependencies=[Depends(require_task)])
+@app.post(
+    "/tasks/tick", dependencies=[Depends(require_write_tokens), Depends(require_task)],
+)
 def tick() -> dict:
     """Commit due UTC slots; a retry reports the prior result without extra progression."""
     try:
@@ -157,9 +187,15 @@ def wild_state() -> dict:
     return snapshot
 
 
-@app.post("/wild/advance", dependencies=[Depends(require_operator)])
+@app.post(
+    "/wild/advance", dependencies=[Depends(require_write_tokens), Depends(require_operator)],
+)
 def wild_advance(days: int = Query(default=1, ge=1, le=730)) -> dict:
     """Advance the enabled simulation, reporting disabled or conflicting state via HTTP."""
+    try:
+        ensure_schedule_compatible(repo, engine, settings)
+    except ScheduleConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if not settings.wild_sim:
         raise HTTPException(
             status_code=403,

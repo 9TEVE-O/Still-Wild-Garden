@@ -19,7 +19,7 @@ background-proof/ now contains the recovered private Darwin test-app source from
 
 Native observations on 5 October show revision 22, 22 unique committed ticks and 31 saved events. Each tick's run ID matches successful Worker logs; recorded plant, habitat and water changes reconcile. This establishes observed background progress in that separate test app. It does not change the behaviour of this public legacy app.
 
-The Python service, including the opt-in Wild simulation, is a third separate runtime. The Wild uses simulated weather and is not evidence for the real-weather pixel proof. Current local backend checks pass: 56 tests and Ruff.
+The Python service, including the opt-in Wild simulation, is a third separate runtime. The Wild uses simulated weather and is not evidence for the real-weather pixel proof. Current local backend checks pass: 100 tests and Ruff.
 
 ## Remaining gates
 

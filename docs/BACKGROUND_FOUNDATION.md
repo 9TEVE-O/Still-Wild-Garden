@@ -19,6 +19,7 @@ per slot is accelerated model time, not an hour of actual weather or physical gr
 
 The database pins the interval, simulation mode, seed configuration and rules version.
 An incompatible configuration returns a conflict rather than silently resetting the garden.
+Manual Wild advances reject the same mismatch before creating or mutating a world.
 Use a separate test database for different configurations. No reset/migration endpoint is added.
 
 ## Permissions and routes
@@ -31,8 +32,10 @@ Use a separate test database for different configurations. No reset/migration en
 | Local worker | Local database access | The same `run_due` transaction as the scheduler |
 
 Use `Authorization: Bearer <token>`. Tokens must be distinct and at least 32 characters.
-Empty, short or shared tokens disable API writes with HTTP 503. Missing/wrong credentials
-return HTTP 401 when the relevant token is configured. Simulation/lease/configuration
+Both tokens must be configured, distinct and at least 32 characters before any HTTP mutation
+is enabled; otherwise mutation routes return HTTP 503. A valid operator key alone still
+authorizes `GET /tasks/runs`, which remains a read-only route. Missing/wrong credentials
+return HTTP 401 when the relevant role token is configured. Simulation/lease/configuration
 conflicts return HTTP 409. These service credentials do not implement separate-user ownership.
 
 `GET /wild`, `/state`, `/events` and `/garden` remain read-only prototype views.
@@ -45,6 +48,8 @@ or session storage. The scheduler token never belongs in the dashboard.
 
 Docker binds the API to `127.0.0.1` by default. Use authenticated TLS hosting for an external
 scheduler. Hosting, private reads and an owner mapping are not supplied by this slice.
+If the worker detects a pinned-schedule conflict, it records the failed attempt and remains
+quiescent rather than retrying; resolve the configuration and explicitly restart the worker.
 
 ## Run locally
 

@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from threading import Barrier
 
 import pytest
-from conftest import OPERATOR_HEADERS, OPERATOR_TOKEN, TASK_HEADERS
+from conftest import OPERATOR_HEADERS, OPERATOR_TOKEN, TASK_HEADERS, TASK_TOKEN
 from fastapi.testclient import TestClient
 
 from stillwild import api
@@ -147,6 +147,76 @@ def test_schedule_settings_cannot_silently_change(tmp_path):
     assert repo.list_background_runs()[0]["status"] == "failed"
 
 
+@pytest.mark.parametrize(("pinned_changes", "runtime_changes"), [
+    ({"wild_sim": False}, {"wild_sim": True}),
+    ({"wild_sim": True}, {"wild_seed": 8}),
+    ({"wild_sim": True}, {"tick_seconds": 300}),
+    ({"wild_sim": True}, {"wild_days_per_tick": 2}),
+    ({"wild_sim": True}, {"wild_sim": False}),
+])
+def test_manual_advance_rejects_a_conflicting_pinned_schedule(
+    tmp_path, monkeypatch, pinned_changes, runtime_changes,
+):
+    repo = Repository(str(tmp_path / "isolated-background.db"))
+    engine = GardenEngine(repo)
+    pinned = replace(Settings(), tick_seconds=3600, **pinned_changes)
+    run_due(repo, engine, pinned, "worker", BASELINE)
+    with repo.connection() as conn:
+        pinned_schedule = conn.execute(
+            "SELECT config_json,last_slot_end_ms FROM background_schedules",
+        ).fetchall()
+    before = table_counts(repo), repo.load_world("wild"), repo.list_background_runs(), pinned_schedule
+    monkeypatch.setattr(api, "repo", repo)
+    monkeypatch.setattr(api, "engine", engine)
+    monkeypatch.setattr(
+        api,
+        "settings",
+        replace(api.settings, **{
+            "tick_seconds": 3600,
+            "wild_sim": pinned.wild_sim,
+            "wild_seed": pinned.wild_seed,
+            "wild_days_per_tick": pinned.wild_days_per_tick,
+            "task_token": TASK_TOKEN,
+            "operator_token": OPERATOR_TOKEN,
+            **runtime_changes,
+        }),
+    )
+
+    response = TestClient(api.app).post("/wild/advance", headers=OPERATOR_HEADERS)
+
+    assert response.status_code == 409
+    assert "stored background schedule" in response.json()["detail"]
+    with repo.connection() as conn:
+        current_schedule = conn.execute(
+            "SELECT config_json,last_slot_end_ms FROM background_schedules",
+        ).fetchall()
+    assert (
+        table_counts(repo), repo.load_world("wild"), repo.list_background_runs(), current_schedule,
+    ) == before
+
+
+def test_background_run_history_index_is_created_and_recreated(tmp_path):
+    repo, _, _ = setup_garden(tmp_path)
+    index_name = "idx_background_runs_started_id"
+    with repo.connection() as conn:
+        conn.execute(f"DROP INDEX {index_name}")
+
+    Repository(repo.path)
+
+    with repo.connection() as conn:
+        indexed_columns = [
+            (row["name"], row["desc"])
+            for row in conn.execute(f"PRAGMA index_xinfo({index_name})")
+            if row["key"]
+        ]
+        plan = conn.execute(
+            "EXPLAIN QUERY PLAN SELECT * FROM background_runs "
+            "ORDER BY started_at DESC, id DESC LIMIT 50",
+        ).fetchall()
+    assert indexed_columns == [("started_at", 1), ("id", 1)]
+    assert any(index_name in row["detail"] for row in plan)
+
+
 def test_scheduled_days_can_judge_advice_in_the_same_transaction(tmp_path):
     repo, engine, config = setup_garden(tmp_path, wild_days_per_tick=7)
     run_due(repo, engine, config, "worker", BASELINE)
@@ -209,7 +279,10 @@ def test_scheduler_key_has_no_operator_authority(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("tokens", [
     {"operator_token": "", "task_token": ""},
-    {"operator_token": "short", "task_token": "short-too"},
+    {"operator_token": "", "task_token": TASK_TOKEN},
+    {"operator_token": OPERATOR_TOKEN, "task_token": ""},
+    {"operator_token": "short", "task_token": TASK_TOKEN},
+    {"operator_token": OPERATOR_TOKEN, "task_token": "short"},
     {"operator_token": OPERATOR_TOKEN, "task_token": OPERATOR_TOKEN},
 ])
 def test_unconfigured_or_shared_credentials_disable_writes(tmp_path, monkeypatch, tokens):
@@ -217,14 +290,41 @@ def test_unconfigured_or_shared_credentials_disable_writes(tmp_path, monkeypatch
     monkeypatch.setattr(api, "repo", repo)
     monkeypatch.setattr(api, "engine", engine)
     monkeypatch.setattr(api, "settings", replace(api.settings, **tokens))
-    client = TestClient(api.app, headers=OPERATOR_HEADERS)
-    assert client.post("/wild/advance").status_code == 503
-    assert client.post("/tasks/tick").status_code == 503
+    client = TestClient(api.app)
+    operator_credential = tokens["operator_token"] or OPERATOR_TOKEN
+    task_credential = tokens["task_token"] or TASK_TOKEN
+    operator_headers = {"Authorization": "Bearer " + operator_credential}
+    task_headers = {"Authorization": "Bearer " + task_credential}
+    for path in ("/events", "/experiments", "/outcomes", "/wild/advance"):
+        assert client.post(path, json={}, headers=operator_headers).status_code == 503
+    assert client.post("/tasks/tick", headers=task_headers).status_code == 503
+    if len(tokens["operator_token"]) >= 32:
+        assert client.get("/tasks/runs", headers=operator_headers).status_code == 200
     assert not any(table_counts(repo).values())
+
+
+def test_valid_distinct_tokens_allow_only_their_write_roles(tmp_path, monkeypatch):
+    repo, engine, config = setup_garden(tmp_path)
+    config = replace(config, task_token=TASK_TOKEN, operator_token=OPERATOR_TOKEN)
+    monkeypatch.setattr(api, "repo", repo)
+    monkeypatch.setattr(api, "engine", engine)
+    monkeypatch.setattr(api, "settings", config)
+    operator_client = TestClient(api.app, headers=OPERATOR_HEADERS)
+    task_client = TestClient(api.app, headers=TASK_HEADERS)
+
+    assert operator_client.post("/wild/advance").status_code == 200
+    assert task_client.post("/tasks/tick").status_code == 200
+    assert operator_client.get("/tasks/runs").status_code == 200
+    assert operator_client.post("/tasks/tick").status_code == 401
+    assert task_client.post("/wild/advance").status_code == 401
 
 
 @pytest.mark.parametrize("changes", [
     {"tick_seconds": 0}, {"tick_seconds": 86401}, {"sse_poll_seconds": 0},
+    {"sse_poll_seconds": -1}, {"sse_poll_seconds": float("nan")},
+    {"sse_poll_seconds": float("inf")}, {"sse_poll_seconds": float("-inf")},
+    {"tick_seconds": float("nan")}, {"tick_seconds": float("inf")},
+    {"tick_seconds": float("-inf")},
     {"catch_up_limit": 0}, {"catch_up_limit": 25}, {"wild_days_per_tick": 8},
 ])
 def test_invalid_schedule_configuration_is_rejected(changes):

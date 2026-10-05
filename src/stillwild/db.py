@@ -138,6 +138,9 @@ CREATE TABLE IF NOT EXISTS background_runs (
     error TEXT
 );
 
+CREATE INDEX IF NOT EXISTS idx_background_runs_started_id
+ON background_runs(started_at DESC, id DESC);
+
 CREATE TABLE IF NOT EXISTS background_ticks (
     schedule_name TEXT NOT NULL,
     slot_end_ms INTEGER NOT NULL,

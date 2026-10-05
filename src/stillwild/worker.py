@@ -18,8 +18,14 @@ def work_forever() -> None:
     while True:
         try:
             run_due(repo, engine, settings, trigger=settings.worker_id)
-        except ScheduleConflict:
-            raise  # Requires an explicit configuration decision, not an endless retry loop.
+        except ScheduleConflict as exc:
+            log.critical(
+                "Background worker is quiescent until an operator resolves the pinned "
+                "schedule conflict and restarts it: %s",
+                exc,
+            )
+            while True:
+                time.sleep(settings.tick_seconds)
         except Exception:
             log.exception("Background work failed; uncommitted slots will be retried.")
         time.sleep(settings.tick_seconds)

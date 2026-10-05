@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import dataclass
 
@@ -27,10 +28,11 @@ class Settings:
     operator_token: str = os.getenv("STILLWILD_OPERATOR_TOKEN", "").strip()
 
     def __post_init__(self) -> None:
+        """Validate the configured schedule and stream timing ranges."""
         if not 1 <= self.tick_seconds <= 86400:
             raise ValueError("STILLWILD_TICK_SECONDS must be between 1 and 86400")
-        if self.sse_poll_seconds <= 0:
-            raise ValueError("STILLWILD_SSE_POLL_SECONDS must be positive")
+        if not math.isfinite(self.sse_poll_seconds) or self.sse_poll_seconds <= 0:
+            raise ValueError("STILLWILD_SSE_POLL_SECONDS must be finite and positive")
         if not 1 <= self.catch_up_limit <= 24:
             raise ValueError("STILLWILD_CATCH_UP_LIMIT must be between 1 and 24")
         if not 1 <= self.wild_days_per_tick <= 7:

@@ -23,6 +23,12 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def require(condition: bool, message: str) -> None:
+    """Fail the smoke check explicitly, including when Python assertions are optimized away."""
+    if not condition:
+        raise RuntimeError(f"background smoke check failed: {message}")
+
+
 def state_evidence(db_path: Path) -> dict:
     with sqlite3.connect(db_path) as conn:
         encoded = conn.execute("SELECT state_json FROM worlds WHERE name='wild'").fetchone()[0]
@@ -47,6 +53,7 @@ def stop(process: subprocess.Popen) -> None:
 
 
 def verify(seconds: float = 3) -> dict:
+    """Run isolated worker/API checks and return their local evidence report."""
     with TemporaryDirectory(prefix="stillwild-process-proof-") as directory:
         root = Path(directory)
         db_path = root / "isolated.db"
@@ -65,14 +72,23 @@ def verify(seconds: float = 3) -> dict:
             )
             try:
                 time.sleep(seconds)  # Deliberately short and bounded, no API process or viewers.
-                assert worker.poll() is None, "worker exited before the observation window ended"
+                require(
+                    worker.poll() is None,
+                    "worker exited before the observation window ended",
+                )
             finally:
                 stop(worker)
         stopped_at = utc_now()
         before = state_evidence(db_path)
-        assert before["day"] >= 2 and before["day"] == len(before["ticks"])
+        require(
+            before["day"] >= 2 and before["day"] == len(before["ticks"]),
+            "simulated days do not match committed ticks",
+        )
         log = (root / "worker.log").read_text()
-        assert all(tick["run_id"] in log for tick in before["ticks"])
+        require(
+            all(tick["run_id"] in log for tick in before["ticks"]),
+            "worker log is missing a committed run",
+        )
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
@@ -93,20 +109,29 @@ def verify(seconds: float = 3) -> dict:
                                 break
                         except httpx.TransportError:
                             pass
-                        assert time.monotonic() < deadline, "API failed to start"
+                        require(time.monotonic() < deadline, "API failed to start")
                         time.sleep(0.1)
                     first_return_at = utc_now()
                     response = client.get("/wild")
-                    assert response.status_code == 200
+                    require(response.status_code == 200, "Wild snapshot request failed")
                     returned = response.json()
-                    assert returned["day"] == before["day"]
-                    assert returned["revision"] == before["revision"]
+                    require(returned["day"] == before["day"], "Wild day changed before return")
+                    require(
+                        returned["revision"] == before["revision"],
+                        "Wild revision changed before return",
+                    )
                     anonymous = client.post("/tasks/tick").status_code
-                    assert anonymous == 401
-                    assert state_evidence(db_path) == before
+                    require(anonymous == 401, "anonymous scheduler write was not rejected")
+                    require(
+                        state_evidence(db_path) == before,
+                        "read or rejected write changed saved state",
+                    )
             finally:
                 stop(server)
-        assert all(tick["committed_at"] < first_return_at for tick in before["ticks"])
+        require(
+            all(tick["committed_at"] < first_return_at for tick in before["ticks"]),
+            "a committed tick was not saved before first return",
+        )
         return {
             "check": "isolated-local-process-smoke-v1", "status": "passed",
             "scope": "Short local simulated progression before first return; not 24-hour or hosted proof",

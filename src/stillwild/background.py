@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import sqlite3
 from datetime import UTC, datetime
 
 from .config import Settings
@@ -17,6 +18,36 @@ SCHEDULE = "background-v1"
 
 class ScheduleConflict(ValueError):
     """The persisted schedule cannot silently change interval or simulation rules."""
+
+
+def _schedule_config(engine: GardenEngine, config: Settings) -> str:
+    """Serialize every setting that pins background progression."""
+    return json.dumps({
+        "tick_seconds": config.tick_seconds,
+        "wild_sim": config.wild_sim,
+        "wild_seed": config.wild_seed,
+        "wild_days_per_tick": config.wild_days_per_tick,
+        "automation_authority": engine.automation_authority,
+        "rules_version": 1,
+    }, sort_keys=True, separators=(",", ":"))
+
+
+def ensure_schedule_compatible(
+    repo: Repository,
+    engine: GardenEngine,
+    config: Settings,
+    connection: sqlite3.Connection | None = None,
+) -> None:
+    """Reject a runtime configuration that differs from the persisted schedule."""
+    with repo.connection(connection) as conn:
+        schedule = conn.execute(
+            "SELECT config_json FROM background_schedules WHERE name=?", (SCHEDULE,),
+        ).fetchone()
+    if schedule is not None and schedule["config_json"] != _schedule_config(engine, config):
+        raise ScheduleConflict(
+            "the stored background schedule has different settings; use a separate "
+            "test database instead of silently changing its interval or rules"
+        )
 
 
 def run_due(
@@ -34,14 +65,7 @@ def run_due(
         raise ValueError("the scheduler clock must be timezone-aware")
     interval_ms = config.tick_seconds * 1000
     through_ms = int(now.timestamp()) // config.tick_seconds * interval_ms
-    config_json = json.dumps({
-        "tick_seconds": config.tick_seconds,
-        "wild_sim": config.wild_sim,
-        "wild_seed": config.wild_seed,
-        "wild_days_per_tick": config.wild_days_per_tick,
-        "automation_authority": engine.automation_authority,
-        "rules_version": 1,
-    }, sort_keys=True, separators=(",", ":"))
+    config_json = _schedule_config(engine, config)
     run_id = repo.start_background_run(SCHEDULE, through_ms, trigger)
     try:
         with repo.transaction() as conn:
@@ -50,14 +74,10 @@ def run_due(
                 (name,config_json,last_slot_end_ms) VALUES (?,?,?)""",
                 (SCHEDULE, config_json, through_ms - interval_ms),
             )
+            ensure_schedule_compatible(repo, engine, config, connection=conn)
             schedule = conn.execute(
                 "SELECT * FROM background_schedules WHERE name=?", (SCHEDULE,),
             ).fetchone()
-            if schedule["config_json"] != config_json:
-                raise ScheduleConflict(
-                    "the stored background schedule has different settings; use a separate "
-                    "test database instead of silently changing its interval or rules"
-                )
             last_ms = schedule["last_slot_end_ms"]
             slots = []
             for _ in range(config.catch_up_limit):
