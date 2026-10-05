@@ -1,23 +1,30 @@
 # Current background-garden state
 
 Updated: 5 October 2026, Australia/Darwin.
+Authority: approved canonical App Brief v0.2.
+Active stage: provenance boundary deployed; one live mutation specimen passed; hourly receipt relay resumed.
+Scope: owner-private Darwin proof garden. Original 24-hour absence result remains INCONCLUSIVE.
 
-Authority: approved canonical App Brief v0.2, 4 October 2026.
-Active stage: collect and review the isolated 24-hour absence proof.
-Scope: one owner-private Darwin test garden; public origin unchanged.
+## Runtime
 
-Source: managed Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, imported into GitHub under background-proof/. The GitHub copy does not deploy the Site.
+Managed Site version 4 is deployed successfully from source commit `9f3a40b74d662d6578fa756c430facc62afa3cd0`. GitHub stores the corresponding generated provenance migration and metadata. GitHub commits alone do not deploy the Site.
 
-Implemented: version 2 saved state; finite-state keepers; completed UTC modelled-weather inputs and validated scheduler relay; atomic tick/event/state commits; six-interval bounded recovery; labelled zero-rain fallback; read-only snapshots/evidence; immutable explicit proof checkpoint; visible-page refresh. SSE is deferred.
+Implemented: saved version 2 world; finite-state keepers; UTC weather accounting; pinned inputs; atomic tick/event/state commits; bounded recovery; labelled fallback; read-only snapshots and evidence; validated scheduler correlation fields; unique execution IDs; direct run ID on new consequence events. Historical scheduler identity remains unknown. SSE stays deferred.
 
-Observed: native deployment status is succeeded. Site metadata shows one allowed owner, no visitor grants and enabled hourly/review tasks. Read-only native D1 data shows revision 22, 22 unique ticks and 31 consequence events. All 22 tick run IDs correlate with successful Worker logs. The saved plant, habitat and water totals reconcile with recorded consequences. The last observed world update was 2026-10-05T05:05:14.842Z.
+## Executed specimen
 
-Local verification on this import: TypeScript, the source/SQLite background verifier and production build passed. These results do not establish private-host access enforcement or the full absence interval.
+Fresh independently recorded GitHub run 37312848020, attempt 2, emitted execution ID `github-actions:run:37312848020:attempt:2`.
+Native database readback confirms exactly one matching garden run `db565618-3d75-4c3e-baab-352a6ab4b85c`, one committed tick 497557, revision 30 and Dew's roots-watered event. Weather collection returned HTTP 200 and the garden reports relayed-modelled.
+This is a bootstrap workflow rerun specimen, not an observed hourly cron execution. Its PASS is limited to independent receipt correlation and one persistent consequence.
 
-Proof baseline: 2026-10-04T07:27:51.364Z, revision 0. Earliest check: 2026-10-05T07:27:51.364Z (16:57:51 ACST). Existing review task: 17:12:51 ACST. Full absence, all-view closure and first read-only return remain pending. Returned Worker logs showed no view events after the checkpoint, but bounded logs alone do not prove every view was closed.
+TypeScript, transactional SQLite background verification, local provenance verification and production build passed. [Full specimen and limitations](../../docs/audits/2026-10-05/SCHEDULER_PROVENANCE_SPECIMEN.md).
 
-Not established: separate personal ownership, cloud/mobile synchronisation, adaptive LLM behaviour or Android device acceptance. No claim is promoted by elapsed time alone.
+## Preservation and operations
 
-Next: let the existing review run, inspect saved progress and independent provenance before a viewing return, and record a bounded acceptance result. Do not reinitialise the checkpoint, mutate hosted state, change schedules or redeploy during this window.
+Garden identity and planting time are preserved. Deployment left revision 29 unchanged; the specimen advanced revision 29 to 30. Both immutable baseline rows match the pre-deployment records. The absence-check-001 checkpoint remains started_at 1791098871364 and revision 0.
 
-[Repository audit and native evidence](../../docs/audits/2026-10-05/REPORT.md). These records describe the inspected observation window, not future operation.
+The existing hourly Advance Stillwild garden task is enabled, retaining :35 Australia/Darwin timing. It verifies fresh successful independent GitHub attempt records, rejects consumed or ineligible receipts, and fails closed when provenance is unavailable. The expired original receipt was not consumed.
+
+The original 4–5 October absence review remains INCONCLUSIVE. Full-window view closure and historic execution receipts are still unestablished. No new absence checkpoint was started.
+
+Next separate gate: implement view-closure control before authorising a second 24-hour test. Separate-user ownership, adaptive LLM behaviour and Android device acceptance remain outside this completed slice.
