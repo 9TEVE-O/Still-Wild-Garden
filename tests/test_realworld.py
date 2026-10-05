@@ -71,6 +71,7 @@ def test_real_registry_and_sensor_reading_feed_event_ledger(tmp_path):
     )
 
     assert organism["scientific_name"] == "Citrus limon"
+    assert service.store.list_organisms("darwin-test")[0]["id"] == "lemon-1"
     assert sensor["zone_id"] == "north-bed"
     assert result["decision"]["decision"] == "PROPOSE"
     events = repo.list_events()
@@ -79,6 +80,7 @@ def test_real_registry_and_sensor_reading_feed_event_ledger(tmp_path):
     assert events[0]["payload"]["garden_id"] == "darwin-test"
     assert events[0]["payload"]["sensor_id"] == "soil-1"
     assert events[0]["payload"]["percent"] == 14
+    assert repo.claim_world("wild", {"revision": 0}) is False
 
 
 def test_weather_collection_records_provenance_and_is_idempotent(tmp_path):
