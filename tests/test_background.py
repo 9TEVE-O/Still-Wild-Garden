@@ -386,5 +386,5 @@ def test_api_collects_weather_only_after_committed_hourly_slots(monkeypatch):
     assert weather.calls[0][0] == "darwin-test"
     assert weather.calls[0][1] == datetime(2026, 10, 5, 6, tzinfo=UTC)
     assert result["real_weather"] == [
-        {"slot_end_ms": hour_end_ms, "skipped": "provider unavailable"}
+        {"slot_end_ms": hour_end_ms, "skipped": "weather collection unavailable"}
     ]

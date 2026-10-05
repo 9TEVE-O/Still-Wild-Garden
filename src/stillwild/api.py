@@ -203,7 +203,7 @@ def _collect_due_weather(receipt: dict) -> None:
             )
         except RealWorldError as exc:
             log.warning("Scheduled weather collection failed: %s", exc)
-            result = {"skipped": str(exc)}
+            result = {"skipped": "weather collection unavailable"}
         attempts.append({"slot_end_ms": slot_end_ms, **result})
     if attempts:
         receipt["real_weather"] = attempts
