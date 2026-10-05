@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import os
@@ -22,6 +21,9 @@ class Settings:
     wild_sim: bool = _bool("STILLWILD_WILD_SIM", False)
     wild_seed: int = int(os.getenv("STILLWILD_WILD_SEED", "7"))
     wild_days_per_tick: int = int(os.getenv("STILLWILD_WILD_DAYS_PER_TICK", "1"))
+    weather_collect: bool = _bool("STILLWILD_WEATHER_COLLECT", False)
+    real_garden_id: str | None = os.getenv("STILLWILD_REAL_GARDEN_ID") or None
+    weather_timeout_seconds: float = float(os.getenv("STILLWILD_WEATHER_TIMEOUT_SECONDS", "10"))
 
 
 settings = Settings()
