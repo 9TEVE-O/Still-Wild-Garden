@@ -1,4 +1,3 @@
-
 name: test
 
 on:
@@ -18,8 +17,39 @@ jobs:
       - run: ruff check src tests scripts/verify-background.py
       - run: pytest -q
       - run: python scripts/verify-background.py --output background-smoke.json
+      - run: python -O scripts/verify-background.py --output background-smoke-optimized.json
       - uses: actions/upload-artifact@v4
         with:
           name: isolated-background-smoke
-          path: background-smoke.json
+          path: |
+            background-smoke.json
+            background-smoke-optimized.json
           if-no-files-found: error
+
+  web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            verifier: verify-persistence.cjs
+          - app: background-proof
+            verifier: verify-background.cjs
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: node scripts/${{ matrix.verifier }}
+      - if: matrix.app == 'background-proof'
+        run: node scripts/verify-provenance.cjs
+      - run: pnpm build

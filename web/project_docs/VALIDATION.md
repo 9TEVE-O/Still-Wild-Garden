@@ -44,3 +44,11 @@ Fresh TypeScript and production build checks passed. The existing persistence, G
 Sites metadata now reports the Site as public with one shared origin and no linked schedules, in contrast to the original private-delivery descriptions above. This GitHub update changes no hosting audience or production data. There is no executed pixel-garden background updater, connected weather integration, separate-user isolation test or 24-hour absence proof. The preserved Python backend has a separate worker/SSE prototype; its presence does not establish this milestone.
 
 The preserved Python backend at commit `d123b97cbf86a1a0d989ccce8a5d6be561f11734` was checked locally with its unchanged runtime/tests: 21 pytest tests and Ruff passed. Its original runtime, Docker/CI configuration and architecture remain unchanged in GitHub; the root README and ignore rules are merged, and the original backend README is archived. This establishes local backend checks, not connection to the pixel garden or a deployed unattended proof.
+
+## Repository evidence reconciliation — 2026-10-05
+
+The previous no-updater statement describes the original web app at import. A separate private test app was subsequently implemented and published; its recovered version 3 source is now in background-proof/. Neither this legacy runtime nor the Python backend is connected to it.
+
+Fresh local TypeScript and persistence checks pass for the unchanged legacy code. The current Python source at baseline commit edd4fec25c6835fe305a3896d3391fa039ea48b5, including the Wild simulation, passes 56 tests and Ruff. Background-proof TypeScript, the transactional SQLite verifier and production build pass. Node version is 24.19.0; pnpm is 11.25.0. No native compilation or phone checks were repeated.
+
+Native D1 and Worker evidence supports 22 unique committed test-garden ticks and 31 saved consequence events. These observations establish progress, not the completed absence proof. The 24-hour gate, separate personal ownership and Android device acceptance remain open. Root docs/audits/2026-10-05/ contains revision binding, execution evidence and limitations. New CI covers TypeScript, the applicable SQLite verifier and production build for each web app; hosted CI execution must be checked separately.

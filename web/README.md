@@ -20,7 +20,7 @@ The current published Site is public. It has no separate visitor ownership model
 
 ## Background development
 
-The confirmed requirement is **scheduled execution**: a server job must save garden outcomes before anyone returns. The implementation is still pending.
+The confirmed requirement is **scheduled execution**: a server job must save garden outcomes before anyone returns. The isolated implementation now lives in [background-proof/](../background-proof/README.md). This public legacy app remains unchanged; the separate test garden's 24-hour absence proof is pending.
 
 The proposed first milestone is one isolated Darwin test garden, hourly weather intervals keyed in UTC, saved keeper consequences, and a read-only snapshot with visible-page refresh. Its acceptance includes 24 hours with every view closed. SSE and WebSockets are deferred.
 

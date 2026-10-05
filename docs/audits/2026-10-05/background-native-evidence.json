@@ -1,0 +1,2306 @@
+{
+  "recorded_at_utc": "2026-10-05T06:16:08.160Z",
+  "site": {
+    "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+    "version": 3,
+    "status": "active",
+    "role": "owner",
+    "url": "https://stillwild-background-proof.subzteveo.chatgpt.site",
+    "access_mode": "custom",
+    "automations": [
+      {
+        "id": "Automation_6066c44f4ba08191a8f037d82b1d20de",
+        "title": "Review Stillwild absence test",
+        "schedule": "BEGIN:VEVENT\nDTSTART;TZID=Australia/Darwin:20261005T171251\nEND:VEVENT",
+        "is_enabled": true,
+        "default_timezone": "Australia/Darwin",
+        "last_run_time": null,
+        "updated_at": "2026-10-04T07:29:41.573401+00:00"
+      },
+      {
+        "id": "Automation_b026bc1a50588191a24a3318127624c5",
+        "title": "Advance Stillwild garden",
+        "schedule": "BEGIN:VEVENT\nDTSTART;TZID=Australia/Darwin:20261004T173500\nRRULE:FREQ=HOURLY\nEND:VEVENT",
+        "is_enabled": true,
+        "default_timezone": "Australia/Darwin",
+        "last_run_time": "2026-10-05T05:06:12.860437+00:00",
+        "updated_at": "2026-10-05T05:06:34.600613+00:00"
+      }
+    ],
+    "access_summary": {
+      "mode": "custom",
+      "allowed_users": 1,
+      "allowed_groups": 0,
+      "external_visitors": 0,
+      "allowed_roles": [
+        "owner"
+      ]
+    }
+  },
+  "published_source": {
+    "commit_sha": "89babb648b5519f6f8545d265171b351d9c47154",
+    "version_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2~appgver_134b3ee6c7b48191889e7b3a94e6214d",
+    "deployment": {
+      "id": "appgdep_6ac1ff86a104819186e5afcca2d73b08",
+      "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+      "title": "Stillwild · Background garden proof",
+      "version_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2~appgver_134b3ee6c7b48191889e7b3a94e6214d",
+      "type": "publish",
+      "status": "succeeded",
+      "url": "https://stillwild-background-proof.subzteveo.chatgpt.site",
+      "has_mcp": false,
+      "screenshot_asset_pointer": "sediment://file_00000000056481f8851af6cfcb1cca31",
+      "provider_deployment_id": "site---6ac1f8bb574c8191ad592b7d1a8587d2",
+      "failure_message": null,
+      "env_set_revision": 0,
+      "updated_at": "2026-10-04T07:26:57.263726+00:00"
+    }
+  },
+  "database": {
+    "applied_ticks": {
+      "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+      "binding_name": "DB",
+      "table_name": "applied_ticks",
+      "columns": [
+        "garden_id",
+        "rules_version",
+        "tick_id",
+        "input_id",
+        "run_id",
+        "revision",
+        "committed_at"
+      ],
+      "rows": [
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497528,
+          "input_id": "meteo:1791100800000:1791101347141:54316757-e367-41be-97b4-8255f2ebf2c1",
+          "run_id": "96c23f91-a2c8-42d0-b53f-c057058bd96a",
+          "revision": 1,
+          "committed_at": 1791101348219
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497529,
+          "input_id": "meteo:1791104400000:1791105037442:c562bfec-c08c-4ebf-b29b-44163aa9d1aa",
+          "run_id": "e3c51d54-5968-481c-b372-240c87b21dbf",
+          "revision": 2,
+          "committed_at": 1791105038237
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497530,
+          "input_id": "meteo:1791108000000:1791108658695:c9d13f12-6cd5-4c1b-a074-6aa36fb8af4e",
+          "run_id": "7810d490-81fc-4fb3-baf5-df8df2bd6fb3",
+          "revision": 3,
+          "committed_at": 1791108659668
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497531,
+          "input_id": "meteo:1791111600000:1791111903187:f7687226-2910-47f5-8f10-f6a3129b9840",
+          "run_id": "44997f55-1617-443b-940d-d435168b8d27",
+          "revision": 4,
+          "committed_at": 1791111904071
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497532,
+          "input_id": "meteo:1791115200000:1791115669868:2026173a-fc0b-49a2-988b-59f4be29ebc7",
+          "run_id": "9cac9797-01de-44bf-a8ee-f2e0b12f6e6a",
+          "revision": 5,
+          "committed_at": 1791115670943
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497533,
+          "input_id": "meteo:1791118800000:1791119142173:8d5da789-fdd7-4079-9f6b-578d574fcf75",
+          "run_id": "7438e03c-8c39-42f1-b60b-07b4d2f302d6",
+          "revision": 6,
+          "committed_at": 1791119143251
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497534,
+          "input_id": "meteo:1791122400000:1791123231068:299f4508-2395-4a20-bbc8-5e56a791a72c",
+          "run_id": "4219ddd1-4982-472e-ad68-b0e12fb11007",
+          "revision": 7,
+          "committed_at": 1791123231853
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497535,
+          "input_id": "meteo:1791126000000:1791126330740:af0de7cd-54b2-4fa2-b424-bf8dc150c86a",
+          "run_id": "9cd65603-71b7-4dc5-ba71-f1fb68e0f1f9",
+          "revision": 8,
+          "committed_at": 1791126331538
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497536,
+          "input_id": "meteo:1791129600000:1791130254679:e9cf8c84-7a66-480a-9493-8433585e6dbf",
+          "run_id": "102b95e5-6d48-4c32-91ec-1e70535fc941",
+          "revision": 9,
+          "committed_at": 1791130255627
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497537,
+          "input_id": "meteo:1791133200000:1791133704607:5cc0927d-81c3-4b88-87ec-19dc11a833b0",
+          "run_id": "e231d7f9-2b3b-4576-ae50-0366d05199c3",
+          "revision": 10,
+          "committed_at": 1791133705600
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497538,
+          "input_id": "meteo:1791136800000:1791137130733:43cd42b8-86db-42ee-b882-a4da162b0686",
+          "run_id": "40b9fa35-d9e6-44ad-bd17-563496a452cf",
+          "revision": 11,
+          "committed_at": 1791137131804
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497539,
+          "input_id": "meteo:1791140400000:1791140920120:bea9915c-c4a0-43d1-be44-e39e0651fb52",
+          "run_id": "8061a8b9-73bf-4da9-ab75-4f0a4bae191c",
+          "revision": 12,
+          "committed_at": 1791140921195
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497540,
+          "input_id": "meteo:1791144000000:1791144404937:ad1acaa4-9c8e-4532-bf98-d21dc460b14d",
+          "run_id": "8a759a0b-793d-42df-b9c5-f1fa1f60222f",
+          "revision": 13,
+          "committed_at": 1791144405905
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497541,
+          "input_id": "meteo:1791147600000:1791147860363:9804ca09-3f60-4981-815d-212080d5dc6f",
+          "run_id": "07ba401e-618c-48a7-96c8-d114ca9116a6",
+          "revision": 14,
+          "committed_at": 1791147861339
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497542,
+          "input_id": "meteo:1791151200000:1791151757512:4ef67413-ca66-4129-aad1-b02a3d4f3002",
+          "run_id": "1e89fd9a-ec6e-430e-a8b2-018870dd1564",
+          "revision": 15,
+          "committed_at": 1791151758492
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497543,
+          "input_id": "meteo:1791154800000:1791155616842:f59a5c7a-f043-491a-9ade-b2d0618077fd",
+          "run_id": "dd0c502e-c1ec-440f-b190-697919cd8ca9",
+          "revision": 16,
+          "committed_at": 1791155617931
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497544,
+          "input_id": "meteo:1791158400000:1791158825284:ee1252f0-6731-4774-8fb9-a103b52e1266",
+          "run_id": "80af6314-3a9e-490a-9e1b-3c02e22b839b",
+          "revision": 17,
+          "committed_at": 1791158826375
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497545,
+          "input_id": "meteo:1791162000000:1791162194492:46a4816d-cc5f-4280-a912-b78cfe6af606",
+          "run_id": "f0091002-5da7-4b42-a11c-f663c698dac0",
+          "revision": 18,
+          "committed_at": 1791162195318
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497546,
+          "input_id": "meteo:1791165600000:1791166118582:7db86657-a1f3-42e9-bc74-5519b04fa701",
+          "run_id": "c69460f0-c929-4da1-a49a-173cd53553fe",
+          "revision": 19,
+          "committed_at": 1791166119489
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497547,
+          "input_id": "meteo:1791169200000:1791169870135:53d77fb6-343d-436b-b5de-77c935d09b4d",
+          "run_id": "ed2771a8-1c07-4a12-9ea9-9f5ed547106e",
+          "revision": 20,
+          "committed_at": 1791169871231
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497548,
+          "input_id": "meteo:1791172800000:1791173346752:8988d6b3-44f1-43a2-bc19-48883691610f",
+          "run_id": "02b37089-98bf-455e-abc1-b88acc6237d9",
+          "revision": 21,
+          "committed_at": 1791173347827
+        },
+        {
+          "garden_id": "darwin-proof-001",
+          "rules_version": 2,
+          "tick_id": 497549,
+          "input_id": "meteo:1791176400000:1791176713992:46a34dd3-2149-4127-a646-7c860e833059",
+          "run_id": "b414a73b-c6fb-4997-8ae7-d4a5a8d4ef3b",
+          "revision": 22,
+          "committed_at": 1791176714842
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "has_more": false,
+      "model_projection": {
+        "truncated": false,
+        "truncated_values": 0,
+        "omitted_columns": 0,
+        "omitted_rows": 0,
+        "next_offset": null
+      }
+    },
+    "background_runs": {
+      "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+      "binding_name": "DB",
+      "table_name": "background_runs",
+      "columns": [
+        "id",
+        "trigger",
+        "slot",
+        "started_at",
+        "finished_at",
+        "status",
+        "committed_ticks",
+        "weather_status",
+        "error"
+      ],
+      "rows": [
+        {
+          "id": "02b37089-98bf-455e-abc1-b88acc6237d9",
+          "trigger": "schedule",
+          "slot": 497548,
+          "started_at": 1791173346752,
+          "finished_at": 1791173348232,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "07ba401e-618c-48a7-96c8-d114ca9116a6",
+          "trigger": "schedule",
+          "slot": 497541,
+          "started_at": 1791147860363,
+          "finished_at": 1791147861748,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "102b95e5-6d48-4c32-91ec-1e70535fc941",
+          "trigger": "schedule",
+          "slot": 497536,
+          "started_at": 1791130254679,
+          "finished_at": 1791130255981,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "1e89fd9a-ec6e-430e-a8b2-018870dd1564",
+          "trigger": "schedule",
+          "slot": 497542,
+          "started_at": 1791151757512,
+          "finished_at": 1791151758857,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "24eb1dd2-bb74-47d8-b3e9-998b879f7a89",
+          "trigger": "schedule",
+          "slot": 497528,
+          "started_at": 1791101667883,
+          "finished_at": 1791101668948,
+          "status": "succeeded",
+          "committed_ticks": 0,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "3ff9a1c5-fa92-4a11-89d8-61e68b593613",
+          "trigger": "manual",
+          "slot": 497527,
+          "started_at": 1791098137995,
+          "finished_at": 1791098139105,
+          "status": "succeeded",
+          "committed_ticks": 0,
+          "weather_status": "unavailable",
+          "error": null
+        },
+        {
+          "id": "40b9fa35-d9e6-44ad-bd17-563496a452cf",
+          "trigger": "schedule",
+          "slot": 497538,
+          "started_at": 1791137130733,
+          "finished_at": 1791137132208,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "4219ddd1-4982-472e-ad68-b0e12fb11007",
+          "trigger": "schedule",
+          "slot": 497534,
+          "started_at": 1791123231068,
+          "finished_at": 1791123232176,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "44997f55-1617-443b-940d-d435168b8d27",
+          "trigger": "schedule",
+          "slot": 497531,
+          "started_at": 1791111903187,
+          "finished_at": 1791111904432,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "59535059-6f73-4246-b280-355a987cc6e2",
+          "trigger": "manual",
+          "slot": 497527,
+          "started_at": 1791098667753,
+          "finished_at": 1791098668650,
+          "status": "succeeded",
+          "committed_ticks": 0,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "7438e03c-8c39-42f1-b60b-07b4d2f302d6",
+          "trigger": "schedule",
+          "slot": 497533,
+          "started_at": 1791119142173,
+          "finished_at": 1791119143655,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "7810d490-81fc-4fb3-baf5-df8df2bd6fb3",
+          "trigger": "schedule",
+          "slot": 497530,
+          "started_at": 1791108658695,
+          "finished_at": 1791108660034,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "8061a8b9-73bf-4da9-ab75-4f0a4bae191c",
+          "trigger": "schedule",
+          "slot": 497539,
+          "started_at": 1791140920120,
+          "finished_at": 1791140921600,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "80af6314-3a9e-490a-9e1b-3c02e22b839b",
+          "trigger": "schedule",
+          "slot": 497544,
+          "started_at": 1791158825284,
+          "finished_at": 1791158826789,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "8a759a0b-793d-42df-b9c5-f1fa1f60222f",
+          "trigger": "schedule",
+          "slot": 497540,
+          "started_at": 1791144404937,
+          "finished_at": 1791144406272,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "96c23f91-a2c8-42d0-b53f-c057058bd96a",
+          "trigger": "schedule",
+          "slot": 497528,
+          "started_at": 1791101347141,
+          "finished_at": 1791101348617,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "9cac9797-01de-44bf-a8ee-f2e0b12f6e6a",
+          "trigger": "schedule",
+          "slot": 497532,
+          "started_at": 1791115669868,
+          "finished_at": 1791115671344,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "9cd65603-71b7-4dc5-ba71-f1fb68e0f1f9",
+          "trigger": "schedule",
+          "slot": 497535,
+          "started_at": 1791126330740,
+          "finished_at": 1791126331833,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "b414a73b-c6fb-4997-8ae7-d4a5a8d4ef3b",
+          "trigger": "schedule",
+          "slot": 497549,
+          "started_at": 1791176713992,
+          "finished_at": 1791176715156,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "c69460f0-c929-4da1-a49a-173cd53553fe",
+          "trigger": "schedule",
+          "slot": 497546,
+          "started_at": 1791166118582,
+          "finished_at": 1791166119861,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "dd0c502e-c1ec-440f-b190-697919cd8ca9",
+          "trigger": "schedule",
+          "slot": 497543,
+          "started_at": 1791155616842,
+          "finished_at": 1791155618340,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "e231d7f9-2b3b-4576-ae50-0366d05199c3",
+          "trigger": "schedule",
+          "slot": 497537,
+          "started_at": 1791133704607,
+          "finished_at": 1791133706008,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "e3c51d54-5968-481c-b372-240c87b21dbf",
+          "trigger": "schedule",
+          "slot": 497529,
+          "started_at": 1791105037442,
+          "finished_at": 1791105038530,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "ed2771a8-1c07-4a12-9ea9-9f5ed547106e",
+          "trigger": "schedule",
+          "slot": 497547,
+          "started_at": 1791169870135,
+          "finished_at": 1791169871638,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        },
+        {
+          "id": "f0091002-5da7-4b42-a11c-f663c698dac0",
+          "trigger": "schedule",
+          "slot": 497545,
+          "started_at": 1791162194492,
+          "finished_at": 1791162195616,
+          "status": "succeeded",
+          "committed_ticks": 1,
+          "weather_status": "relayed-modelled",
+          "error": null
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "has_more": false,
+      "model_projection": {
+        "truncated": false,
+        "truncated_values": 0,
+        "omitted_columns": 0,
+        "omitted_rows": 0,
+        "next_offset": null
+      }
+    },
+    "garden_events": {
+      "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+      "binding_name": "DB",
+      "table_name": "garden_events",
+      "columns": [
+        "id",
+        "garden_id",
+        "tick_id",
+        "rules_version",
+        "revision",
+        "type",
+        "keeper",
+        "payload",
+        "committed_at"
+      ],
+      "rows": [
+        {
+          "id": "darwin-proof-001:2:497528:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497528,
+          "rules_version": 2,
+          "revision": 1,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791101348219
+        },
+        {
+          "id": "darwin-proof-001:2:497529:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497529,
+          "rules_version": 2,
+          "revision": 2,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791105038237
+        },
+        {
+          "id": "darwin-proof-001:2:497529:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497529,
+          "rules_version": 2,
+          "revision": 2,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791105038237
+        },
+        {
+          "id": "darwin-proof-001:2:497530:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497530,
+          "rules_version": 2,
+          "revision": 3,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":9}}",
+          "committed_at": 1791108659668
+        },
+        {
+          "id": "darwin-proof-001:2:497531:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497531,
+          "rules_version": 2,
+          "revision": 4,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791111904071
+        },
+        {
+          "id": "darwin-proof-001:2:497532:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497532,
+          "rules_version": 2,
+          "revision": 5,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791115670943
+        },
+        {
+          "id": "darwin-proof-001:2:497532:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497532,
+          "rules_version": 2,
+          "revision": 5,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791115670943
+        },
+        {
+          "id": "darwin-proof-001:2:497533:rain-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497533,
+          "rules_version": 2,
+          "revision": 6,
+          "type": "rain-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"rain-collected\",\"keeper\":\"Dew\",\"text\":\"Rain found its way into the water store.\",\"change\":{\"water\":1.5}}",
+          "committed_at": 1791119143251
+        },
+        {
+          "id": "darwin-proof-001:2:497533:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497533,
+          "rules_version": 2,
+          "revision": 6,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":9}}",
+          "committed_at": 1791119143251
+        },
+        {
+          "id": "darwin-proof-001:2:497534:rain-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497534,
+          "rules_version": 2,
+          "revision": 7,
+          "type": "rain-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"rain-collected\",\"keeper\":\"Dew\",\"text\":\"Rain found its way into the water store.\",\"change\":{\"water\":0.6000000000000014}}",
+          "committed_at": 1791123231853
+        },
+        {
+          "id": "darwin-proof-001:2:497534:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497534,
+          "rules_version": 2,
+          "revision": 7,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791123231853
+        },
+        {
+          "id": "darwin-proof-001:2:497535:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497535,
+          "rules_version": 2,
+          "revision": 8,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791126331538
+        },
+        {
+          "id": "darwin-proof-001:2:497535:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497535,
+          "rules_version": 2,
+          "revision": 8,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791126331538
+        },
+        {
+          "id": "darwin-proof-001:2:497536:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497536,
+          "rules_version": 2,
+          "revision": 9,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":9}}",
+          "committed_at": 1791130255627
+        },
+        {
+          "id": "darwin-proof-001:2:497537:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497537,
+          "rules_version": 2,
+          "revision": 10,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791133705600
+        },
+        {
+          "id": "darwin-proof-001:2:497538:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497538,
+          "rules_version": 2,
+          "revision": 11,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791137131804
+        },
+        {
+          "id": "darwin-proof-001:2:497538:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497538,
+          "rules_version": 2,
+          "revision": 11,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791137131804
+        },
+        {
+          "id": "darwin-proof-001:2:497539:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497539,
+          "rules_version": 2,
+          "revision": 12,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":9}}",
+          "committed_at": 1791140921195
+        },
+        {
+          "id": "darwin-proof-001:2:497540:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497540,
+          "rules_version": 2,
+          "revision": 13,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791144405905
+        },
+        {
+          "id": "darwin-proof-001:2:497541:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497541,
+          "rules_version": 2,
+          "revision": 14,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791147861339
+        },
+        {
+          "id": "darwin-proof-001:2:497541:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497541,
+          "rules_version": 2,
+          "revision": 14,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791147861339
+        },
+        {
+          "id": "darwin-proof-001:2:497542:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497542,
+          "rules_version": 2,
+          "revision": 15,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":9}}",
+          "committed_at": 1791151758492
+        },
+        {
+          "id": "darwin-proof-001:2:497543:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497543,
+          "rules_version": 2,
+          "revision": 16,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791155617931
+        },
+        {
+          "id": "darwin-proof-001:2:497544:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497544,
+          "rules_version": 2,
+          "revision": 17,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791158826375
+        },
+        {
+          "id": "darwin-proof-001:2:497544:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497544,
+          "rules_version": 2,
+          "revision": 17,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791158826375
+        },
+        {
+          "id": "darwin-proof-001:2:497545:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497545,
+          "rules_version": 2,
+          "revision": 18,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":9}}",
+          "committed_at": 1791162195318
+        },
+        {
+          "id": "darwin-proof-001:2:497546:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497546,
+          "rules_version": 2,
+          "revision": 19,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791166119489
+        },
+        {
+          "id": "darwin-proof-001:2:497547:habitat-made",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497547,
+          "rules_version": 2,
+          "revision": 20,
+          "type": "habitat-made",
+          "keeper": "Moss",
+          "payload": "{\"type\":\"habitat-made\",\"keeper\":\"Moss\",\"text\":\"Moss made a quiet place for another seed.\",\"change\":{\"habitat\":1}}",
+          "committed_at": 1791169871231
+        },
+        {
+          "id": "darwin-proof-001:2:497547:seed-planted",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497547,
+          "rules_version": 2,
+          "revision": 20,
+          "type": "seed-planted",
+          "keeper": "Pip",
+          "payload": "{\"type\":\"seed-planted\",\"keeper\":\"Pip\",\"text\":\"Pip planted a new seed.\",\"change\":{\"plants\":1}}",
+          "committed_at": 1791169871231
+        },
+        {
+          "id": "darwin-proof-001:2:497548:roots-watered",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497548,
+          "rules_version": 2,
+          "revision": 21,
+          "type": "roots-watered",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"roots-watered\",\"keeper\":\"Dew\",\"text\":\"Dew brought water to the roots.\",\"change\":{\"water\":-3,\"soilMoisture\":7.75}}",
+          "committed_at": 1791173347827
+        },
+        {
+          "id": "darwin-proof-001:2:497549:spring-water-collected",
+          "garden_id": "darwin-proof-001",
+          "tick_id": 497549,
+          "rules_version": 2,
+          "revision": 22,
+          "type": "spring-water-collected",
+          "keeper": "Dew",
+          "payload": "{\"type\":\"spring-water-collected\",\"keeper\":\"Dew\",\"text\":\"Dew collected a little water from the spring.\",\"change\":{\"water\":4}}",
+          "committed_at": 1791176714842
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "has_more": false,
+      "model_projection": {
+        "truncated": false,
+        "truncated_values": 0,
+        "omitted_columns": 0,
+        "omitted_rows": 0,
+        "next_offset": 25
+      }
+    },
+    "proof_baseline": {
+      "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+      "binding_name": "DB",
+      "table_name": "proof_baseline",
+      "columns": [
+        "id",
+        "garden_id",
+        "started_at",
+        "revision",
+        "state"
+      ],
+      "rows": [
+        {
+          "id": "absence-001",
+          "garden_id": "darwin-proof-001",
+          "started_at": 1791098137995,
+          "revision": 0,
+          "state": "{\"plants\":1,\"habitat\":4,\"water\":20,\"soilMoisture\":50,\"keepers\":{\"Pip\":{\"task\":\"find-space\",\"completed\":0},\"Dew\":{\"task\":\"collect\",\"completed\":0},\"Moss\":{\"task\":\"observe\",\"completed\":0}},\"environment\":null}"
+        },
+        {
+          "id": "absence-check-001",
+          "garden_id": "darwin-proof-001",
+          "started_at": 1791098871364,
+          "revision": 0,
+          "state": "{\"plants\":1,\"habitat\":4,\"water\":20,\"soilMoisture\":50,\"keepers\":{\"Pip\":{\"task\":\"find-space\",\"completed\":0},\"Dew\":{\"task\":\"collect\",\"completed\":0},\"Moss\":{\"task\":\"observe\",\"completed\":0}},\"environment\":null}"
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "has_more": false,
+      "model_projection": {
+        "truncated": false,
+        "truncated_values": 0,
+        "omitted_columns": 0,
+        "omitted_rows": 0,
+        "next_offset": null
+      }
+    },
+    "worlds": {
+      "project_id": "appgprj_6ac1f8bb574c8191ad592b7d1a8587d2",
+      "binding_name": "DB",
+      "table_name": "worlds",
+      "columns": [
+        "id",
+        "seed",
+        "born_at",
+        "rules_version",
+        "climate",
+        "state",
+        "revision",
+        "last_tick",
+        "updated_at"
+      ],
+      "rows": [
+        {
+          "id": "darwin-proof-001",
+          "seed": 2854306126,
+          "born_at": 1791098137995,
+          "rules_version": 2,
+          "climate": "darwin",
+          "state": "{\"plants\":8,\"habitat\":11,\"water\":33.1,\"soilMoisture\":98,\"keepers\":{\"Pip\":{\"task\":\"sow\",\"completed\":7},\"Dew\":{\"task\":\"carry\",\"completed\":7},\"Moss\":{\"task\":\"make-space\",\"completed\":7}},\"environment\":{\"id\":\"meteo:1791176400000:1791176713992:46a34dd3-2149-4127-a646-7c860e833059\",\"city\":\"darwin\",\"provider\":\"open-meteo:best_match\",\"validStart\":1791172800000,\"validEnd\":1791176400000,\"fetchedAt\":1791176713992,\"sourceStatus\":\"modelled\",\"transport\":\"scheduler-relay\",\"temperatureC\":28.5,\"precipitationMm\":0,\"cloudPercent\":45,\"windKmh\":13.3,\"isDay\":true,\"sunrise\":1791147458000,\"sunset\":1791191559000,\"units\":{\"temperature\":\"°C\",\"precipitation\":\"mm\",\"cloud\":\"%\",\"wind\":\"km/h\"}}}",
+          "revision": 22,
+          "last_tick": 497549,
+          "updated_at": 1791176714842
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "has_more": false,
+      "model_projection": {
+        "truncated": false,
+        "truncated_values": 0,
+        "omitted_columns": 0,
+        "omitted_rows": 0,
+        "next_offset": null
+      }
+    }
+  },
+  "worker_logs": {
+    "source": "Sites get_site_worker_logs",
+    "query": {
+      "since_minutes": 1440,
+      "limit": 100,
+      "errors_only": false
+    },
+    "events": [
+      {
+        "timestamp": 1791176719946,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "ffc16461ca8235f1174b52f8407e2422",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791176715466,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "9d2e8c4d8f2571e8d4c2beee86c78c84",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791176715466,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "b414a73b-c6fb-4997-8ae7-d4a5a8d4ef3b",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497549,
+          "committedTicks": 1,
+          "revision": 22,
+          "remainingTicks": 0,
+          "at": 1791176715156
+        },
+        "requestId": "9d2e8c4d8f2571e8d4c2beee86c78c84",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791176714249,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "b414a73b-c6fb-4997-8ae7-d4a5a8d4ef3b",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497549,
+          "at": 1791176713992
+        },
+        "requestId": "9d2e8c4d8f2571e8d4c2beee86c78c84",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791173355644,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "85245796fba55a7fdcdf55f504659abc",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791173348628,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "4818325a5d0aa44cc59d73f8a572e620",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791173348628,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "02b37089-98bf-455e-abc1-b88acc6237d9",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497548,
+          "committedTicks": 1,
+          "revision": 21,
+          "remainingTicks": 0,
+          "at": 1791173348232
+        },
+        "requestId": "4818325a5d0aa44cc59d73f8a572e620",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791173347052,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "02b37089-98bf-455e-abc1-b88acc6237d9",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497548,
+          "at": 1791173346752
+        },
+        "requestId": "4818325a5d0aa44cc59d73f8a572e620",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791169877808,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "60995a72606a6864f752f0533ee9a876",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791169872039,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "bf25ee80ef3c5c8d3622ecf53054b48d",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791169872039,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "ed2771a8-1c07-4a12-9ea9-9f5ed547106e",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497547,
+          "committedTicks": 1,
+          "revision": 20,
+          "remainingTicks": 0,
+          "at": 1791169871638
+        },
+        "requestId": "bf25ee80ef3c5c8d3622ecf53054b48d",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791169870451,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "ed2771a8-1c07-4a12-9ea9-9f5ed547106e",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497547,
+          "at": 1791169870135
+        },
+        "requestId": "bf25ee80ef3c5c8d3622ecf53054b48d",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791166128148,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "d926affb27a6066bc72cd85fea308059",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791166120229,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "1db4602d16bf5da67d599ef4e9c7d17a",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791166120229,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "c69460f0-c929-4da1-a49a-173cd53553fe",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497546,
+          "committedTicks": 1,
+          "revision": 19,
+          "remainingTicks": 0,
+          "at": 1791166119861
+        },
+        "requestId": "1db4602d16bf5da67d599ef4e9c7d17a",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791166118783,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "c69460f0-c929-4da1-a49a-173cd53553fe",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497546,
+          "at": 1791166118582
+        },
+        "requestId": "1db4602d16bf5da67d599ef4e9c7d17a",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791162200880,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "a1c78dd028d47acae68100eb3c273f3f",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791162195982,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "07e7e361f9b4ab1cd643171dacc8ea2c",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791162195982,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "f0091002-5da7-4b42-a11c-f663c698dac0",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497545,
+          "committedTicks": 1,
+          "revision": 18,
+          "remainingTicks": 0,
+          "at": 1791162195616
+        },
+        "requestId": "07e7e361f9b4ab1cd643171dacc8ea2c",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791162194754,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "f0091002-5da7-4b42-a11c-f663c698dac0",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497545,
+          "at": 1791162194492
+        },
+        "requestId": "07e7e361f9b4ab1cd643171dacc8ea2c",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791158834049,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "d8b6d8fb310a6fad4668af5375f81f52",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791158827198,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "410788bbc5bb197055d1eadb5260f273",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791158827198,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "80af6314-3a9e-490a-9e1b-3c02e22b839b",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497544,
+          "committedTicks": 1,
+          "revision": 17,
+          "remainingTicks": 0,
+          "at": 1791158826789
+        },
+        "requestId": "410788bbc5bb197055d1eadb5260f273",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791158825587,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "80af6314-3a9e-490a-9e1b-3c02e22b839b",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497544,
+          "at": 1791158825284
+        },
+        "requestId": "410788bbc5bb197055d1eadb5260f273",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791155624102,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "e16dac9e96527a37f62f190b5fc05e83",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791155618743,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "bc59d54b29dbf2f2a55bc4312d7df04c",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791155618743,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "dd0c502e-c1ec-440f-b190-697919cd8ca9",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497543,
+          "committedTicks": 1,
+          "revision": 16,
+          "remainingTicks": 0,
+          "at": 1791155618340
+        },
+        "requestId": "bc59d54b29dbf2f2a55bc4312d7df04c",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791155617145,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "dd0c502e-c1ec-440f-b190-697919cd8ca9",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497543,
+          "at": 1791155616842
+        },
+        "requestId": "bc59d54b29dbf2f2a55bc4312d7df04c",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791151765384,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "f3dedd928053ab45bb113ba0ea195715",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791151759216,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "b9f8fa2dda806991be2d39116ddfa600",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791151759216,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "1e89fd9a-ec6e-430e-a8b2-018870dd1564",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497542,
+          "committedTicks": 1,
+          "revision": 15,
+          "remainingTicks": 0,
+          "at": 1791151758857
+        },
+        "requestId": "b9f8fa2dda806991be2d39116ddfa600",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791151757795,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "1e89fd9a-ec6e-430e-a8b2-018870dd1564",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497542,
+          "at": 1791151757512
+        },
+        "requestId": "b9f8fa2dda806991be2d39116ddfa600",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791147867216,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "22955e8ca6b5c49634eb37d1926821a4",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791147862117,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "a01f5de2e6bd418cfda142c98ab7ed4f",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791147862117,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "07ba401e-618c-48a7-96c8-d114ca9116a6",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497541,
+          "committedTicks": 1,
+          "revision": 14,
+          "remainingTicks": 0,
+          "at": 1791147861748
+        },
+        "requestId": "a01f5de2e6bd418cfda142c98ab7ed4f",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791147860642,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "07ba401e-618c-48a7-96c8-d114ca9116a6",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497541,
+          "at": 1791147860363
+        },
+        "requestId": "a01f5de2e6bd418cfda142c98ab7ed4f",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791144413038,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "5ced33f63b158dc72485d7351c55088d",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791144406628,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "41fd81f7b35b215d5c583c4cc2bc2247",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791144406628,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "8a759a0b-793d-42df-b9c5-f1fa1f60222f",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497540,
+          "committedTicks": 1,
+          "revision": 13,
+          "remainingTicks": 0,
+          "at": 1791144406272
+        },
+        "requestId": "41fd81f7b35b215d5c583c4cc2bc2247",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791144405208,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "8a759a0b-793d-42df-b9c5-f1fa1f60222f",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497540,
+          "at": 1791144404937
+        },
+        "requestId": "41fd81f7b35b215d5c583c4cc2bc2247",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791140926884,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "1cb8806ea646be0664926f9dd4297813",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791140922001,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "25a03026347a393c8cc1b88dacc50d14",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791140922001,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "8061a8b9-73bf-4da9-ab75-4f0a4bae191c",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497539,
+          "committedTicks": 1,
+          "revision": 12,
+          "remainingTicks": 0,
+          "at": 1791140921600
+        },
+        "requestId": "25a03026347a393c8cc1b88dacc50d14",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791140920413,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "8061a8b9-73bf-4da9-ab75-4f0a4bae191c",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497539,
+          "at": 1791140920120
+        },
+        "requestId": "25a03026347a393c8cc1b88dacc50d14",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791137138173,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "3decbf0fc1cf80c4ff5da71a191f4271",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791137132611,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "e5e45484ac9a7146170b9415a3d03dc2",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791137132611,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "40b9fa35-d9e6-44ad-bd17-563496a452cf",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497538,
+          "committedTicks": 1,
+          "revision": 11,
+          "remainingTicks": 0,
+          "at": 1791137132208
+        },
+        "requestId": "e5e45484ac9a7146170b9415a3d03dc2",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791137131029,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "40b9fa35-d9e6-44ad-bd17-563496a452cf",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497538,
+          "at": 1791137130733
+        },
+        "requestId": "e5e45484ac9a7146170b9415a3d03dc2",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791133716124,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "67c6c41234504ab3ab7929d28de3ee77",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791133706406,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "b278ed51f387d8db2a02655805a35c9a",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791133706406,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "e231d7f9-2b3b-4576-ae50-0366d05199c3",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497537,
+          "committedTicks": 1,
+          "revision": 10,
+          "remainingTicks": 0,
+          "at": 1791133706008
+        },
+        "requestId": "b278ed51f387d8db2a02655805a35c9a",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791133704822,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "e231d7f9-2b3b-4576-ae50-0366d05199c3",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497537,
+          "at": 1791133704607
+        },
+        "requestId": "b278ed51f387d8db2a02655805a35c9a",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791130265981,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "e22649c36670a2c7d9cad1c380663290",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791130256538,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "4a24a58cc13d16625a1b46fba08da5bd",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791130256538,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "102b95e5-6d48-4c32-91ec-1e70535fc941",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497536,
+          "committedTicks": 1,
+          "revision": 9,
+          "remainingTicks": 0,
+          "at": 1791130255981
+        },
+        "requestId": "4a24a58cc13d16625a1b46fba08da5bd",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791130254948,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "102b95e5-6d48-4c32-91ec-1e70535fc941",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497536,
+          "at": 1791130254679
+        },
+        "requestId": "4a24a58cc13d16625a1b46fba08da5bd",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791126341196,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "794ae40c958446069a7c3164d9e2c2be",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791126332121,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "87b8f5d2eb7ad053d1b75f0730013fd2",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791126332121,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "9cd65603-71b7-4dc5-ba71-f1fb68e0f1f9",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497535,
+          "committedTicks": 1,
+          "revision": 8,
+          "remainingTicks": 0,
+          "at": 1791126331833
+        },
+        "requestId": "87b8f5d2eb7ad053d1b75f0730013fd2",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791126330982,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "9cd65603-71b7-4dc5-ba71-f1fb68e0f1f9",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497535,
+          "at": 1791126330740
+        },
+        "requestId": "87b8f5d2eb7ad053d1b75f0730013fd2",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791123236748,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "2d778112d668e00331a5ee61442020f8",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791123232494,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "049d599799ef7beb100e9a00e381ec2f",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791123232494,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "4219ddd1-4982-472e-ad68-b0e12fb11007",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497534,
+          "committedTicks": 1,
+          "revision": 7,
+          "remainingTicks": 0,
+          "at": 1791123232176
+        },
+        "requestId": "049d599799ef7beb100e9a00e381ec2f",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791123231248,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "4219ddd1-4982-472e-ad68-b0e12fb11007",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497534,
+          "at": 1791123231068
+        },
+        "requestId": "049d599799ef7beb100e9a00e381ec2f",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791119149127,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "b2f47244d9857eead797d75558399b27",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791119144057,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "d4c4ac148f89f7e0a212beb7c619ce83",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791119144057,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "7438e03c-8c39-42f1-b60b-07b4d2f302d6",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497533,
+          "committedTicks": 1,
+          "revision": 6,
+          "remainingTicks": 0,
+          "at": 1791119143655
+        },
+        "requestId": "d4c4ac148f89f7e0a212beb7c619ce83",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791119142472,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "7438e03c-8c39-42f1-b60b-07b4d2f302d6",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497533,
+          "at": 1791119142173
+        },
+        "requestId": "d4c4ac148f89f7e0a212beb7c619ce83",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791115676263,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "4b94f72abc26c583a6bb138b72aae10f",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791115671743,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "e26814011fb75b154c7b1477d90f0765",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791115671743,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "9cac9797-01de-44bf-a8ee-f2e0b12f6e6a",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497532,
+          "committedTicks": 1,
+          "revision": 5,
+          "remainingTicks": 0,
+          "at": 1791115671344
+        },
+        "requestId": "e26814011fb75b154c7b1477d90f0765",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791115670160,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "9cac9797-01de-44bf-a8ee-f2e0b12f6e6a",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497532,
+          "at": 1791115669868
+        },
+        "requestId": "e26814011fb75b154c7b1477d90f0765",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791111915875,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "7856fa874172d6bda848add45b791ec9",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791111904788,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "5f0a83a4003fbd797f127c67c271f2be",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791111904788,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "44997f55-1617-443b-940d-d435168b8d27",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497531,
+          "committedTicks": 1,
+          "revision": 4,
+          "remainingTicks": 0,
+          "at": 1791111904432
+        },
+        "requestId": "5f0a83a4003fbd797f127c67c271f2be",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791111903384,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "44997f55-1617-443b-940d-d435168b8d27",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497531,
+          "at": 1791111903187
+        },
+        "requestId": "5f0a83a4003fbd797f127c67c271f2be",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791108665304,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "e6f92fbed64b02f6b248b12647ca6a69",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791108660388,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "f9962205750e2814927dc4f03c8320f5",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791108660388,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "7810d490-81fc-4fb3-baf5-df8df2bd6fb3",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497530,
+          "committedTicks": 1,
+          "revision": 3,
+          "remainingTicks": 0,
+          "at": 1791108660034
+        },
+        "requestId": "f9962205750e2814927dc4f03c8320f5",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791108658972,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "7810d490-81fc-4fb3-baf5-df8df2bd6fb3",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497530,
+          "at": 1791108658695
+        },
+        "requestId": "f9962205750e2814927dc4f03c8320f5",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791105043272,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "87705887b2bec47472eeea57ba8cd02d",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791105038823,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "c0b80a971b67573d3d4f4f0e3e4e6871",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791105038823,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "e3c51d54-5968-481c-b372-240c87b21dbf",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497529,
+          "committedTicks": 1,
+          "revision": 2,
+          "remainingTicks": 0,
+          "at": 1791105038530
+        },
+        "requestId": "c0b80a971b67573d3d4f4f0e3e4e6871",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791105037688,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "e3c51d54-5968-481c-b372-240c87b21dbf",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497529,
+          "at": 1791105037442
+        },
+        "requestId": "c0b80a971b67573d3d4f4f0e3e4e6871",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791101675010,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "220cd73a608c0cab01c828dd230e7113",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791101669342,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "bebb32f96c9d31b04af44875f88cb717",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791101669342,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "24eb1dd2-bb74-47d8-b3e9-998b879f7a89",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497528,
+          "committedTicks": 0,
+          "revision": 1,
+          "remainingTicks": 0,
+          "at": 1791101668948
+        },
+        "requestId": "bebb32f96c9d31b04af44875f88cb717",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791101668180,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "24eb1dd2-bb74-47d8-b3e9-998b879f7a89",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497528,
+          "at": 1791101667883
+        },
+        "requestId": "bebb32f96c9d31b04af44875f88cb717",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791101354644,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "fc55b3b85ca2efd0f3bc9e58774e38ea",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791101349014,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/background/tick"
+        },
+        "requestId": "dfe41216cdffe12a059b49ec6693213f",
+        "trigger": "POST /api/background/tick",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791101349014,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_finished",
+          "runId": "96c23f91-a2c8-42d0-b53f-c057058bd96a",
+          "trigger": "schedule",
+          "status": "succeeded",
+          "weatherStatus": "relayed-modelled",
+          "slot": 497528,
+          "committedTicks": 1,
+          "revision": 1,
+          "remainingTicks": 0,
+          "at": 1791101348617
+        },
+        "requestId": "dfe41216cdffe12a059b49ec6693213f",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791101347442,
+        "source": {
+          "level": "info",
+          "event": "stillwild_run_started",
+          "runId": "96c23f91-a2c8-42d0-b53f-c057058bd96a",
+          "callerDeclaredTrigger": "schedule",
+          "slot": 497528,
+          "at": 1791101347141
+        },
+        "requestId": "dfe41216cdffe12a059b49ec6693213f",
+        "trigger": "POST /api/background/tick"
+      },
+      {
+        "timestamp": 1791098969445,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/evidence"
+        },
+        "requestId": "acbf7320f3fdfdb4cd006c538afe03f6",
+        "trigger": "GET /api/evidence",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791098871733,
+        "source": {
+          "level": "info",
+          "message": "POST https://stillwild-background-proof.subzteveo.chatgpt.site/api/proof/start"
+        },
+        "requestId": "b239581a5362b1d717277b006b1b7fcb",
+        "trigger": "POST /api/proof/start",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791098871733,
+        "source": {
+          "level": "info",
+          "event": "stillwild_absence_baseline",
+          "startedAt": 1791098871364,
+          "revision": 0
+        },
+        "requestId": "b239581a5362b1d717277b006b1b7fcb",
+        "trigger": "POST /api/proof/start"
+      },
+      {
+        "timestamp": 1791098815557,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/snapshot"
+        },
+        "requestId": "89158dde36bf3994cfb37a9c89424556",
+        "trigger": "GET /api/snapshot",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791098815557,
+        "source": {
+          "level": "info",
+          "event": "stillwild_snapshot_view",
+          "at": 1791098815385,
+          "revision": 0
+        },
+        "requestId": "89158dde36bf3994cfb37a9c89424556",
+        "trigger": "GET /api/snapshot"
+      },
+      {
+        "timestamp": 1791098815338,
+        "source": {
+          "level": "info",
+          "message": "GET https://stillwild-background-proof.subzteveo.chatgpt.site/api/snapshot"
+        },
+        "requestId": "03e24795611081c981b3f8a009602dda",
+        "trigger": "GET /api/snapshot",
+        "outcome": "ok"
+      },
+      {
+        "timestamp": 1791098815338,
+        "source": {
+          "level": "info",
+          "event": "stillwild_snapshot_view",
+          "at": 1791098815164,
+          "revision": 0
+        },
+        "requestId": "03e24795611081c981b3f8a009602dda",
+        "trigger": "GET /api/snapshot"
+      }
+    ],
+    "limitations": [
+      "Bounded returned Worker logs do not establish complete view absence.",
+      "Trigger schedule labels are caller declarations; correlate task metadata, run receipts and Worker logs."
+    ]
+  },
+  "proof": {
+    "status": "PENDING_24_HOUR_ABSENCE_CHECK",
+    "baseline": {
+      "id": "absence-check-001",
+      "garden_id": "darwin-proof-001",
+      "started_at": 1791098871364,
+      "revision": 0,
+      "state": "{\"plants\":1,\"habitat\":4,\"water\":20,\"soilMoisture\":50,\"keepers\":{\"Pip\":{\"task\":\"find-space\",\"completed\":0},\"Dew\":{\"task\":\"collect\",\"completed\":0},\"Moss\":{\"task\":\"observe\",\"completed\":0}},\"environment\":null}"
+    },
+    "earliest_check_at_utc": "2026-10-05T07:27:51.364Z",
+    "all_views_closed_confirmed": false
+  }
+}

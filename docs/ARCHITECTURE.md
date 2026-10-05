@@ -1,6 +1,8 @@
 
 # Stillwild architecture v0.1
 
+Scope: the experimental Python backend and its opt-in Wild simulation. This reference does not govern the approved pixel-garden background milestone or establish connection to web/ or background-proof/.
+
 Stillwild is designed as a persistent ecological system, not a browser session.
 
 ## Core loop
