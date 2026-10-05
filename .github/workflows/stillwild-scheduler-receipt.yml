@@ -1,0 +1,44 @@
+name: stillwild-scheduler-receipt
+
+on:
+  schedule:
+    # 00 UTC = 09:30 Australia/Darwin. The Stillwild relay runs at :35 Darwin.
+    - cron: "0 * * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/stillwild-scheduler-receipt.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stillwild-scheduler-receipt
+  cancel-in-progress: false
+
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit independent scheduler receipt
+        shell: bash
+        run: |
+          cat <<'EOF'
+          Stillwild scheduler receipt
+          task_id=github-actions:stillwild-scheduler-receipt-v0.1
+          execution_id=github-actions:run:${{ github.run_id }}:attempt:${{ github.run_attempt }}
+          event=${{ github.event_name }}
+          repository=${{ github.repository }}
+          ref=${{ github.ref }}
+          sha=${{ github.sha }}
+          EOF
+          {
+            echo "## Stillwild scheduler receipt"
+            echo "- task_id: \`github-actions:stillwild-scheduler-receipt-v0.1\`"
+            echo "- execution_id: \`github-actions:run:${{ github.run_id }}:attempt:${{ github.run_attempt }}\`"
+            echo "- event: \`${{ github.event_name }}\`"
+            echo "- ref: \`${{ github.ref }}\`"
+            echo "- sha: \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
