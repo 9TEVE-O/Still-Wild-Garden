@@ -27,16 +27,20 @@ Use a separate test database for different configurations. No reset/migration en
 | Actor | Credential | Allowed API writes |
 |---|---|---|
 | Scheduler | `STILLWILD_TASK_TOKEN` | `POST /tasks/tick` |
-| Operator | `STILLWILD_OPERATOR_TOKEN` | `POST /events`, `/experiments`, `/outcomes`, `/wild/advance`, and all `/real/*` mutations |
+| Operator | `STILLWILD_OPERATOR_TOKEN` | `POST /events`, `/experiments`, `/outcomes`, `/wild/advance`, and `/real/*` mutations except `POST /real/sensor-readings` |
+| Sensor/gateway | `STILLWILD_SENSOR_TOKEN` | `POST /real/sensor-readings` only, for an already registered sensor |
 | Viewer | None | None |
 | Local worker | Local database access | The same `run_due` transaction as the scheduler |
 
-Use `Authorization: Bearer <token>`. Tokens must be distinct and at least 32 characters.
-Both tokens must be configured, distinct and at least 32 characters before any HTTP mutation
-is enabled; otherwise mutation routes return HTTP 503. A valid operator key alone still
-authorizes `GET /tasks/runs`, which remains a read-only route. Missing/wrong credentials
-return HTTP 401 when the relevant role token is configured. Simulation/lease/configuration
-conflicts return HTTP 409. These service credentials do not implement separate-user ownership.
+Use `Authorization: Bearer <token>`. The task and operator tokens must both be configured,
+distinct and at least 32 characters before any HTTP mutation is enabled; otherwise mutation
+routes return HTTP 503. Sensor ingestion additionally requires a sensor token of at least
+32 characters. If a sensor token is configured, it must differ from both privileged tokens;
+a collision disables HTTP mutations with HTTP 503. A valid operator key alone still authorizes
+`GET /tasks/runs`, which remains a read-only route when the role configuration is valid.
+Missing/wrong credentials return HTTP 401 when the relevant role token is configured.
+Simulation/lease/configuration conflicts return HTTP 409. These service credentials do not
+implement separate-user ownership.
 
 `GET /wild`, `/state`, `/events` and `/garden` remain read-only prototype views.
 `GET /tasks/runs` requires the operator key and returns attempted execution separately
@@ -62,7 +66,9 @@ python -c 'import secrets; print(secrets.token_urlsafe(32))'
 ```
 
 Generate two different values with that last command and set the task/operator token fields
-in `.env`. For an isolated simulated Docker garden, set `STILLWILD_WILD_SIM=true`.
+in `.env`. If sensor ingestion is enabled, generate a third distinct value for
+`STILLWILD_SENSOR_TOKEN`. For an isolated simulated Docker garden, set
+`STILLWILD_WILD_SIM=true`.
 The optional `STILLWILD_TICK_SECONDS=3600` selects hourly UTC slots. API and worker receive
 the same cadence and catch-up limit from Compose. The existing prototype default is 300 seconds.
 

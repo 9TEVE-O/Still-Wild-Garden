@@ -37,6 +37,7 @@ app = FastAPI(
 
 operator_bearer = HTTPBearer(auto_error=False, scheme_name="OperatorToken")
 task_bearer = HTTPBearer(auto_error=False, scheme_name="TaskToken")
+sensor_bearer = HTTPBearer(auto_error=False, scheme_name="SensorToken")
 
 
 def _check_token(
@@ -58,17 +59,22 @@ def _check_token(
 
 
 def require_write_tokens() -> None:
-    """Disable all HTTP mutations unless both distinct service keys are configured."""
+    """Disable HTTP mutations unless configured role credentials are safely separated."""
+    sensor_collision = bool(settings.sensor_token) and settings.sensor_token in {
+        settings.task_token,
+        settings.operator_token,
+    }
     if (
         len(settings.task_token) < 32
         or len(settings.operator_token) < 32
         or settings.task_token == settings.operator_token
+        or sensor_collision
     ):
         raise HTTPException(
             status_code=503,
             detail=(
                 "API writes require distinct configured task and operator tokens "
-                "of at least 32 characters."
+                "of at least 32 characters; any configured sensor token must also be distinct."
             ),
         )
 
@@ -87,10 +93,18 @@ def require_task(
     _check_token(credentials, settings.task_token, "Scheduled")
 
 
+def require_sensor(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(sensor_bearer)],
+) -> None:
+    """Require the sensor credential without granting operator or scheduler authority."""
+    _check_token(credentials, settings.sensor_token, "Sensor")
+
+
 app.include_router(
     build_realworld_router(
         realworld,
         mutation_dependencies=(Depends(require_write_tokens), Depends(require_operator)),
+        sensor_dependencies=(Depends(require_write_tokens), Depends(require_sensor)),
     )
 )
 

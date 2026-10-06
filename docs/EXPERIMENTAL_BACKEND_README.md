@@ -3,8 +3,9 @@
 
 Experimental backend only. Its Wild and SSE dashboard are separate from the published pixel
 garden. The current operating contract is [Background foundation v0.1](BACKGROUND_FOUNDATION.md):
-HTTP writes require distinct scheduler/operator bearer tokens, and scheduled retries share
-durable UTC slot identities. Local verification does not establish a hosted absence proof.
+HTTP writes require distinct scheduler/operator bearer tokens; sensor ingestion additionally
+uses a separate sensor credential. Scheduled retries share durable UTC slot identities. Local
+verification does not establish a hosted absence proof.
 
 **A forever-growing garden that evolves over time with the help of agents.**
 
@@ -60,6 +61,33 @@ curl -X POST http://localhost:8000/events \
 ```
 
 Stillwild stores the observation, routes it to relevant agents, applies the wildness gate, records a council recommendation and updates evidence-linked memory.
+
+## Connect a physical sensor or gateway
+
+Register the garden, zone and sensor with the operator credential first. Physical devices should
+then use a separate sensor credential rather than receiving the operator key:
+
+```text
+STILLWILD_SENSOR_TOKEN=<random token of at least 32 characters, distinct from task/operator>
+```
+
+A registered sensor can submit a reading to the one sensor-ingestion endpoint:
+
+```bash
+curl -X POST http://localhost:8000/real/sensor-readings \
+  -H "Authorization: Bearer $STILLWILD_SENSOR_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "sensor_id": "soil-1",
+    "value": 22.5
+  }'
+```
+
+The sensor credential is deliberately narrow. It can feed a registered source into the durable
+event ledger only when the global HTTP write gate is healthy, but it cannot register gardens or
+zones, create organisms or sensors, run operator controls, or act as the scheduler. A configured
+sensor token that matches the task or operator token disables HTTP mutations. The returned event
+ID and sequence are the ingestion receipt.
 
 ## Stream garden events
 
@@ -189,6 +217,10 @@ Unknown event types are still durably stored and observed. New agents can be add
 - `GET /wild` (simulated garden snapshot)
 - `POST /wild/advance?days=N` (requires `STILLWILD_WILD_SIM=true`)
 - `GET /garden` (live garden page)
+- `POST /real/gardens`, `/real/zones`, `/real/organisms`, `/real/sensors` (operator registration)
+- `POST /real/sensor-readings` (sensor-scoped physical observation ingestion)
+- `POST /real/gardens/{garden_id}/weather/collect` (operator weather collection)
+- `GET /real/gardens/{garden_id}/environment` (saved weather intervals)
 
 ## Principle
 

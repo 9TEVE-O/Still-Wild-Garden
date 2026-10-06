@@ -587,9 +587,12 @@ class RealWorldService:
 
 
 def build_realworld_router(
-    service: RealWorldService, mutation_dependencies: tuple[Any, ...]
+    service: RealWorldService,
+    mutation_dependencies: tuple[Any, ...],
+    sensor_dependencies: tuple[Any, ...] | None = None,
 ) -> APIRouter:
     router = APIRouter(prefix="/real", tags=["real-world"])
+    sensor_write_dependencies = sensor_dependencies or mutation_dependencies
 
     @router.post(
         "/gardens", status_code=201, dependencies=list(mutation_dependencies)
@@ -630,7 +633,7 @@ def build_realworld_router(
         return _api_call(lambda: service.store.list_sensors(garden_id))
 
     @router.post(
-        "/sensor-readings", status_code=201, dependencies=list(mutation_dependencies)
+        "/sensor-readings", status_code=201, dependencies=list(sensor_write_dependencies)
     )
     def sensor_reading(item: SensorReadingInput) -> dict[str, Any]:
         return _api_call(lambda: service.ingest_sensor(item))
