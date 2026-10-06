@@ -26,6 +26,7 @@ class Settings:
     catch_up_limit: int = int(os.getenv("STILLWILD_CATCH_UP_LIMIT", "6"))
     task_token: str = os.getenv("STILLWILD_TASK_TOKEN", "").strip()
     operator_token: str = os.getenv("STILLWILD_OPERATOR_TOKEN", "").strip()
+    sensor_token: str = os.getenv("STILLWILD_SENSOR_TOKEN", "").strip()
     weather_collect: bool = _bool("STILLWILD_WEATHER_COLLECT", False)
     real_garden_id: str | None = os.getenv("STILLWILD_REAL_GARDEN_ID") or None
     weather_timeout_seconds: float = float(os.getenv("STILLWILD_WEATHER_TIMEOUT_SECONDS", "10"))
