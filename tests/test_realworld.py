@@ -5,7 +5,7 @@ from threading import Event
 from time import sleep
 
 import pytest
-from conftest import OPERATOR_HEADERS, OPERATOR_TOKEN, TASK_HEADERS
+from conftest import OPERATOR_HEADERS, OPERATOR_TOKEN, SENSOR_HEADERS, TASK_HEADERS
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
@@ -361,3 +361,46 @@ def test_weather_collection_requires_completed_target_hour(tmp_path):
 
     with pytest.raises(WeatherUnavailableError, match="completed UTC hour"):
         service.collect_weather("darwin-test", now=now)
+
+
+def test_sensor_credential_can_only_feed_registered_sensor_endpoint(tmp_path):
+    repo, service = _service(tmp_path)
+    _register(service)
+    service.store.create_sensor(
+        SensorInput(
+            id="soil-device-1",
+            garden_id="darwin-test",
+            zone_id="north-bed",
+            kind="soil_moisture",
+            unit="%",
+            source="physical-gateway-01",
+        )
+    )
+    app = FastAPI()
+    app.include_router(
+        build_realworld_router(
+            service,
+            mutation_dependencies=(Depends(api.require_write_tokens), Depends(api.require_operator)),
+            sensor_dependencies=(Depends(api.require_sensor),),
+        )
+    )
+    client = TestClient(app)
+
+    reading = {"sensor_id": "soil-device-1", "value": 22.5}
+    assert client.post("/real/sensor-readings", json=reading).status_code == 401
+    assert (
+        client.post("/real/sensor-readings", json=reading, headers=TASK_HEADERS).status_code == 401
+    )
+    accepted = client.post("/real/sensor-readings", json=reading, headers=SENSOR_HEADERS)
+    assert accepted.status_code == 201
+    assert accepted.json()["event"]["payload"]["sensor_id"] == "soil-device-1"
+
+    assert (
+        client.post(
+            "/real/zones",
+            json={"id": "forbidden-zone", "garden_id": "darwin-test", "name": "Forbidden"},
+            headers=SENSOR_HEADERS,
+        ).status_code
+        == 401
+    )
+    assert repo.list_events()[-1]["source"] == "physical-gateway-01"
