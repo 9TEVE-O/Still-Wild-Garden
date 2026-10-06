@@ -36,7 +36,7 @@ def _wait_for_api() -> None:
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         try:
-            with urlopen("http://127.0.0.1:8000/health", timeout=1):  # noqa: S310
+            with urlopen("http://127.0.0.1:8000/health", timeout=1):
                 return
         except (OSError, URLError):
             time.sleep(0.1)
