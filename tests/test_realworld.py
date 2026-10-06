@@ -6,7 +6,13 @@ from threading import Event
 from time import sleep
 
 import pytest
-from conftest import OPERATOR_HEADERS, OPERATOR_TOKEN, SENSOR_HEADERS, TASK_HEADERS
+from conftest import (
+    OPERATOR_HEADERS,
+    OPERATOR_TOKEN,
+    SENSOR_HEADERS,
+    TASK_HEADERS,
+    TASK_TOKEN,
+)
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
@@ -382,7 +388,7 @@ def test_sensor_credential_can_only_feed_registered_sensor_endpoint(tmp_path):
         build_realworld_router(
             service,
             mutation_dependencies=(Depends(api.require_write_tokens), Depends(api.require_operator)),
-            sensor_dependencies=(Depends(api.require_sensor),),
+            sensor_dependencies=(Depends(api.require_write_tokens), Depends(api.require_sensor)),
         )
     )
     client = TestClient(app)
@@ -407,7 +413,7 @@ def test_sensor_credential_can_only_feed_registered_sensor_endpoint(tmp_path):
     assert repo.list_events()[-1]["source"] == "physical-gateway-01"
 
 
-@pytest.mark.parametrize("privileged_token", [OPERATOR_TOKEN, TASK_HEADERS["Authorization"].removeprefix("Bearer ")])
+@pytest.mark.parametrize("privileged_token", [OPERATOR_TOKEN, TASK_TOKEN])
 def test_sensor_token_collision_disables_http_mutations(tmp_path, monkeypatch, privileged_token):
     repo, service = _service(tmp_path)
     _register(service)
