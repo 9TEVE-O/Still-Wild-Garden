@@ -37,6 +37,7 @@ app = FastAPI(
 
 operator_bearer = HTTPBearer(auto_error=False, scheme_name="OperatorToken")
 task_bearer = HTTPBearer(auto_error=False, scheme_name="TaskToken")
+sensor_bearer = HTTPBearer(auto_error=False, scheme_name="SensorToken")
 
 
 def _check_token(
@@ -87,10 +88,18 @@ def require_task(
     _check_token(credentials, settings.task_token, "Scheduled")
 
 
+def require_sensor(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(sensor_bearer)],
+) -> None:
+    """Require the sensor credential without granting operator or scheduler authority."""
+    _check_token(credentials, settings.sensor_token, "Sensor")
+
+
 app.include_router(
     build_realworld_router(
         realworld,
         mutation_dependencies=(Depends(require_write_tokens), Depends(require_operator)),
+        sensor_dependencies=(Depends(require_sensor),),
     )
 )
 
