@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import UTC, datetime
+from pathlib import Path
 from threading import Event
 from time import sleep
 
@@ -404,3 +405,85 @@ def test_sensor_credential_can_only_feed_registered_sensor_endpoint(tmp_path):
         == 401
     )
     assert repo.list_events()[-1]["source"] == "physical-gateway-01"
+
+
+@pytest.mark.parametrize("privileged_token", [OPERATOR_TOKEN, TASK_HEADERS["Authorization"].removeprefix("Bearer ")])
+def test_sensor_token_collision_disables_http_mutations(tmp_path, monkeypatch, privileged_token):
+    repo, service = _service(tmp_path)
+    _register(service)
+    service.store.create_sensor(
+        SensorInput(
+            id="soil-device-1",
+            garden_id="darwin-test",
+            zone_id="north-bed",
+            kind="soil_moisture",
+            unit="%",
+            source="physical-gateway-01",
+        )
+    )
+    app = FastAPI()
+    app.include_router(
+        build_realworld_router(
+            service,
+            mutation_dependencies=(Depends(api.require_write_tokens), Depends(api.require_operator)),
+            sensor_dependencies=(Depends(api.require_write_tokens), Depends(api.require_sensor)),
+        )
+    )
+    client = TestClient(app)
+    monkeypatch.setattr(api, "settings", replace(api.settings, sensor_token=privileged_token))
+
+    shared_headers = {"Authorization": f"Bearer {privileged_token}"}
+    reading = {"sensor_id": "soil-device-1", "value": 22.5}
+    assert client.post("/real/sensor-readings", json=reading, headers=shared_headers).status_code == 503
+    assert (
+        client.post(
+            "/real/zones",
+            json={"id": "blocked-zone", "garden_id": "darwin-test", "name": "Blocked"},
+            headers=OPERATOR_HEADERS,
+        ).status_code
+        == 503
+    )
+    assert repo.list_events() == []
+
+
+@pytest.mark.parametrize("missing_role", ["operator_token", "task_token"])
+def test_sensor_ingestion_requires_global_write_gate(tmp_path, monkeypatch, missing_role):
+    repo, service = _service(tmp_path)
+    _register(service)
+    service.store.create_sensor(
+        SensorInput(
+            id="soil-device-1",
+            garden_id="darwin-test",
+            zone_id="north-bed",
+            kind="soil_moisture",
+            unit="%",
+            source="physical-gateway-01",
+        )
+    )
+    app = FastAPI()
+    app.include_router(
+        build_realworld_router(
+            service,
+            mutation_dependencies=(Depends(api.require_write_tokens), Depends(api.require_operator)),
+            sensor_dependencies=(Depends(api.require_write_tokens), Depends(api.require_sensor)),
+        )
+    )
+    client = TestClient(app)
+    monkeypatch.setattr(api, "settings", replace(api.settings, **{missing_role: ""}))
+
+    reading = {"sensor_id": "soil-device-1", "value": 22.5}
+    assert client.post("/real/sensor-readings", json=reading, headers=SENSOR_HEADERS).status_code == 503
+    assert repo.list_events() == []
+
+
+def test_sensor_documentation_and_compose_preserve_runnable_boundary():
+    root = Path(__file__).resolve().parents[1]
+    compose = (root / "docker-compose.yml").read_text(encoding="utf-8")
+    assert "STILLWILD_SENSOR_TOKEN: ${STILLWILD_SENSOR_TOKEN:-}" in compose
+
+    readme = (root / "docs" / "EXPERIMENTAL_BACKEND_README.md").read_text(encoding="utf-8")
+    section = readme.split("## Connect a physical sensor or gateway", 1)[1]
+    shell_block = section.split("```bash", 1)[1].split("```", 1)[0]
+    continued = [line.rstrip() for line in shell_block.splitlines() if line.rstrip().endswith("\\")]
+    assert len(continued) == 3
+    assert all(not line.endswith("\\\\") for line in continued)
