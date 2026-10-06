@@ -12,6 +12,7 @@ from stillwild.background import ScheduleConflict, run_due
 from stillwild.config import Settings
 from stillwild.db import Repository
 from stillwild.engine import GardenEngine
+from stillwild.realworld import WeatherUnavailableError
 from stillwild.wild import LEASE, Wild, WildBusyError
 
 BASELINE = datetime(2026, 10, 4, 10, tzinfo=UTC)
@@ -330,3 +331,60 @@ def test_valid_distinct_tokens_allow_only_their_write_roles(tmp_path, monkeypatc
 def test_invalid_schedule_configuration_is_rejected(changes):
     with pytest.raises(ValueError):
         replace(Settings(), **changes)
+
+
+@pytest.mark.parametrize("weather_timeout", [
+    0, -1, float("nan"), float("inf"), float("-inf"),
+])
+def test_invalid_weather_timeout_is_rejected(weather_timeout):
+    with pytest.raises(ValueError, match="WEATHER_TIMEOUT_SECONDS"):
+        replace(Settings(), weather_timeout_seconds=weather_timeout)
+
+
+def test_weather_collection_requires_garden_when_enabled():
+    with pytest.raises(ValueError, match="REAL_GARDEN_ID"):
+        replace(Settings(), weather_collect=True, real_garden_id=None)
+
+
+def test_api_collects_weather_only_after_committed_hourly_slots(monkeypatch):
+    hour_end_ms = int(datetime(2026, 10, 5, 6, tzinfo=UTC).timestamp() * 1000)
+    receipt = {
+        "slots": [
+            {"slot_end_ms": hour_end_ms},
+            {"slot_end_ms": hour_end_ms + 5 * 60_000},
+        ]
+    }
+    committed = False
+
+    def run_due(*args, **kwargs):
+        nonlocal committed
+        assert kwargs["trigger"] == "api-cron"
+        committed = True
+        return receipt
+
+    class Weather:
+        def __init__(self):
+            self.calls = []
+
+        def collect_weather(self, garden_id, *, now):
+            assert committed
+            self.calls.append((garden_id, now))
+            raise WeatherUnavailableError("provider unavailable")
+
+    weather = Weather()
+    monkeypatch.setattr(api, "run_due", run_due)
+    monkeypatch.setattr(api, "realworld", weather)
+    monkeypatch.setattr(
+        api,
+        "settings",
+        replace(api.settings, weather_collect=True, real_garden_id="darwin-test"),
+    )
+
+    result = api.tick()
+
+    assert len(weather.calls) == 1
+    assert weather.calls[0][0] == "darwin-test"
+    assert weather.calls[0][1] == datetime(2026, 10, 5, 6, tzinfo=UTC)
+    assert result["real_weather"] == [
+        {"slot_end_ms": hour_end_ms, "skipped": "weather collection unavailable"}
+    ]

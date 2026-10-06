@@ -27,7 +27,7 @@ Use a separate test database for different configurations. No reset/migration en
 | Actor | Credential | Allowed API writes |
 |---|---|---|
 | Scheduler | `STILLWILD_TASK_TOKEN` | `POST /tasks/tick` |
-| Operator | `STILLWILD_OPERATOR_TOKEN` | `POST /events`, `/experiments`, `/outcomes`, `/wild/advance` |
+| Operator | `STILLWILD_OPERATOR_TOKEN` | `POST /events`, `/experiments`, `/outcomes`, `/wild/advance`, and all `/real/*` mutations |
 | Viewer | None | None |
 | Local worker | Local database access | The same `run_due` transaction as the scheduler |
 

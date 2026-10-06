@@ -9,6 +9,7 @@ from stillwild.background import run_due
 from stillwild.config import Settings
 from stillwild.db import Repository
 from stillwild.engine import GardenEngine
+from stillwild.realworld import WeatherUnavailableError
 
 
 def test_restarted_worker_reuses_slot_and_keeps_source_label(tmp_path, monkeypatch):
@@ -67,3 +68,77 @@ def test_schedule_conflict_quiesces_worker_without_repeated_receipts(
     assert len(sleeps) == 4
     assert sum(run["status"] == "failed" for run in runs) == 1
     assert "quiescent" in caplog.text
+
+
+def test_worker_weather_runs_only_after_committed_hour_boundaries(caplog):
+    hour_end_ms = int(datetime(2026, 10, 5, 6, tzinfo=UTC).timestamp() * 1000)
+    receipt = {
+        "slots": [
+            {"slot_end_ms": hour_end_ms + 5 * 60_000},
+            {"slot_end_ms": hour_end_ms},
+        ]
+    }
+
+    class Weather:
+        def __init__(self):
+            self.calls = []
+
+        def collect_weather(self, garden_id, *, now):
+            self.calls.append((garden_id, now))
+            raise WeatherUnavailableError("provider unavailable")
+
+    weather = Weather()
+
+    with caplog.at_level(logging.WARNING):
+        worker._collect_due_weather(weather, "darwin-test", receipt)
+
+    assert weather.calls == [
+        ("darwin-test", datetime(2026, 10, 5, 6, tzinfo=UTC))
+    ]
+    assert "provider unavailable" in caplog.text
+
+
+def test_worker_collects_weather_after_run_due_and_keeps_committed_slot(
+    tmp_path, monkeypatch, caplog,
+):
+    config = replace(
+        Settings(),
+        db_path=str(tmp_path / "weather-worker.db"),
+        weather_collect=True,
+        real_garden_id="darwin-test",
+    )
+    monkeypatch.setattr(worker, "settings", config)
+    committed = False
+    hour_end_ms = int(datetime(2026, 10, 5, 6, tzinfo=UTC).timestamp() * 1000)
+    receipt = {"slots": [{"slot_end_ms": hour_end_ms}]}
+
+    def run_due(*args, **kwargs):
+        nonlocal committed
+        assert kwargs["trigger"] == config.worker_id
+        committed = True
+        return receipt
+
+    class Weather:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def collect_weather(self, garden_id, *, now):
+            assert committed
+            assert garden_id == "darwin-test"
+            raise WeatherUnavailableError("provider unavailable")
+
+    class StopLoop(Exception):
+        pass
+
+    def stop_sleep(_):
+        raise StopLoop
+
+    monkeypatch.setattr(worker, "run_due", run_due)
+    monkeypatch.setattr(worker, "RealWorldService", Weather)
+    monkeypatch.setattr(worker.time, "sleep", stop_sleep)
+
+    with caplog.at_level(logging.WARNING), pytest.raises(StopLoop):
+        worker.work_forever()
+
+    assert committed
+    assert "provider unavailable" in caplog.text

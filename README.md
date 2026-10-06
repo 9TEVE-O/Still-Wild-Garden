@@ -10,7 +10,7 @@ The repository now holds three distinct runtimes:
 |---|---|---|
 | [web/](web/README.md) | Public pixel garden, gifts and Android companion candidate | Site version 2; one shared origin; version 1 age-based growth |
 | [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Private test Site version 3; hourly updater enabled; 24-hour absence proof pending |
-| [src/stillwild/](docs/EXPERIMENTAL_BACKEND_README.md) | Experimental Python agent service and opt-in Wild ecosystem simulation | Separate SQLite runtime; simulated Wild weather; no connection to either pixel app |
+| [src/stillwild/](docs/EXPERIMENTAL_BACKEND_README.md) | Experimental Python agent service, isolated real-garden registry/weather ingestion, and opt-in Wild simulation | Separate SQLite runtime; model-derived Open-Meteo values; no connection to either pixel app |
 
 The public app and the original seed and birth time are preserved. GitHub updates do not deploy either managed Site.
 

@@ -617,6 +617,16 @@ class Repository:
             ).fetchone()
             return row is not None
 
+    def has_real_garden_registry(self, connection: sqlite3.Connection | None = None) -> bool:
+        """Return whether any real garden is registered, if the real-world schema exists."""
+        with self.connection(connection) as conn:
+            registry_exists = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='real_gardens'"
+            ).fetchone()
+            if registry_exists is None:
+                return False
+            return conn.execute("SELECT 1 FROM real_gardens LIMIT 1").fetchone() is not None
+
     def has_world(self, connection: sqlite3.Connection | None = None) -> bool:
         """Return whether any simulated world exists, optionally within a shared transaction."""
         with self.connection(connection) as conn:
@@ -634,7 +644,9 @@ class Repository:
         with self.connection(connection) as conn:
             if not conn.in_transaction:
                 conn.execute("BEGIN IMMEDIATE")
-            if self.has_real_observations(connection=conn):
+            if self.has_real_observations(connection=conn) or self.has_real_garden_registry(
+                connection=conn
+            ):
                 return False
             conn.execute(
                 "INSERT OR IGNORE INTO worlds(name,state_json,updated_at) VALUES (?,?,?)",

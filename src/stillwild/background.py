@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from .config import Settings
 from .db import Repository, _now
 from .engine import GardenEngine
-from .wild import RealGardenError, Wild
+from .wild import REAL_GARDEN_MESSAGE, RealGardenError, Wild
 
 log = logging.getLogger(__name__)
 SCHEDULE = "background-v1"
@@ -93,9 +93,9 @@ def run_due(
                         result["wild"] = {
                             key: grown[key] for key in ("day", "revision", "date", "events")
                         }
-                    except RealGardenError as exc:
+                    except RealGardenError:
                         # A receipt for evaluation is not a receipt for garden growth.
-                        result["wild"] = {"skipped": str(exc)}
+                        result["wild"] = {"skipped": REAL_GARDEN_MESSAGE}
                 conn.execute(
                     """INSERT INTO background_ticks
                     (schedule_name,slot_end_ms,run_id,result_json,committed_at)

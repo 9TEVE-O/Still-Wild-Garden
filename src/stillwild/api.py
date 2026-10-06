@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import secrets
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from importlib import resources
 from typing import Annotated
 
@@ -16,11 +18,16 @@ from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
 from .engine import GardenEngine, SimulatedGardenError
+from .realworld import RealWorldError, RealWorldService, build_realworld_router
 from .wild import SOURCE as WILD_SOURCE
 from .wild import RealGardenError, Wild, WildBusyError
 
+log = logging.getLogger(__name__)
 repo = Repository(settings.db_path)
 engine = GardenEngine(repo, automation_authority=settings.automation_authority)
+realworld = RealWorldService(
+    repo, engine, weather_timeout_seconds=settings.weather_timeout_seconds,
+)
 
 app = FastAPI(
     title="Stillwild Garden",
@@ -80,12 +87,22 @@ def require_task(
     _check_token(credentials, settings.task_token, "Scheduled")
 
 
+app.include_router(
+    build_realworld_router(
+        realworld,
+        mutation_dependencies=(Depends(require_write_tokens), Depends(require_operator)),
+    )
+)
+
+
 @app.get("/health")
 def health() -> dict:
     return {
         "status": "ok",
         "automation_authority": settings.automation_authority,
         "db_path": settings.db_path,
+        "weather_collect": settings.weather_collect,
+        "real_garden_id": settings.real_garden_id,
     }
 
 
@@ -163,9 +180,33 @@ def record_outcome(outcome: OutcomeInput) -> dict:
 def tick() -> dict:
     """Commit due UTC slots; a retry reports the prior result without extra progression."""
     try:
-        return run_due(repo, engine, settings, trigger="api-cron")
+        receipt = run_due(repo, engine, settings, trigger="api-cron")
     except (ScheduleConflict, WildBusyError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    _collect_due_weather(receipt)
+    return receipt
+
+
+def _collect_due_weather(receipt: dict) -> None:
+    """Collect completed-hour weather only after its scheduled slot has committed."""
+    if not settings.weather_collect or not settings.real_garden_id:
+        return
+    attempts = []
+    for slot in receipt.get("slots", []):
+        slot_end_ms = int(slot["slot_end_ms"])
+        if slot_end_ms % 3_600_000:
+            continue
+        try:
+            result = realworld.collect_weather(
+                settings.real_garden_id,
+                now=datetime.fromtimestamp(slot_end_ms / 1000, UTC),
+            )
+        except RealWorldError as exc:
+            log.warning("Scheduled weather collection failed: %s", exc)
+            result = {"skipped": "weather collection unavailable"}
+        attempts.append({"slot_end_ms": slot_end_ms, **result})
+    if attempts:
+        receipt["real_weather"] = attempts
 
 
 @app.get("/tasks/runs", dependencies=[Depends(require_operator)])
