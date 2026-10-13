@@ -53,6 +53,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: node scripts/${{ matrix.verifier }}
+      - if: matrix.app == 'web'
+        run: node scripts/verify-growth.cjs
       - if: matrix.app == 'background-proof'
         run: node scripts/verify-provenance.cjs
       - run: pnpm build
