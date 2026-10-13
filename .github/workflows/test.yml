@@ -53,6 +53,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: node scripts/${{ matrix.verifier }}
+      # The renderer checks need a Node canvas. It is installed outside the app's lockfile so the
+      # managed Site build and its dependencies stay unchanged.
+      - if: matrix.app == 'web'
+        run: npm install --no-save --no-package-lock --prefix "$RUNNER_TEMP/canvas" @napi-rs/canvas@1.0.11
+      - if: matrix.app == 'web'
+        run: node scripts/verify-growth.cjs --require-canvas
+        env:
+          CODEX_PRIMARY_RUNTIME_NODE_MODULES: ${{ runner.temp }}/canvas/node_modules
       - if: matrix.app == 'background-proof'
         run: node scripts/verify-provenance.cjs
       - run: pnpm build

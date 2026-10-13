@@ -1,13 +1,15 @@
 STATE_SCHEMA_VERSION: 1
 LAST_COMPLETED_STAGE: Original 24-hour absence review executed (INCONCLUSIVE); scheduler provenance specimen recorded (narrow PASS)
-CURRENT_ACTIVE_STAGE: No absence window running; original checkpoint preserved
-NEXT_PERMITTED_STAGE: View-closure control before any second 24-hour window, per background-proof/project_docs/CURRENT_BUILD_STATE.md; preserve both gardens
+CURRENT_ACTIVE_STAGE: Five-stage growth layer built in web/ source (candidate, unpublished); no absence window running; original checkpoint preserved
+NEXT_PERMITTED_STAGE: Growth layer: blind ordering test, then owner decision to publish through Sites. Background proof: view-closure control before any second 24-hour window, per background-proof/project_docs/CURRENT_BUILD_STATE.md. Preserve both gardens
 
 Updated: 13 October 2026, Australia/Darwin.
 
 ## Legacy application
 
-web/ remains the saved Site version 2 source from `bcf2d5210282e3683502be5066d745f920ffb191`. Its immutable public origin, version 1 growth rules, renderer, gifts and Android companion are unchanged. Current local TypeScript and persistence checks pass. Source sync is not a Site deployment.
+web/ began as the saved Site version 2 source from `bcf2d5210282e3683502be5066d745f920ffb191`. Its immutable public origin, version 1 growth rules, gifts and Android companion are unchanged. Current local TypeScript and persistence checks pass. Source sync is not a Site deployment.
+
+Five-stage growth layer, 13 October 2026 (candidate, not published). The owner asked to start building growth into the live demo. The live view, floating bubble, wallpaper and GIF export now draw the unchanged version 1 plant counts as one species in five stages (mound, sprout, sapling, shrub, flowering) at 78 fixed ground spots, through lib/render-world.ts, lib/growth.ts and the generated atlas. lib/render-garden.ts, lib/garden.ts, the seed runtime and both art files are untouched, so offline gifts and the Android companion keep the version 1 drawing and its recorded hashes. Applied to the original garden (planted 26 September 2026), the view would show about 20 saplings and 10 sprouts or mounds on 13 October, first shrubs from 26 October and first flowers from 24 January 2027. Checks are in VALIDATION.md and growth-evidence.json. The blind ordering test of day 7, 40 and 400 renders has not been run, and the change is not on the public Site until it is published through Sites.
 
 Since pull request #6 (6 October 2026), web/ also contains a separate, unconfigured Dew persistent-hour proof path: app/api/internal/evolution/tick, app/api/garden/snapshot, db/evolution.ts, lib/evolution/ and drizzle/0001_dew_persistent_hour.sql, driven by .github/workflows/stillwild-hourly-proof.yml. It is not part of Site version 2 and is not evidence for the background milestone. A 13 October repository review reproduced a defect in it: when two overlapping ticks read the same prior state, the losing run still saves an applied tick, a committed run record and a watering event. Its migration is also missing from the Drizzle journal. Retire or fix is an open owner decision.
 

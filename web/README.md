@@ -13,6 +13,7 @@ This repository contains the existing web app, artwork, database migration, offl
 - React and TypeScript interface with a Canvas 2D garden, ambient sound and a movable viewing bubble.
 - One shared cloud garden: an immutable seed and birth time stored in Cloudflare D1.
 - Version 1 growth reconstructed from elapsed time, with deterministic keeper animations.
+- In source, not yet published: the live view draws that growth as one plant species in five stages (mound, sprout, sapling, shrub, flowering) on fixed ground spots. Gifts and the Android companion keep the version 1 drawing. See [the art direction](../docs/ART_DIRECTION_AND_GROWTH_MODEL.md).
 - Self-contained offline HTML seed gifts, PNG wallpaper and small GIF exports.
 - An Android overlay development candidate with original-garden JSON import. Physical-device acceptance remains open.
 
@@ -48,7 +49,10 @@ pnpm exec tsc --noEmit
 node scripts/verify-persistence.cjs
 node scripts/verify-garden.cjs
 node scripts/verify-android.cjs
+node scripts/verify-growth.cjs
 ```
+
+`verify-growth.cjs` always runs its logic checks. Its renderer checks also need `@napi-rs/canvas`, found as an installed package or through `CODEX_PRIMARY_RUNTIME_NODE_MODULES`; CI installs it and passes `--require-canvas`.
 
 The two renderer checks additionally use `@napi-rs/canvas` from `CODEX_PRIMARY_RUNTIME_NODE_MODULES`, as supplied in the Work Mode environment. Their results do not establish browser or Android device acceptance.
 

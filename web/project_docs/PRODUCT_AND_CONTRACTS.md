@@ -9,7 +9,7 @@ User: Steven Lees. Original delivery: private Sites garden with a modular movabl
 | Requirement | Acceptance | Verification |
 |---|---|---|
 | R1 One small beginning | Plant creates one immutable garden seed; repeats return the same seed and birth time | Local API create/repeat/read, invalid mutation rejection |
-| R2 Growth without tending | Age-based v1 rules reconstruct progress; keepers and plants stay within the scene; no prune/reset/speed controls | Growth/time fixtures, renderer inspection |
+| R2 Growth without tending | Age-based v1 rules reconstruct progress; keepers and plants stay within the scene; no prune/reset/speed controls. Candidate since 13 October 2026: the live view draws those v1 counts as one species in five stages at 78 fixed ground spots (docs/ART_DIRECTION_AND_GROWTH_MODEL.md) | Growth/time fixtures, renderer inspection; scripts/verify-growth.cjs |
 | R3 Durable garden | D1 holds the seed and birth time across sessions; failures show a retryable unavailable state | Migration and local runtime read/write checks |
 | R4 A gift is a new beginning | Self-contained HTML contains child seed, parent lineage and embedded images; no account IDs, credentials, network access or public link; cancellation does not report delivery | Offline runtime syntax/fixture, source inspection; device sharing still needs device verification |
 | R5 Adaptable viewing | Responsive canvas, reduced-motion support, ambient view, PNG wallpaper export | Build/source inspection; phone/browser UX not yet device-verified |
@@ -22,7 +22,7 @@ Vinext/React site served by a Cloudflare Worker. Originally delivered owner-priv
 
 D1 row: id='origin', uint32 seed, born_at UTC epoch milliseconds, version=1. The generated additive schema migration owns creation. No runtime schema mutation. SQLite can retain the row independently of browser sessions. UI-only bubble position uses localStorage; it is not authoritative garden state.
 
-Keepers are deterministic visual simulation agents, not LLM calls. Growth is reconstructed from the saved birth time, not continuously executed while the page is closed. No external tools, web access, autonomous spending or real-world actions are available to them. Render work is capped and suspended while hidden. The logical history grows; only up to 45 additional plants are visible as the scene renews.
+Keepers are deterministic visual simulation agents, not LLM calls. Growth is reconstructed from the saved birth time, not continuously executed while the page is closed. No external tools, web access, autonomous spending or real-world actions are available to them. Render work is capped and suspended while hidden. The logical history grows; only up to 45 additional plants are visible as the scene renews in gifts and the Android companion. The live view, wallpaper and GIF export instead show up to 78 additional plants at fixed ground spots, each staged by its own age (candidate, 13 October 2026).
 
 ## Seed file contract v1
 

@@ -1,5 +1,5 @@
 import type { Garden } from "./garden";
-import { drawGarden, loadArt } from "./render-garden";
+import { drawWorld, loadWorldArt } from "./render-world";
 import { seedRuntime } from "./seed-runtime";
 export function saveFile(file: File) {
   const url = URL.createObjectURL(file); const a = document.createElement("a"); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -17,11 +17,11 @@ export async function makeGift(parent: Garden): Promise<File> {
   return new File([html], `stillwild-seed-${values[0].toString(16)}.html`, { type: "text/html" });
 }
 export async function wallpaper(garden: Garden | null): Promise<File> {
-  const art = await loadArt(); const canvas = document.createElement("canvas");
+  const art = await loadWorldArt(); const canvas = document.createElement("canvas");
   const ratio = Math.min(2.4, Math.max(1.2, window.screen.height / window.screen.width));
   canvas.width = 1440; canvas.height = Math.round(1440 * ratio);
   const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("Canvas unavailable");
-  drawGarden(ctx, canvas.width, canvas.height, garden, Date.now(), art, true);
+  drawWorld(ctx, canvas.width, canvas.height, garden, Date.now(), art, true);
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("Export failed")), "image/png"));
   return new File([blob], "stillwild-wallpaper.png", { type: "image/png" });
 }

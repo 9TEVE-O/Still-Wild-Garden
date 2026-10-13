@@ -52,3 +52,19 @@ The previous no-updater statement describes the original web app at import. A se
 Fresh local TypeScript and persistence checks pass for the unchanged legacy code. The current Python source at baseline commit edd4fec25c6835fe305a3896d3391fa039ea48b5, including the Wild simulation, passes 56 tests and Ruff. Background-proof TypeScript, the transactional SQLite verifier and production build pass. Node version is 24.19.0; pnpm is 11.25.0. No native compilation or phone checks were repeated.
 
 Native D1 and Worker evidence supports 22 unique committed test-garden ticks and 31 saved consequence events. These observations establish progress, not the completed absence proof. The 24-hour gate, separate personal ownership and Android device acceptance remain open. Root docs/audits/2026-10-05/ contains revision binding, execution evidence and limitations. New CI covers TypeScript, the applicable SQLite verifier and production build for each web app; hosted CI execution must be checked separately.
+
+## Five-stage growth layer — 2026-10-13
+
+Candidate change in source only; the public Site was not published or touched. Node 22.22.0 and pnpm 11.25.0 in a cloud session; Node canvas from `@napi-rs/canvas` installed outside the repository.
+
+| Executed check | Result and scope |
+|---|---|
+| `pnpm exec tsc --noEmit` | PASS |
+| `eslint` on the new and changed TypeScript files | PASS |
+| `node scripts/verify-growth.cjs --record` | PASS. Atlas digest matches its index (60 sprites, 256 x 142). Exact parity with the version 1 plant count across 5 seeds and 10 ages. Stages never go backwards. Deterministic output. 78 spots kept clear of the first sprout. Unchanged version 1 sources and art for Android. Pixel-identical output to the version 1 renderer when no extra plants are visible. Phone-size renders at day 7, 40 and 400 (390 x 844 points at the live canvas's device pixel ratio cap of 2). A day-400 GIF loop closes exactly at 144,259 bytes. See growth-evidence.json |
+| `verify-persistence.cjs`, `verify-evolution.cjs`, `verify-garden.cjs`, `verify-android.cjs` | PASS. `verify-garden.cjs` measured 125,569 bytes with this session's canvas build against the recorded 121,484; the recorded loop-evidence.json was left unchanged because the version 1 path did not change |
+| `pnpm build` | PASS; the atlas ships at `/art/growth/stillwild-growth-atlas.png` |
+
+CI installs `@napi-rs/canvas` 1.0.11 outside the app's lockfile and runs `verify-growth.cjs --require-canvas`, so the renderer checks fail rather than skip if the canvas is missing.
+
+Not established: browser or phone rendering, the blind ordering test, performance on low-end phones and publication to the managed Site. The build also includes the unconfigured pull request #6 routes recorded in CURRENT_BUILD_STATE.md.

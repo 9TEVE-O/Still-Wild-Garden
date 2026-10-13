@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-10-13T04:43:46.574Z",
+  "atlas": {
+    "file": "public/art/growth/stillwild-growth-atlas.png",
+    "sha256": "32d5c5e67ba4660e1acaa62d2372676234e89fcc834ef9990b8f9737b38ef0c7",
+    "width": 256,
+    "height": 142,
+    "sprites": 60
+  },
+  "spots": 78,
+  "seeds": 5,
+  "ages": 10,
+  "stageCensus": {
+    "day7": {
+      "mound": 3,
+      "sprout": 16,
+      "sapling": 0,
+      "shrub": 0,
+      "flowering": 0
+    },
+    "day40": {
+      "mound": 1,
+      "sprout": 5,
+      "sapling": 17,
+      "shrub": 23,
+      "flowering": 0
+    },
+    "day400": {
+      "mound": 0,
+      "sprout": 0,
+      "sapling": 0,
+      "shrub": 0,
+      "flowering": 78
+    }
+  },
+  "version1Unchanged": [
+    "lib/garden.ts",
+    "lib/render-garden.ts",
+    "android/scene.ts",
+    "public/art/island.png",
+    "public/art/sapling.png"
+  ],
+  "canvas": {
+    "status": "PASS",
+    "parityWithoutExtraPlants": true,
+    "phoneRenders": {
+      "7": ".sites-runtime/verification/growth-day007-phone.png",
+      "40": ".sites-runtime/verification/growth-day040-phone.png",
+      "400": ".sites-runtime/verification/growth-day400-phone.png"
+    },
+    "phoneRenderDevicePixelRatio": 2,
+    "day400LoopBytes": 144259,
+    "note": "Node canvas, not a browser or phone; renders are for the blind ordering test, not its result."
+  }
+}
