@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import signal
 import time
 from datetime import UTC, datetime
 
@@ -13,6 +14,22 @@ from .realworld import RealWorldError, RealWorldService
 log = logging.getLogger(__name__)
 
 
+class _Shutdown:
+    """SIGTERM/SIGINT state: a stop requested mid-run waits for the run's receipt to be logged."""
+
+    def __init__(self) -> None:
+        self.requested = False
+        self.busy = False
+
+    def request(self, signum: int, _frame: object) -> None:
+        self.requested = True
+        if not self.busy:
+            raise SystemExit(0)
+
+
+shutdown = _Shutdown()
+
+
 def work_forever() -> None:
     """Run due UTC slots without viewers; cron uses the same transaction and slot identity."""
     repo = Repository(settings.db_path)
@@ -22,22 +39,29 @@ def work_forever() -> None:
         if settings.weather_collect
         else None
     )
-    while True:
+    while not shutdown.requested:
+        shutdown.busy = True
         try:
             receipt = run_due(repo, engine, settings, trigger=settings.worker_id)
             if realworld is not None and settings.real_garden_id:
                 _collect_due_weather(realworld, settings.real_garden_id, receipt)
         except ScheduleConflict as exc:
+            shutdown.busy = False  # Nothing is in flight while quiescent; stop at once.
             log.critical(
                 "Background worker is quiescent until an operator resolves the pinned "
                 "schedule conflict and restarts it: %s",
                 exc,
             )
-            while True:
+            while not shutdown.requested:
                 time.sleep(settings.tick_seconds)
         except Exception:
             log.exception("Background work failed; uncommitted slots will be retried.")
+        finally:
+            shutdown.busy = False
+        if shutdown.requested:
+            break
         time.sleep(settings.tick_seconds)
+    log.info("Background worker stopped.")
 
 
 def _collect_due_weather(
@@ -68,6 +92,8 @@ def _collect_due_weather(
 def run() -> None:
     """Configure worker logging and enter the background tick loop."""
     logging.basicConfig(level=logging.INFO)
+    signal.signal(signal.SIGTERM, shutdown.request)
+    signal.signal(signal.SIGINT, shutdown.request)
     work_forever()
 
 

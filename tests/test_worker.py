@@ -142,3 +142,76 @@ def test_worker_collects_weather_after_run_due_and_keeps_committed_slot(
 
     assert committed
     assert "provider unavailable" in caplog.text
+
+
+def test_stop_during_run_lets_the_receipt_log_before_exiting(tmp_path, monkeypatch, caplog):
+    """A SIGTERM between commit and receipt log must not lose the log line (CI race)."""
+    config = replace(Settings(), db_path=str(tmp_path / 'stop.db'), wild_sim=True)
+    clock = datetime(2026, 10, 4, 10, tzinfo=UTC)
+    monkeypatch.setattr(worker, 'settings', config)
+    monkeypatch.setattr(worker, 'shutdown', worker._Shutdown())
+
+    finish = Repository.finish_background_run
+
+    def finish_then_signal(self, *args, **kwargs):
+        finish(self, *args, **kwargs)  # Slot is committed; receipt not yet logged.
+        worker.shutdown.request(15, None)  # Must not raise here.
+
+    monkeypatch.setattr(Repository, 'finish_background_run', finish_then_signal)
+    monkeypatch.setattr(
+        worker, 'run_due',
+        lambda repo, engine, settings, trigger: run_due(repo, engine, settings, trigger, clock),
+    )
+    monkeypatch.setattr(worker.time, 'sleep', lambda _: pytest.fail('slept after stop'))
+    with caplog.at_level(logging.INFO, logger='stillwild'):
+        worker.work_forever()
+    runs = Repository(config.db_path).list_background_runs()
+    assert runs and all(r['id'] in caplog.text for r in runs)
+
+
+def test_stop_while_idle_exits_immediately():
+    shutdown = worker._Shutdown()
+    with pytest.raises(SystemExit):
+        shutdown.request(15, None)
+    assert shutdown.requested
+
+
+def test_pending_stop_during_schedule_conflict_exits_without_sleep(tmp_path, monkeypatch, caplog):
+    """A deferred SIGTERM must terminate the quiescent conflict path."""
+    from stillwild.background import ScheduleConflict
+
+    config = replace(Settings(), db_path=str(tmp_path / "pending-stop.db"))
+    monkeypatch.setattr(worker, "settings", config)
+    monkeypatch.setattr(worker, "shutdown", worker._Shutdown())
+
+    def conflict_after_stop(*args, **kwargs):
+        worker.shutdown.request(15, None)
+        raise ScheduleConflict("pinned schedule differs")
+
+    monkeypatch.setattr(worker, "run_due", conflict_after_stop)
+    monkeypatch.setattr(worker.time, "sleep", lambda _: pytest.fail("slept despite pending stop"))
+    with caplog.at_level(logging.INFO):
+        worker.work_forever()
+    assert worker.shutdown.requested
+    assert not worker.shutdown.busy
+    assert "quiescent" in caplog.text
+    assert "Background worker stopped." in caplog.text
+
+
+def test_exception_shutdown_does_not_claim_commit(tmp_path, monkeypatch, caplog):
+    """A failed run followed by SIGTERM must not be logged as committed."""
+    config = replace(Settings(), db_path=str(tmp_path / "failed-stop.db"))
+    monkeypatch.setattr(worker, "settings", config)
+    monkeypatch.setattr(worker, "shutdown", worker._Shutdown())
+
+    def fail_after_stop(*args, **kwargs):
+        worker.shutdown.request(15, None)
+        raise RuntimeError("synthetic failure")
+
+    monkeypatch.setattr(worker, "run_due", fail_after_stop)
+    monkeypatch.setattr(worker.time, "sleep", lambda _: pytest.fail("slept despite pending stop"))
+    with caplog.at_level(logging.INFO):
+        worker.work_forever()
+    assert "synthetic failure" in caplog.text
+    assert "Background worker stopped." in caplog.text
+    assert "last run was committed" not in caplog.text
