@@ -14,7 +14,7 @@ days as Darwin weather evidence. This foundation does not connect or mutate eith
 
 Preserve the original public seed and birth time. Never plant, reset or delete either hosted garden for tests. Use local databases or an explicitly isolated new fixture. Keep version 1 gifts and the Android companion compatible. web/AGENTS.md owns legacy continuation. Managed Sites own hosting access and their live databases; GitHub commits do not deploy them.
 
-The private proof checkpoint began at 2026-10-04T07:27:51.364Z. Its earliest 24-hour review is 2026-10-05T07:27:51.364Z (16:57:51 ACST); an existing review task is enabled for 17:12:51 ACST. Do not restart the checkpoint, open the test view, publish a capture or change its schedule during the test. Use read-only native D1/Worker evidence for a repo audit.
+The original proof checkpoint `absence-check-001` began at 2026-10-04T07:27:51.364Z. Its 24-hour review was executed and is INCONCLUSIVE: complete view closure and historical scheduler identity were not established. background-proof/project_docs/CURRENT_BUILD_STATE.md owns the proof's current status and next gate. Never restart or overwrite the original checkpoint. A new absence window needs a distinct immutable checkpoint and the owner's authorisation; do not open the test view, publish a capture or change its schedule during an authorised window. Use read-only native D1/Worker evidence for a repo audit.
 
 For a GitHub-only task, update this repository without publishing either managed Site. A requested Site change uses the Sites workflow and its exact original project_id. Never use the proof app's private-boundary writer as a public endpoint.
 
