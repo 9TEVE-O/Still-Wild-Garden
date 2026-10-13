@@ -52,6 +52,8 @@ node scripts/verify-android.cjs
 node scripts/verify-growth.cjs
 ```
 
+`verify-growth.cjs` always runs its logic checks. Its renderer checks also need `@napi-rs/canvas`, found as an installed package or through `CODEX_PRIMARY_RUNTIME_NODE_MODULES`; CI installs it and passes `--require-canvas`.
+
 The two renderer checks additionally use `@napi-rs/canvas` from `CODEX_PRIMARY_RUNTIME_NODE_MODULES`, as supplied in the Work Mode environment. Their results do not establish browser or Android device acceptance.
 
 Read [AGENTS.md](AGENTS.md), [the project index](project_docs/PROJECT_INDEX.md), [the current checkpoint](project_docs/CURRENT_BUILD_STATE.md) and [validation evidence](project_docs/VALIDATION.md) before making changes. [The Android README](android/README.md) owns its build instructions and phone acceptance. [Source provenance](project_docs/source-import-manifest.json) records the imported files and original hashes.

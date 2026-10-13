@@ -65,4 +65,6 @@ Candidate change in source only; the public Site was not published or touched. N
 | `verify-persistence.cjs`, `verify-evolution.cjs`, `verify-garden.cjs`, `verify-android.cjs` | PASS. `verify-garden.cjs` measured 125,569 bytes with this session's canvas build against the recorded 121,484; the recorded loop-evidence.json was left unchanged because the version 1 path did not change |
 | `pnpm build` | PASS; the atlas ships at `/art/growth/stillwild-growth-atlas.png` |
 
+CI installs `@napi-rs/canvas` 1.0.11 outside the app's lockfile and runs `verify-growth.cjs --require-canvas`, so the renderer checks fail rather than skip if the canvas is missing.
+
 Not established: browser or phone rendering, the blind ordering test, performance on low-end phones and publication to the managed Site. The build also includes the unconfigured pull request #6 routes recorded in CURRENT_BUILD_STATE.md.

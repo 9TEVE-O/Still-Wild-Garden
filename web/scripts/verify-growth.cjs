@@ -2,6 +2,7 @@
 // Pure checks always run. Canvas checks run when @napi-rs/canvas is available (installed, or via
 // CODEX_PRIMARY_RUNTIME_NODE_MODULES as for the other renderer checks) and are reported otherwise.
 // Writes renders only to .sites-runtime/verification/. Pass --record to also write project_docs/growth-evidence.json.
+// Pass --require-canvas (as CI does) to fail instead of skipping when no Node canvas is available.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -106,6 +107,7 @@ function loadCanvas() {
 
 (async () => {
   const canvasLib = loadCanvas();
+  if (!canvasLib && process.argv.includes('--require-canvas')) throw new Error('--require-canvas: @napi-rs/canvas is not available, so the renderer checks did not run');
   if (canvasLib) {
     const { createCanvas, loadImage } = canvasLib;
     const { drawGarden } = require(path.join(dir, 'render-garden.js'));
