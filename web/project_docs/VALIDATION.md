@@ -61,7 +61,7 @@ Candidate change in source only; the public Site was not published or touched. N
 |---|---|
 | `pnpm exec tsc --noEmit` | PASS |
 | `eslint` on the new and changed TypeScript files | PASS |
-| `node scripts/verify-growth.cjs --record` | PASS. Atlas digest matches its index (60 sprites, 256 x 142). Exact parity with the version 1 plant count across 5 seeds and 10 ages. Stages never go backwards. Deterministic output. 78 spots kept clear of the first sprout. Unchanged version 1 sources and art for Android. Pixel-identical output to the version 1 renderer when no extra plants are visible. Phone-size renders at day 7, 40 and 400. A day-400 GIF loop closes exactly at 144,259 bytes. See growth-evidence.json |
+| `node scripts/verify-growth.cjs --record` | PASS. Atlas digest matches its index (60 sprites, 256 x 142). Exact parity with the version 1 plant count across 5 seeds and 10 ages. Stages never go backwards. Deterministic output. 78 spots kept clear of the first sprout. Unchanged version 1 sources and art for Android. Pixel-identical output to the version 1 renderer when no extra plants are visible. Phone-size renders at day 7, 40 and 400 (390 x 844 points at the live canvas's device pixel ratio cap of 2). A day-400 GIF loop closes exactly at 144,259 bytes. See growth-evidence.json |
 | `verify-persistence.cjs`, `verify-evolution.cjs`, `verify-garden.cjs`, `verify-android.cjs` | PASS. `verify-garden.cjs` measured 125,569 bytes with this session's canvas build against the recorded 121,484; the recorded loop-evidence.json was left unchanged because the version 1 path did not change |
 | `pnpm build` | PASS; the atlas ships at `/art/growth/stillwild-growth-atlas.png` |
 

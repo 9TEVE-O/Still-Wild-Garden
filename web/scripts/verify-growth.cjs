@@ -123,10 +123,11 @@ function loadCanvas() {
       drawWorld(b.getContext('2d'), 800, 520, garden, now, art2, false, 1.3);
       assert.ok(Buffer.from(a.getContext('2d').getImageData(0, 0, 800, 520).data).equals(Buffer.from(b.getContext('2d').getImageData(0, 0, 800, 520).data)), 'pixel parity without extra plants');
     }
-    // 6. Three ages at phone presentation size (390 x 844 points at 3x), drawn by the live renderer.
-    const renders = {};
+    // 6. Three ages at phone presentation size (390 x 844 points), drawn by the live renderer with the
+    //    same backing store as components/garden-canvas.tsx, which caps device pixel ratio at 2.
+    const DPR = 2, renders = {};
     for (const days of [7, 40, 400]) {
-      const c = createCanvas(390 * 3, 844 * 3), ctx = c.getContext('2d'); ctx.setTransform(3, 0, 0, 3, 0, 0);
+      const c = createCanvas(390 * DPR, 844 * DPR), ctx = c.getContext('2d'); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       drawWorld(ctx, 390, 844, { seed: 4288523180, bornAt: now - days * DAY, version: 1 }, now, art2, false, 0);
       const file = path.join(dir, `growth-day${String(days).padStart(3, '0')}-phone.png`);
       fs.writeFileSync(file, c.toBuffer('image/png'));
@@ -140,7 +141,7 @@ function loadCanvas() {
     const loop = await encodeLoop(width, height, frame);
     assert.ok(loop.bytes.length < 2000000, 'GIF under 2,000,000 bytes');
     fs.writeFileSync(path.join(dir, 'growth-day400-loop.gif'), loop.bytes);
-    evidence.canvas = { status: 'PASS', parityWithoutExtraPlants: true, phoneRenders: renders, day400LoopBytes: loop.bytes.length,
+    evidence.canvas = { status: 'PASS', parityWithoutExtraPlants: true, phoneRenders: renders, phoneRenderDevicePixelRatio: DPR, day400LoopBytes: loop.bytes.length,
       note: 'Node canvas, not a browser or phone; renders are for the blind ordering test, not its result.' };
   }
   if (process.argv.includes('--record')) fs.writeFileSync('project_docs/growth-evidence.json', JSON.stringify(evidence, null, 2) + '\n');

@@ -13,7 +13,7 @@ To regenerate (needs Python 3.11+ with numpy, Pillow and scipy):
 
 ```sh
 python3 web/design-assets/growth/build_atlas.py
-node web/scripts/verify-growth.cjs        # run from web/
+cd web && node scripts/verify-growth.cjs
 ```
 
 `build_atlas.py` writes `web/public/art/growth/stillwild-growth-atlas.png` and `web/lib/growth-atlas.ts`. The output is deterministic. The verifier fails if the atlas and its index drift apart.
