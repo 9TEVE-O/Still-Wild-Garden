@@ -142,3 +142,35 @@ def test_worker_collects_weather_after_run_due_and_keeps_committed_slot(
 
     assert committed
     assert "provider unavailable" in caplog.text
+
+
+def test_stop_during_run_lets_the_receipt_log_before_exiting(tmp_path, monkeypatch, caplog):
+    """A SIGTERM between commit and receipt log must not lose the log line (CI race)."""
+    config = replace(Settings(), db_path=str(tmp_path / 'stop.db'), wild_sim=True)
+    clock = datetime(2026, 10, 4, 10, tzinfo=UTC)
+    monkeypatch.setattr(worker, 'settings', config)
+    monkeypatch.setattr(worker, 'shutdown', worker._Shutdown())
+
+    finish = Repository.finish_background_run
+
+    def finish_then_signal(self, *args, **kwargs):
+        finish(self, *args, **kwargs)  # Slot is committed; receipt not yet logged.
+        worker.shutdown.request(15, None)  # Must not raise here.
+
+    monkeypatch.setattr(Repository, 'finish_background_run', finish_then_signal)
+    monkeypatch.setattr(
+        worker, 'run_due',
+        lambda repo, engine, settings, trigger: run_due(repo, engine, settings, trigger, clock),
+    )
+    monkeypatch.setattr(worker.time, 'sleep', lambda _: pytest.fail('slept after stop'))
+    with caplog.at_level(logging.INFO, logger='stillwild'):
+        worker.work_forever()
+    runs = Repository(config.db_path).list_background_runs()
+    assert runs and all(r['id'] in caplog.text for r in runs)
+
+
+def test_stop_while_idle_exits_immediately():
+    shutdown = worker._Shutdown()
+    with pytest.raises(SystemExit):
+        shutdown.request(15, None)
+    assert shutdown.requested
