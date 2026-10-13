@@ -9,7 +9,7 @@ The repository now holds three distinct runtimes:
 | Location | Purpose | Current boundary |
 |---|---|---|
 | [web/](web/README.md) | Public pixel garden, gifts and Android companion candidate | Site version 2; one shared origin; version 1 age-based growth |
-| [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Private test Site version 3; hourly updater enabled; 24-hour absence proof pending |
+| [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Private test Site version 4 per its current-state record; original 24-hour absence review INCONCLUSIVE; no new window started |
 | [src/stillwild/](docs/EXPERIMENTAL_BACKEND_README.md) | Experimental Python agent service, isolated real-garden registry/weather ingestion, and opt-in Wild simulation | Separate SQLite runtime; model-derived Open-Meteo values; no connection to either pixel app |
 
 The public app and the original seed and birth time are preserved. GitHub updates do not deploy either managed Site.
@@ -18,11 +18,11 @@ The public app and the original seed and birth time are preserved. GitHub update
 
 The [approved v0.2 brief](web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md) governs this bounded milestone: scheduled jobs must save outcomes before a viewer returns. The first garden uses completed UTC-hour weather intervals, finite-state keeper actions and read-only snapshots with refresh. SSE remains deferred; the prompt catalog remains parked; future LLM use is undecided.
 
-The private background-test source was recovered from Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, and imported under `background-proof/`. Its D1 database is separate from the public origin.
+The private background-test source was recovered from Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, and imported under `background-proof/`. Its D1 database is separate from the public origin. [Its current-state record](background-proof/project_docs/CURRENT_BUILD_STATE.md) owns the proof's status, including the later version 4 scheduler-provenance deployment.
 
-On 5 October 2026, native database reads showed **22 unique committed hourly ticks, revision 22 and 31 saved consequence events**. All 22 tick run IDs matched successful Worker log entries. Recorded planting, habitat and water changes reconcile with the saved world. This establishes background progress within the observed window.
+On 5 October 2026, native database reads showed **22 unique committed hourly ticks, revision 22 and 31 saved consequence events** at that cutoff. All 22 tick run IDs matched successful Worker log entries. Recorded planting, habitat and water changes reconcile with the saved world. This establishes background progress within the observed window.
 
-**The full 24-hour absence proof remains pending.** The immutable checkpoint starts at 4 October 2026, 16:57:51 ACST; its earliest review is 5 October 2026, 16:57:51 ACST. The existing review task is set for 17:12:51 ACST. View-closure confirmation and the first read-only return still need review. Do not open the test garden or restart its checkpoint during that window.
+**The original 4–5 October 2026 absence review was executed and remains INCONCLUSIVE.** Saved progress is evidenced within that window; complete view closure and historical scheduler identity were not established. A later bootstrap-rerun specimen linked one independently recorded execution to one saved keeper consequence. It does not establish hourly scheduling or a full absence PASS. Records through 5 October show the original garden and its checkpoint (`absence-check-001`, started 4 October 2026, 16:57:51 ACST) preserved. Never restart or overwrite that checkpoint; a new 24-hour window needs a distinct immutable checkpoint and the owner's authorisation.
 
 Separate personal ownership is a later release gate. The Android candidate still needs physical-device acceptance.
 
@@ -40,7 +40,7 @@ Open `http://localhost:8000/docs`. The optional [Wild simulation](docs/EXPERIMEN
 
 ## Checks and next work
 
-Current local checks: **100 Python tests and Ruff pass**, legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
+Current local checks: **124 Python tests and Ruff pass** (re-run 13 October 2026), legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
 
 The [Project Auditor report](docs/audits/2026-10-05/REPORT.md) records the reviewed revisions, findings, remediation and remaining gates. [Native evidence](docs/audits/2026-10-05/background-native-evidence.json) and [correlation](docs/audits/2026-10-05/background-correlation.json) preserve the observed progress without claiming full absence.
 
@@ -57,4 +57,4 @@ GIF/renderer, Android-scene and local Worker/D1 behavior. [The sync record](web/
 and [import evidence](web/project_docs/repository-verification.json) bind those checks to the import.
 None of these local checks establishes the required hosted 24-hour absence proof.
 
-The next bounded action is the existing absence review, followed by any evidence-led correction it identifies. Preserve both managed Sites and their current data while this test runs.
+The next recorded gate is view-closure control, implemented and verified before any second 24-hour window is authorised (see the proof's current-state record). Preserve both managed Sites and their current data; GitHub changes do not deploy either Site.
