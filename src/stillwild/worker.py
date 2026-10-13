@@ -52,7 +52,7 @@ def work_forever() -> None:
                 "schedule conflict and restarts it: %s",
                 exc,
             )
-            while True:
+            while not shutdown.requested:
                 time.sleep(settings.tick_seconds)
         except Exception:
             log.exception("Background work failed; uncommitted slots will be retried.")
@@ -61,7 +61,7 @@ def work_forever() -> None:
         if shutdown.requested:
             break
         time.sleep(settings.tick_seconds)
-    log.info("Background worker stopped after its last run was committed and logged.")
+    log.info("Background worker stopped.")
 
 
 def _collect_due_weather(
