@@ -1,7 +1,7 @@
 "use client";
 import { forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
 import type { Garden } from "@/lib/garden";
-import { drawGarden, loadArt } from "@/lib/render-garden";
+import { drawWorld, loadWorldArt } from "@/lib/render-world";
 export const GardenCanvas = forwardRef<HTMLCanvasElement, { garden: Garden | null; now: number }>(function GardenCanvas({ garden, now }, forwarded) {
   const ref = useRef<HTMLCanvasElement>(null);
   const state = useRef({ garden, offset: now - Date.now() });
@@ -15,13 +15,13 @@ export const GardenCanvas = forwardRef<HTMLCanvasElement, { garden: Garden | nul
     const reduce = matchMedia("(prefers-reduced-motion: reduce)");
     const resize = () => { const r = el.getBoundingClientRect(); const dpr = Math.min(devicePixelRatio, 2); el.width = Math.round(r.width * dpr); el.height = Math.round(r.height * dpr); context.setTransform(dpr, 0, 0, dpr, 0, 0); };
     const observer = new ResizeObserver(resize); observer.observe(el); resize();
-    void loadArt().then(art => {
+    void loadWorldArt().then(art => {
       if (dead) return;
       const paint = (time: number) => {
         if (dead) return;
         if (!document.hidden && (time - previous > (reduce.matches ? 1000 : 33))) {
           previous = time;
-          drawGarden(context, el.clientWidth, el.clientHeight, state.current.garden, Date.now() + state.current.offset, art, reduce.matches);
+          drawWorld(context, el.clientWidth, el.clientHeight, state.current.garden, Date.now() + state.current.offset, art, reduce.matches);
         }
         frame = requestAnimationFrame(paint);
       };
