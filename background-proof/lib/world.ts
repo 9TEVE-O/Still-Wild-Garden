@@ -1,6 +1,9 @@
 export const HOUR = 3_600_000;
 export const RULES_VERSION = 2;
 export const GARDEN_ID = "darwin-proof-001";
+// The original checkpoint is immutable and its executed review is INCONCLUSIVE; it is reported separately
+// from the active second-window checkpoint and is never restarted or overwritten.
+export const ORIGINAL_PROOF_ID = "absence-check-001";
 export const PROOF_ID = "absence-check-002";
 // Recover missed intervals in bounded batches while allowing the hourly
 // scheduler to make measurable net progress against a growing backlog.
