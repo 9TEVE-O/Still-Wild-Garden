@@ -116,10 +116,14 @@ const snapshotRequest = sessionId => new Request('https://proof.example/api/snap
   const noScheduler = new Request('https://proof.example/api/background/tick',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"trigger":"schedule"}'});
   assert.equal((await api.POST(noScheduler)).status,400);
   const activeView = await background.recordViewSession('8c2bfc62-737d-4a5b-9c53-96b3b20d188f','open');
-  // GET /api/snapshot writes nothing and does not depend on the view log; the page records its read first.
+  // GET /api/snapshot writes nothing, does not depend on the view log, and serves garden data only to an open
+  // recorded session; the page records its read first.
   const beforeSnapshot = get('SELECT total_changes() AS n').n;
   assert.equal((await viewApi.GET(snapshotRequest(activeView.sessionId))).status,200);
-  assert.equal((await viewApi.GET(snapshotRequest('x'.repeat(5000)))).status,200);
+  assert.equal((await viewApi.GET(snapshotRequest('x'.repeat(5000)))).status,400);
+  assert.equal((await viewApi.GET(snapshotRequest(null))).status,400);
+  const unknownRead = await viewApi.GET(snapshotRequest('5b1f0c2e-8d3a-4e6b-9f7c-2a1b3c4d5e6f'));
+  assert.equal(unknownRead.status,409); assert.equal((await unknownRead.json()).world,undefined);
   assert.equal(get('SELECT total_changes() AS n').n,beforeSnapshot);
   sql.exec("CREATE TRIGGER refuse_view_log BEFORE INSERT ON view_events BEGIN SELECT RAISE(ABORT,'View log unavailable'); END");
   assert.equal((await viewApi.GET(snapshotRequest(activeView.sessionId))).status,200);
@@ -143,6 +147,11 @@ const snapshotRequest = sessionId => new Request('https://proof.example/api/snap
   assert.equal((await sessionApi.POST(viewEvent(raced,'open'))).status,409);
   assert.notEqual(get('SELECT closed_at FROM view_sessions WHERE id = ?',raced).closed_at,null);
   await background.recordViewSession(activeView.sessionId,'close');
+  // A closed session gets no garden data, whether it closed normally or its close overtook its open.
+  const beforeClosedReads = get('SELECT total_changes() AS n').n;
+  assert.equal((await viewApi.GET(snapshotRequest(activeView.sessionId))).status,409);
+  assert.equal((await viewApi.GET(snapshotRequest(raced))).status,409);
+  assert.equal(get('SELECT total_changes() AS n').n,beforeClosedReads);
   // A view opened after the pre-checks but before the checkpoint transaction still blocks the checkpoint.
   const racing = 'f3b8c1d2-7a6e-4f5d-8c9b-0a1b2c3d4e5f'; const realBatch = DB.batch;
   DB.batch = async statements => {
@@ -178,8 +187,15 @@ const snapshotRequest = sessionId => new Request('https://proof.example/api/snap
   assert.equal(get('SELECT total_changes() AS n').n,returnReadChanges);
   assert.equal(firstReturn.proof.allViewsClosedConfirmed,true);
   assert.equal(firstReturn.proof.status,'VIEW_CLOSURE_PASS_PENDING_SCHEDULE_CORROBORATION');
-  const readView = await (await viewApi.GET(new Request('https://proof.example/api/snapshot'))).json();
-  assert.equal(readView.proof.allViewsClosedConfirmed,true);
+  // The owner's first page visit after the deadline: a session opened at baseline+24h is outside the window.
+  const firstVisit = '2e7d4c1a-6b5f-4a3e-8d2c-1f0e9d8c7b6a';
+  assert.equal((await viewApi.GET(snapshotRequest(firstVisit))).status,409); // no data before the page opens its session
+  assert.equal((await sessionApi.POST(viewEvent(firstVisit,'open'))).status,200);
+  assert.equal((await sessionApi.POST(viewEvent(firstVisit,'read'))).status,200);
+  const readView = await viewApi.GET(snapshotRequest(firstVisit));
+  assert.equal(readView.status,200); assert.equal((await readView.json()).proof.allViewsClosedConfirmed,true);
+  assert.equal((await sessionApi.POST(viewEvent(firstVisit,'close'))).status,200);
+  assert.equal((await background.snapshot()).proof.allViewsClosedConfirmed,true);
   // A tab that outlived its recorded close and wakes inside the window is still counted.
   clock = checkpoint.started_at + 6 * HOUR;
   assert.equal((await sessionApi.POST(viewEvent(activeView.sessionId,'heartbeat'))).status,409);
@@ -201,7 +217,7 @@ const snapshotRequest = sessionId => new Request('https://proof.example/api/snap
   const wrongMedia = new Request('https://proof.example/api/background/tick',{method:'POST',body:'{}'}); assert.equal((await api.POST(wrongMedia)).status,415);
   const dbCheck = get('PRAGMA foreign_key_check'); assert.equal(dbCheck,undefined);
   const evidence = { status:'PASS', executedAt:new Date().toISOString(), scope:'Actual simulation, weather parser, database queries and API routes with SQLite transactional D1 adapter and controlled clock/weather; not deployed Cloudflare or 24-hour proof.',
-    checks:['snapshot never advances state','UTC preceding-hour rainfall','future weather excluded','input units validated','overlapping runs commit once','duplicate same-run tick no-op','atomic rollback on persistence failure','keeper planting changes saved world','outage uses labelled zero-rain fallback','24-tick bounded recovery makes net progress','original baselines remain immutable','scheduled delivery requires scheduler provenance','snapshot GET is read-only and independent of the view log','unrecorded view read is refused','view sessions block checkpoint while active','stale unclosed view session blocks checkpoint','view opened during checkpoint transaction blocks checkpoint','close before open leaves session closed','checkpoint requires owner view-closure attestation','new immutable checkpoint and view gate','original and active checkpoints reported separately','24-hour read-only first return preserves closure proof','in-window activity from a closed tab invalidates closure proof','view opened during window invalidates closure proof'], ticks:32 };
+    checks:['snapshot never advances state','UTC preceding-hour rainfall','future weather excluded','input units validated','overlapping runs commit once','duplicate same-run tick no-op','atomic rollback on persistence failure','keeper planting changes saved world','outage uses labelled zero-rain fallback','24-tick bounded recovery makes net progress','original baselines remain immutable','scheduled delivery requires scheduler provenance','snapshot GET is read-only and independent of the view log','snapshot GET serves only open recorded view sessions','unrecorded view read is refused','view sessions block checkpoint while active','stale unclosed view session blocks checkpoint','view opened during checkpoint transaction blocks checkpoint','close before open leaves session closed','checkpoint requires owner view-closure attestation','new immutable checkpoint and view gate','original and active checkpoints reported separately','24-hour read-only first return preserves closure proof','in-window activity from a closed tab invalidates closure proof','view opened during window invalidates closure proof'], ticks:32 };
   fs.writeFileSync('project_docs/background-test-evidence.json',JSON.stringify(evidence,null,2)+'\n'); console.log(JSON.stringify(evidence));
   sql.close();
 })().catch(e => { console.error(e);process.exitCode=1; });

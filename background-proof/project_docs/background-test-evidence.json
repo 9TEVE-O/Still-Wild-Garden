@@ -1,6 +1,6 @@
 {
   "status": "PASS",
-  "executedAt": "2026-10-14T04:26:40.968Z",
+  "executedAt": "2026-10-14T13:07:14.991Z",
   "scope": "Actual simulation, weather parser, database queries and API routes with SQLite transactional D1 adapter and controlled clock/weather; not deployed Cloudflare or 24-hour proof.",
   "checks": [
     "snapshot never advances state",
@@ -16,6 +16,7 @@
     "original baselines remain immutable",
     "scheduled delivery requires scheduler provenance",
     "snapshot GET is read-only and independent of the view log",
+    "snapshot GET serves only open recorded view sessions",
     "unrecorded view read is refused",
     "view sessions block checkpoint while active",
     "stale unclosed view session blocks checkpoint",
