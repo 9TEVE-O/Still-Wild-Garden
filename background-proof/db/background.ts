@@ -82,10 +82,12 @@ const VIEW_SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f
 export const isViewSessionId = (value: unknown): value is string => typeof value === "string" && VIEW_SESSION_ID.test(value);
 type ViewGateRow = { startedAt: number; ownerAttestedAt: number | null; activeSessionsAtStart: number | null; protocolVersion: string | null;
   openEvents: number; snapshotEvents: number; heartbeatEvents: number; closeEvents: number; sessionsOverlappingWindow: number };
+export class ViewClosureRequiredError extends Error {}
 export async function snapshot(logView = false, sessionId: string | null = null) {
   const now = Date.now();
   // Read-only: one batch gives state, history and proof evidence from a consistent transaction. It never writes;
-  // the page records each view through POST /api/view/session before it reads.
+  // the page records each view through POST /api/view/session before it reads. A view read (logView) is served
+  // only when the same transaction shows its session open, so garden data never reaches a closed or unknown view.
   const records = await db().batch([
     db().prepare(worldQuery).bind(GARDEN_ID),
     db().prepare("SELECT id, tick_id AS tickId, revision, run_id AS runId, type, keeper, payload, committed_at AS committedAt FROM garden_events WHERE garden_id = ? ORDER BY revision DESC, id LIMIT 30").bind(GARDEN_ID),
@@ -110,11 +112,18 @@ export async function snapshot(logView = false, sessionId: string | null = null)
     db().prepare("SELECT id, started_at AS startedAt, revision FROM proof_baseline WHERE id = ?").bind(ORIGINAL_PROOF_ID),
     db().prepare("SELECT id, opened_at AS openedAt, last_seen_at AS lastSeenAt FROM view_sessions WHERE closed_at IS NULL ORDER BY opened_at LIMIT 50"),
     db().prepare("SELECT COUNT(*) AS n FROM view_sessions WHERE closed_at IS NULL"),
+    ...(logView ? [db().prepare("SELECT closed_at AS closedAt FROM view_sessions WHERE id = ?").bind(sessionId ?? "")] : []),
   ]);
   const row = records[0].results[0] as unknown as Row | undefined;
   const world = row ? { ...row, state: JSON.parse(row.state) } : null;
   const baseline = records[3].results[0] as { id: string; startedAt: number; revision: number; state: string } | undefined;
-  if (logView) console.info(JSON.stringify({ event: "stillwild_snapshot_view", at: now, sessionId, revision: world?.revision ?? null }));
+  if (logView) {
+    const viewer = records[11]?.results[0] as { closedAt: number | null } | undefined;
+    const served = Boolean(viewer && viewer.closedAt === null);
+    console.info(JSON.stringify(served ? { event: "stillwild_snapshot_view", at: now, sessionId, revision: world?.revision ?? null }
+      : { event: "stillwild_snapshot_refused", at: now, sessionId, reason: viewer ? "closed-session" : "unknown-session", revision: world?.revision ?? null }));
+    if (!served) throw new ViewClosureRequiredError("Garden reads need an open, recorded view session");
+  }
   const eventRows = records[1].results as { id: string; tickId: number; revision: number; runId: string | null; type: string; keeper: string; payload: string; committedAt: number }[];
   const viewGate = records[7].results[0] as ViewGateRow | undefined;
   const original = records[8].results[0] as { id: string; startedAt: number; revision: number } | undefined;
@@ -139,7 +148,6 @@ export async function snapshot(logView = false, sessionId: string | null = null)
       unclosedViewSessions: { count: unclosedCount, sessions: unclosedSessions },
       allViewsClosedConfirmed, status: allViewsClosedConfirmed ? "VIEW_CLOSURE_PASS_PENDING_SCHEDULE_CORROBORATION" : "PENDING_24_HOUR_ABSENCE_CHECK" } };
 }
-export class ViewClosureRequiredError extends Error {}
 export async function startAbsenceCheck(allViewsClosedAttested: boolean) {
   if (allViewsClosedAttested !== true) throw new ViewClosureRequiredError("Owner view-closure attestation is required");
   const now = Date.now();

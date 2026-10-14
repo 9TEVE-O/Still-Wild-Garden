@@ -19,7 +19,7 @@ pnpm start
 
 Use the local URL printed by Wrangler. A fresh local database is empty until its first local background write. For example, send JSON `{"trigger":"manual"}` to the local `/api/background/tick` route, then read local `/api/evidence`. Never use these steps against either hosted garden.
 
-`verify-background.cjs` tests the actual transition, weather parser, SQL and route code against an isolated transactional SQLite adapter with a controlled clock and weather. It exercises duplicate/overlapping ticks, rollback, rainfall intervals, fallback, catch-up, read-only snapshots, immutable checkpoints and the view-closure gate (stale and racing sessions, close-before-open, in-window activity). Both verifiers run from any working directory. It does not prove deployed absence or platform access enforcement.
+`verify-background.cjs` tests the actual transition, weather parser, SQL and route code against an isolated transactional SQLite adapter with a controlled clock and weather. It exercises duplicate/overlapping ticks, rollback, rainfall intervals, fallback, catch-up, read-only snapshots served only to open view sessions, immutable checkpoints and the view-closure gate (stale and racing sessions, close-before-open, in-window activity). Both verifiers run from any working directory. It does not prove deployed absence or platform access enforcement.
 
 ## Hosted boundary and continuation
 
