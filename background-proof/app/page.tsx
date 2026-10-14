@@ -7,23 +7,28 @@ import type { World, Consequence } from "@/lib/world";
 type Snapshot = { world: World | null; serverNow: number; completedTicks: number;
   events: { id: string; committedAt: number; payload: Consequence }[];
   runs: { id: string; startedAt: number; status: string; committedTicks: number }[];
-  proof: { status: string; earliestCheckAt: number | null } };
+  proof: { status: string; earliestCheckAt: number | null; baseline: { startedAt: number } | null;
+    originalCheckpoint: { id: string; startedAt: number; earliestCheckAt: number } | null } };
 const date = (ms: number) => new Date(ms).toLocaleString("en-AU", { timeZone: "Australia/Darwin", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 export default function Home() {
   const [data, setData] = useState<Snapshot | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
   const viewSession = useRef<string | null>(null);
   async function load(sessionId = viewSession.current) {
+    // Every read is recorded against an open view session first; without that record the garden is not read.
+    if (!sessionId) { setError("View closure tracking is unavailable. Reload the page to try again."); return; }
     setLoading(true);
     try {
-      const headers = sessionId ? { "X-Stillwild-View-Session": sessionId } : undefined;
-      const response = await fetch("/api/snapshot", { cache: "no-store", headers });
+      const recorded = await fetch("/api/view/session", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, event: "read" }) });
+      if (!recorded.ok) throw new Error("View closure tracking is unavailable. Reload the page to try again.");
+      const response = await fetch("/api/snapshot", { cache: "no-store", headers: { "X-Stillwild-View-Session": sessionId } });
       if (!response.ok) throw new Error("The garden is temporarily out of reach. Try again shortly.");
       setData(await response.json()); setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to reach the garden."); }
     finally { setLoading(false); }
   }
   useEffect(() => {
-    let activeSessionId: string | null = null;
+    let activeSessionId: string | null = null; let disposed = false;
     const sendSessionEvent = (sessionId: string, event: "open" | "heartbeat" | "close", keepalive = false) =>
       fetch("/api/view/session", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, event }), keepalive });
@@ -38,17 +43,20 @@ export default function Home() {
       void sendSessionEvent(sessionId, "close", true).catch(() => undefined);
       if (activeSessionId === sessionId) { activeSessionId = null; viewSession.current = null; }
     };
-    void openSession().then(sessionId => load(sessionId)).catch(e => setError(e instanceof Error ? e.message : "View closure tracking is unavailable."));
+    // A page hidden or unmounted while its open is pending has already sent its close; it must not read afterwards.
+    const openAndLoad = () => void openSession()
+      .then(sessionId => { if (!disposed && activeSessionId === sessionId) return load(sessionId); })
+      .catch(e => { if (!disposed) setError(e instanceof Error ? e.message : "View closure tracking is unavailable."); });
+    openAndLoad();
     const onReturn = () => { if (!document.hidden && activeSessionId) void load(activeSessionId); };
     const onPageHide = () => { if (activeSessionId) closeSession(activeSessionId); };
-    const onPageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) void openSession().then(sessionId => load(sessionId)).catch(e => setError(e instanceof Error ? e.message : "View closure tracking is unavailable."));
-    };
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) openAndLoad(); };
     const heartbeat = setInterval(() => { if (activeSessionId) void sendSessionEvent(activeSessionId, "heartbeat").catch(() => undefined); }, 30_000);
     const timer = setInterval(onReturn, 5 * 60_000);
     document.addEventListener("visibilitychange", onReturn); window.addEventListener("online", onReturn);
     window.addEventListener("pagehide", onPageHide); window.addEventListener("pageshow", onPageShow);
     return () => {
+      disposed = true;
       clearInterval(timer); clearInterval(heartbeat); document.removeEventListener("visibilitychange", onReturn);
       window.removeEventListener("online", onReturn); window.removeEventListener("pagehide", onPageHide); window.removeEventListener("pageshow", onPageShow);
       if (activeSessionId) closeSession(activeSessionId);
@@ -74,7 +82,7 @@ export default function Home() {
       <p className="proof-muted">{world ? `Last saved ${date(world.updatedAt)} ACST. Each visit reads what is already here.` : "The background service will plant this separate test garden."}</p>
       <ul className="proof-events">{data?.events.slice(0,8).map(event => <li key={event.id}><span>{event.payload.text}</span><time dateTime={new Date(event.committedAt).toISOString()}>{date(event.committedAt)}</time></li>)}</ul>
       {!data?.events.length && <p className="proof-muted">The first keeper consequence will arrive with a completed hourly update.</p>}
-      <details className="proof-details"><summary>Background test status</summary><p>The original 4–5 October 2026 absence review was executed and is INCONCLUSIVE: full-window view closure and historical scheduler identity were not established. Saved updates alone cannot establish a successful absence test.</p><p>{data?.completedTicks ?? 0} committed hours · revision {world?.revision ?? 0} · rules version 2</p><p>{data?.proof.earliestCheckAt ? `Original checkpoint was eligible for review from ${date(data.proof.earliestCheckAt)} ACST; this time alone is not proof of absence.` : "The snapshot does not provide the original checkpoint timestamp."}</p><p>Verified view-closure control is required before an owner-authorised second 24-hour window. No second window has started. <a href="https://github.com/9TEVE-O/Still-Wild-Garden/blob/main/background-proof/project_docs/CURRENT_BUILD_STATE.md">Current evidence record</a>.</p><p>Keeper behaviour follows fixed rules. A possible future role for an LLM is still undecided.</p></details>
+      <details className="proof-details"><summary>Background test status</summary><p>The original 4–5 October 2026 absence review was executed and is INCONCLUSIVE: full-window view closure and historical scheduler identity were not established. Saved updates alone cannot establish a successful absence test.</p><p>{data?.completedTicks ?? 0} committed hours · revision {world?.revision ?? 0} · rules version 2</p><p>{data?.proof.originalCheckpoint ? `Original checkpoint was eligible for review from ${date(data.proof.originalCheckpoint.earliestCheckAt)} ACST; this time alone is not proof of absence.` : "The snapshot does not include the original checkpoint."}</p><p>{data?.proof.baseline && data.proof.earliestCheckAt ? `A second 24-hour window began ${date(data.proof.baseline.startedAt)} ACST. Its review is due from ${date(data.proof.earliestCheckAt)} ACST and still needs independent schedule corroboration.` : "Verified view-closure control is required before an owner-authorised second 24-hour window. No second window has started."} <a href="https://github.com/9TEVE-O/Still-Wild-Garden/blob/main/background-proof/project_docs/CURRENT_BUILD_STATE.md">Current evidence record</a>.</p><p>Keeper behaviour follows fixed rules. A possible future role for an LLM is still undecided.</p></details>
       <footer className="proof-footer"><span>No tasks. No score. No punishment for leaving.</span><a href="https://stillwild-garden.subzteveo.chatgpt.site/">Original garden</a></footer>
     </section>
   </main>;

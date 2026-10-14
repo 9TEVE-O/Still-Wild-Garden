@@ -3,6 +3,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { DatabaseSync } = require('node:sqlite');
 const ts = require('typescript');
+process.chdir(`${__dirname}/..`); // Source, migrations and evidence paths are app-relative from any working directory.
 const HOUR = 3_600_000;
 let clock = Date.UTC(2026, 9, 6, 4, 35);
 class ClockDate extends Date { static now() { return clock; } }

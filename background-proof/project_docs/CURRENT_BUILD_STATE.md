@@ -2,14 +2,14 @@
 
 Updated: 14 October 2026, Australia/Darwin.
 Authority: approved canonical App Brief v0.2.
-Active stage: scheduler recovery throughput verified; the separate 24-hour view-closure test is prepared but not started.
+Active stage: scheduler recovery throughput verified; the separate 24-hour view-closure test is not started, and its fail-closed gate is in source but not deployed.
 Scope: one owner-private Darwin test garden. The original public garden is unchanged.
 
 ## Deployed runtime
 
 Private Site version 5 is deployed at https://stillwild-background-proof.subzteveo.chatgpt.site from Site source commit `1579149cd9b13ee5f7513ef508d39c6c361fce2a`. It remains owner-only and uses the existing D1 binding. The additive `0002_view_closure_gate` migration is present in D1.
 
-The runtime now requires scheduler provenance for scheduled writes, recovers up to 24 hourly intervals per run, and exposes read-only scheduler, applied-tick and view-gate evidence. The page records open, heartbeat, close and snapshot-read events. `GET /api/evidence` stays read-only.
+The runtime now requires scheduler provenance for scheduled writes, recovers up to 24 hourly intervals per run, and exposes read-only scheduler, applied-tick and view-gate evidence. The page records open, close and snapshot-read events; heartbeats update a session's last-seen time without an event. `GET /api/evidence` stays read-only.
 
 ## Live recovery specimen, 14 October 2026
 
@@ -36,6 +36,12 @@ The deployed gate requires an explicit owner attestation and zero active session
 
 The review automation is configured to use only `GET /api/evidence` after the checkpoint is due. It remains disabled until the owner attests closure and the new checkpoint is started. The first post-deadline return must be read-only; do not open the garden view during the window.
 
+## Fail-closed view gate (GitHub source only, not deployed)
+
+A local review of the version 5 gate reproduced two ways it can report full closure while a view stayed open: a session silent for more than 90 seconds no longer blocks the checkpoint and its later heartbeats are not counted, and a view opened between the separate closure check and the checkpoint insert is missed while the gate records zero active sessions. The 03:32 UTC unclosed session above would not block the version 5 gate.
+
+The source after this change blocks `absence-check-002` while any view session lacks a recorded close, however old its last heartbeat, and commits the check, checkpoint and gate in one D1 batch. `GET /api/snapshot` no longer writes. The page records every open, read, heartbeat and close through `POST /api/view/session`, including heartbeats and reads from an already-closed tab. In-window heartbeats, closes and overlapping sessions count against closure. `GET /api/evidence` lists unclosed sessions and reports `absence-check-001` separately from the new checkpoint. Local deterministic checks cover each case; this source is not deployed.
+
 ## Verification
 
 Local deterministic SQLite checks pass, including a 30-hour backlog recovered as 24 + 6, immutable original checkpoints, active-view blocking, a read-only first return and invalidation when a view opens during the window. Scheduler-provenance checks pass. `pnpm exec tsc --noEmit`, the production build and targeted lint on modified TypeScript files pass.
@@ -44,4 +50,4 @@ The GitHub repair was merged as commit `b85e3f8fab3ad6c00cb018d220eb385de916b5f3
 
 ## Next gate
 
-After every Stillwild view is closed, the owner must attest closure. Then start `absence-check-002` once; do not restart it. Leave the garden page closed and make the first due return through `GET /api/evidence`. A 24-hour PASS still requires zero in-window view events plus independent hourly receipt, run, tick and event corroboration.
+Create `absence-check-002` only through the fail-closed gate: deploy that source as a new owner-authorised Site version before attesting. Then close every Stillwild garden tab; in `GET /api/evidence`, close each session still listed under `proof.unclosedViewSessions` through `POST /api/view/session` only after confirming its tab is gone, until the count is 0. The owner then attests closure and starts `absence-check-002` once; do not restart it. Leave the garden page closed and make the first due return through `GET /api/evidence`. A 24-hour PASS still requires zero in-window view events plus independent hourly receipt, run, tick and event corroboration.
