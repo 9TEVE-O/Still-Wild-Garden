@@ -5,7 +5,11 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const headers = { "Cache-Control": "no-store" };
   const sessionId = request.headers.get("x-stillwild-view-session");
-  if (!isViewSessionId(sessionId)) return Response.json({ error: "An open view session is required to read the garden" }, { status: 400, headers });
+  if (!isViewSessionId(sessionId)) {
+    // Bounded refusal record: the reason only, never the raw header.
+    console.info(JSON.stringify({ event: "stillwild_snapshot_refused", at: Date.now(), reason: sessionId === null ? "missing-session" : "malformed-session" }));
+    return Response.json({ error: "An open view session is required to read the garden" }, { status: 400, headers });
+  }
   try { return Response.json(await snapshot(true, sessionId), { headers }); }
   catch (error) {
     if (error instanceof ViewClosureRequiredError) return Response.json({ error: error.message }, { status: 409, headers });

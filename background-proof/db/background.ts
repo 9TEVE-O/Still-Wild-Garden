@@ -120,7 +120,8 @@ export async function snapshot(logView = false, sessionId: string | null = null)
   if (logView) {
     const viewer = records[11]?.results[0] as { closedAt: number | null } | undefined;
     const served = Boolean(viewer && viewer.closedAt === null);
-    console.info(JSON.stringify({ event: served ? "stillwild_snapshot_view" : "stillwild_snapshot_refused", at: now, sessionId, revision: world?.revision ?? null }));
+    console.info(JSON.stringify(served ? { event: "stillwild_snapshot_view", at: now, sessionId, revision: world?.revision ?? null }
+      : { event: "stillwild_snapshot_refused", at: now, sessionId, reason: viewer ? "closed-session" : "unknown-session", revision: world?.revision ?? null }));
     if (!served) throw new ViewClosureRequiredError("Garden reads need an open, recorded view session");
   }
   const eventRows = records[1].results as { id: string; tickId: number; revision: number; runId: string | null; type: string; keeper: string; payload: string; committedAt: number }[];
