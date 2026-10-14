@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "executedAt": "2026-10-14T03:25:00.598Z",
+  "scope": "Local deterministic provenance specimen: caller-supplied scheduler identity is persisted and joins one API request to one garden run, applied tick, revision and event.",
+  "limitations": [
+    "This test does not establish that scheduler-exec-0001 originated from an independent scheduler.",
+    "A future acceptance run still requires an independently recorded scheduler receipt/history and separate view-closure evidence.",
+    "No hosted Site, live D1 database, live scheduler, deployment or 24-hour proof is exercised here."
+  ],
+  "chain": {
+    "schedulerExecutionId": "scheduler-exec-0001",
+    "gardenRunId": "b2916ebd-af84-4c7d-b35a-ceca12aebdbc",
+    "tickId": 497573,
+    "revision": 1,
+    "eventId": "darwin-proof-001:2:497573:rain-collected"
+  },
+  "checks": [
+    "scheduler metadata validated",
+    "scheduled delivery without scheduler metadata rejected",
+    "execution ID persisted uniquely",
+    "execution ID joins to garden run",
+    "tick revision matches world revision",
+    "event carries direct run ID",
+    "read-only evidence exposes scheduler to run to tick to event chain",
+    "duplicate execution ID rejected"
+  ]
+}

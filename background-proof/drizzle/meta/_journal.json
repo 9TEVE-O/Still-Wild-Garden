@@ -15,6 +15,13 @@
       "when": 1791206110486,
       "tag": "0001_scheduler_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791947908696,
+      "tag": "0002_view_closure_gate",
+      "breakpoints": true
     }
   ]
 }

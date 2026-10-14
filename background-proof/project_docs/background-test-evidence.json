@@ -1,6 +1,6 @@
 {
   "status": "PASS",
-  "executedAt": "2026-10-05T06:05:37.741Z",
+  "executedAt": "2026-10-14T03:25:00.737Z",
   "scope": "Actual simulation, weather parser, database queries and API routes with SQLite transactional D1 adapter and controlled clock/weather; not deployed Cloudflare or 24-hour proof.",
   "checks": [
     "snapshot never advances state",
@@ -12,12 +12,14 @@
     "atomic rollback on persistence failure",
     "keeper planting changes saved world",
     "outage uses labelled zero-rain fallback",
-    "bounded six-hour recovery",
-    "immutable seed and baseline",
-    "unsupported mutation rejected",
-    "validated scheduler weather relay",
-    "invalid relay payload rejected",
-    "immutable explicit proof start without garden reset"
+    "24-tick bounded recovery makes net progress",
+    "original baselines remain immutable",
+    "scheduled delivery requires scheduler provenance",
+    "view sessions block checkpoint while active",
+    "checkpoint requires owner view-closure attestation",
+    "new immutable checkpoint and view gate",
+    "24-hour read-only first return preserves closure proof",
+    "view opened during window invalidates closure proof"
   ],
-  "ticks": 13
+  "ticks": 32
 }

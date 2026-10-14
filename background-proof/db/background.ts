@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { advance, GARDEN_ID, HOUR, initialState, MAX_CATCH_UP, PROOF_ID, RULES_VERSION, type Environment, type World } from "@/lib/world";
+import { advance, GARDEN_ID, HOUR, initialState, MAX_CATCH_UP, PROOF_ID, RULES_VERSION, VIEW_PROTOCOL_VERSION, type Environment, type World } from "@/lib/world";
 import { archivedInput, collectWeather, missingInput, parseForecast } from "@/lib/weather";
 type Row = Omit<World, "state"> & { state: string };
 export type SchedulerExecution = { taskId: string; executionId: string; triggeredAt: number };
@@ -78,32 +78,98 @@ export async function runBackground(trigger: "manual" | "schedule", now = Date.n
     throw error;
   }
 }
-export async function snapshot(logView = false) {
+export async function snapshot(logView = false, sessionId: string | null = null) {
   const now = Date.now();
+  if (logView) {
+    await db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) VALUES (?, ?, 'snapshot_read', ?) ")
+      .bind(crypto.randomUUID(), sessionId, now).run();
+  }
   // Read-only batch gives a state and its history from a consistent database transaction.
   const records = await db().batch([
     db().prepare(worldQuery).bind(GARDEN_ID),
     db().prepare("SELECT id, tick_id AS tickId, revision, run_id AS runId, type, keeper, payload, committed_at AS committedAt FROM garden_events WHERE garden_id = ? ORDER BY revision DESC, id LIMIT 30").bind(GARDEN_ID),
     db().prepare("SELECT id, trigger, slot, started_at AS startedAt, finished_at AS finishedAt, status, committed_ticks AS committedTicks, weather_status AS weatherStatus, scheduler_task_id AS schedulerTaskId, scheduler_execution_id AS schedulerExecutionId, scheduler_triggered_at AS schedulerTriggeredAt FROM background_runs ORDER BY started_at DESC LIMIT 30"),
-    db().prepare("SELECT started_at AS startedAt, revision, state FROM proof_baseline WHERE id = ?").bind(PROOF_ID),
+    db().prepare("SELECT id, started_at AS startedAt, revision, state FROM proof_baseline WHERE id = ?").bind(PROOF_ID),
     db().prepare("SELECT COUNT(*) AS n FROM applied_ticks WHERE garden_id = ?").bind(GARDEN_ID),
+    db().prepare("SELECT scheduler_execution_id AS executionId FROM background_runs WHERE scheduler_execution_id IS NOT NULL AND scheduler_triggered_at >= ? ORDER BY scheduler_triggered_at")
+      .bind(now - 8 * 24 * HOUR),
+    db().prepare("SELECT tick_id AS tickId, revision, run_id AS runId, input_id AS inputId, committed_at AS committedAt FROM applied_ticks WHERE garden_id = ? ORDER BY revision DESC LIMIT 30")
+      .bind(GARDEN_ID),
+    db().prepare(`SELECT b.started_at AS startedAt, g.owner_attested_at AS ownerAttestedAt,
+        g.active_sessions_at_start AS activeSessionsAtStart, g.protocol_version AS protocolVersion,
+        (SELECT COUNT(*) FROM view_events v WHERE v.occurred_at >= b.started_at AND v.occurred_at < b.started_at + ? AND v.event_type = 'open') AS openEvents,
+        (SELECT COUNT(*) FROM view_events v WHERE v.occurred_at >= b.started_at AND v.occurred_at < b.started_at + ? AND v.event_type = 'snapshot_read') AS snapshotEvents
+      FROM proof_baseline b LEFT JOIN proof_view_gate g ON g.checkpoint_id = b.id WHERE b.id = ?`)
+      .bind(24 * HOUR, 24 * HOUR, PROOF_ID),
   ]);
   const row = records[0].results[0] as unknown as Row | undefined;
   const world = row ? { ...row, state: JSON.parse(row.state) } : null;
-  const baseline = records[3].results[0] as { startedAt: number; revision: number; state: string } | undefined;
+  const baseline = records[3].results[0] as { id: string; startedAt: number; revision: number; state: string } | undefined;
   if (logView) console.info(JSON.stringify({ event: "stillwild_snapshot_view", at: now, revision: world?.revision ?? null }));
   const eventRows = records[1].results as { id: string; tickId: number; revision: number; runId: string | null; type: string; keeper: string; payload: string; committedAt: number }[];
+  const viewGate = records[7].results[0] as { startedAt: number; ownerAttestedAt: number | null; activeSessionsAtStart: number | null; protocolVersion: string | null; openEvents: number; snapshotEvents: number } | undefined;
+  const hasCompleteViewGate = Boolean(viewGate?.ownerAttestedAt && viewGate.activeSessionsAtStart === 0 && viewGate.protocolVersion === VIEW_PROTOCOL_VERSION);
+  const viewWindowElapsed = Boolean(baseline && now >= baseline.startedAt + 24 * HOUR);
+  const allViewsClosedConfirmed = Boolean(viewWindowElapsed && hasCompleteViewGate && viewGate?.openEvents === 0 && viewGate?.snapshotEvents === 0);
   return { world, events: eventRows.map(r => ({ ...r, payload: JSON.parse(r.payload) })),
-    runs: records[2].results, serverNow: now, completedTicks: (records[4].results[0] as { n: number } | undefined)?.n ?? 0,
-    proof: { status: "PENDING_24_HOUR_ABSENCE_CHECK", baseline: baseline ? { ...baseline, state: JSON.parse(baseline.state) } : null,
-      earliestCheckAt: baseline ? baseline.startedAt + 24 * HOUR : null, independentScheduleLogsRequired: true, allViewsClosedConfirmed: false } };
+    runs: records[2].results, usedSchedulerExecutionIds: (records[5].results as { executionId: string }[]).map(r => r.executionId),
+    appliedTicks: records[6].results,
+    serverNow: now, completedTicks: (records[4].results[0] as { n: number } | undefined)?.n ?? 0,
+    proof: { baseline: baseline ? { ...baseline, state: JSON.parse(baseline.state) } : null,
+      earliestCheckAt: baseline ? baseline.startedAt + 24 * HOUR : null, independentScheduleLogsRequired: true,
+      viewCoverage: viewGate ? { protocolVersion: viewGate.protocolVersion, ownerAttestedAt: viewGate.ownerAttestedAt,
+        activeSessionsAtStart: viewGate.activeSessionsAtStart, openEvents: viewGate.openEvents, snapshotEvents: viewGate.snapshotEvents,
+        windowElapsed: viewWindowElapsed, instrumentationComplete: hasCompleteViewGate } : null,
+      allViewsClosedConfirmed, status: allViewsClosedConfirmed ? "VIEW_CLOSURE_PASS_PENDING_SCHEDULE_CORROBORATION" : "PENDING_24_HOUR_ABSENCE_CHECK" } };
 }
-export async function startAbsenceCheck() {
+export class ViewClosureRequiredError extends Error {}
+export async function startAbsenceCheck(allViewsClosedAttested: boolean) {
+  if (allViewsClosedAttested !== true) throw new ViewClosureRequiredError("Owner view-closure attestation is required");
   const now = Date.now();
-  // An immutable test checkpoint, separate from garden creation. Retrying cannot restart its clock.
-  await db().prepare("INSERT INTO proof_baseline (id, garden_id, started_at, revision, state) SELECT ?, id, ?, revision, state FROM worlds WHERE id = ? ON CONFLICT(id) DO NOTHING").bind(PROOF_ID, now, GARDEN_ID).run();
+  const existing = await db().prepare("SELECT id FROM proof_baseline WHERE id = ?").bind(PROOF_ID).first<{ id: string }>();
+  if (existing) {
+    const gate = await db().prepare("SELECT checkpoint_id FROM proof_view_gate WHERE checkpoint_id = ?").bind(PROOF_ID).first<{ checkpointId: string }>();
+    if (!gate) throw new Error("Checkpoint exists without its immutable view gate; refusing to backfill it");
+    return (await snapshot()).proof;
+  }
+  const world = await getWorld();
+  if (!world) throw new Error("Initialise the garden before starting its absence check");
+  const active = await db().prepare("SELECT COUNT(*) AS n FROM view_sessions WHERE closed_at IS NULL AND last_seen_at >= ?")
+    .bind(now - 90_000).first<{ n: number }>();
+  if ((active?.n ?? 0) > 0) throw new ViewClosureRequiredError("Close all active garden views before starting the absence check");
+  // A new immutable checkpoint and its attestation are inserted together. Existing proof IDs are never overwritten.
+  await db().batch([
+    db().prepare("INSERT INTO proof_baseline (id, garden_id, started_at, revision, state) SELECT ?, id, ?, revision, state FROM worlds WHERE id = ? ON CONFLICT(id) DO NOTHING")
+      .bind(PROOF_ID, now, GARDEN_ID),
+    db().prepare("INSERT INTO proof_view_gate (checkpoint_id, owner_attested_at, active_sessions_at_start, protocol_version) SELECT ?, ?, 0, ? WHERE EXISTS (SELECT 1 FROM proof_baseline WHERE id = ? AND started_at = ?) ON CONFLICT(checkpoint_id) DO NOTHING")
+      .bind(PROOF_ID, now, VIEW_PROTOCOL_VERSION, PROOF_ID, now),
+  ]);
   const evidence = await snapshot();
-  if (!evidence.proof.baseline) throw new Error("Initialise the garden before starting its absence check");
+  if (!evidence.proof.baseline || !evidence.proof.viewCoverage?.instrumentationComplete) throw new Error("Checkpoint and view gate were not created together");
   console.info(JSON.stringify({ event: "stillwild_absence_baseline", startedAt: evidence.proof.baseline.startedAt, revision: evidence.proof.baseline.revision }));
   return evidence.proof;
+}
+
+export async function recordViewSession(sessionId: string, event: "open" | "heartbeat" | "close") {
+  const now = Date.now();
+  if (event === "open") {
+    await db().batch([
+      db().prepare("INSERT INTO view_sessions (id, opened_at, last_seen_at, closed_at) VALUES (?, ?, ?, NULL) ON CONFLICT(id) DO NOTHING").bind(sessionId, now, now),
+      db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) SELECT ?, ?, 'open', ? WHERE EXISTS (SELECT 1 FROM view_sessions WHERE id = ? AND opened_at = ?) ON CONFLICT(id) DO NOTHING")
+        .bind(`view:${sessionId}:open`, sessionId, now, sessionId, now),
+    ]);
+    const row = await db().prepare("SELECT closed_at AS closedAt FROM view_sessions WHERE id = ?").bind(sessionId).first<{ closedAt: number | null }>();
+    if (!row || row.closedAt !== null) throw new ViewClosureRequiredError("View session could not be opened");
+    return { sessionId, event, at: now };
+  }
+  if (event === "heartbeat") {
+    const result = await db().prepare("UPDATE view_sessions SET last_seen_at = ? WHERE id = ? AND closed_at IS NULL").bind(now, sessionId).run();
+    if (result.meta.changes !== 1) throw new ViewClosureRequiredError("View session is not active");
+    return { sessionId, event, at: now };
+  }
+  const result = await db().prepare("UPDATE view_sessions SET closed_at = COALESCE(closed_at, ?), last_seen_at = ? WHERE id = ?").bind(now, now, sessionId).run();
+  if (result.meta.changes !== 1) throw new ViewClosureRequiredError("View session is unknown");
+  await db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) VALUES (?, ?, 'close', ?) ON CONFLICT(id) DO NOTHING")
+    .bind(`view:${sessionId}:close`, sessionId, now).run();
+  return { sessionId, event, at: now };
 }

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { GardenCanvas } from "@/components/garden-canvas";
 import { gardenAt, type Garden } from "@/lib/garden";
 import type { World, Consequence } from "@/lib/world";
@@ -10,20 +11,48 @@ type Snapshot = { world: World | null; serverNow: number; completedTicks: number
 const date = (ms: number) => new Date(ms).toLocaleString("en-AU", { timeZone: "Australia/Darwin", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 export default function Home() {
   const [data, setData] = useState<Snapshot | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
-  async function load() {
+  const viewSession = useRef<string | null>(null);
+  async function load(sessionId = viewSession.current) {
     setLoading(true);
     try {
-      const response = await fetch("/api/snapshot", { cache: "no-store" });
+      const headers = sessionId ? { "X-Stillwild-View-Session": sessionId } : undefined;
+      const response = await fetch("/api/snapshot", { cache: "no-store", headers });
       if (!response.ok) throw new Error("The garden is temporarily out of reach. Try again shortly.");
       setData(await response.json()); setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to reach the garden."); }
     finally { setLoading(false); }
   }
   useEffect(() => {
-    void load(); const onReturn = () => { if (!document.hidden) void load(); };
+    let activeSessionId: string | null = null;
+    const sendSessionEvent = (sessionId: string, event: "open" | "heartbeat" | "close", keepalive = false) =>
+      fetch("/api/view/session", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, event }), keepalive });
+    const openSession = async () => {
+      const sessionId = crypto.randomUUID();
+      activeSessionId = sessionId; viewSession.current = sessionId;
+      const response = await sendSessionEvent(sessionId, "open");
+      if (!response.ok) throw new Error("View closure tracking is unavailable. Please try again shortly.");
+      return sessionId;
+    };
+    const closeSession = (sessionId: string) => {
+      void sendSessionEvent(sessionId, "close", true).catch(() => undefined);
+      if (activeSessionId === sessionId) { activeSessionId = null; viewSession.current = null; }
+    };
+    void openSession().then(sessionId => load(sessionId)).catch(e => setError(e instanceof Error ? e.message : "View closure tracking is unavailable."));
+    const onReturn = () => { if (!document.hidden && activeSessionId) void load(activeSessionId); };
+    const onPageHide = () => { if (activeSessionId) closeSession(activeSessionId); };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void openSession().then(sessionId => load(sessionId)).catch(e => setError(e instanceof Error ? e.message : "View closure tracking is unavailable."));
+    };
+    const heartbeat = setInterval(() => { if (activeSessionId) void sendSessionEvent(activeSessionId, "heartbeat").catch(() => undefined); }, 30_000);
     const timer = setInterval(onReturn, 5 * 60_000);
     document.addEventListener("visibilitychange", onReturn); window.addEventListener("online", onReturn);
-    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onReturn); window.removeEventListener("online", onReturn); };
+    window.addEventListener("pagehide", onPageHide); window.addEventListener("pageshow", onPageShow);
+    return () => {
+      clearInterval(timer); clearInterval(heartbeat); document.removeEventListener("visibilitychange", onReturn);
+      window.removeEventListener("online", onReturn); window.removeEventListener("pagehide", onPageHide); window.removeEventListener("pageshow", onPageShow);
+      if (activeSessionId) closeSession(activeSessionId);
+    };
   }, []);
   const world = data?.world; const environment = world?.state.environment;
   const garden: Garden | null = world ? { seed: world.seed, bornAt: world.bornAt, version: 1 } : null;
@@ -31,7 +60,7 @@ export default function Home() {
   const growth = world ? { ...gardenAt(garden, world.updatedAt), plants: world.state.plants, agents: 3,
     age: Math.max(3_600_000, world.updatedAt - world.bornAt) } : undefined;
   return <main className="proof-app">
-    <header className="topbar"><a className="wordmark" href="/">stillwild<span className="wordmark-dot">.</span></a><span className="proof-label">Private test garden</span></header>
+    <header className="topbar"><Link className="wordmark" href="/">stillwild<span className="wordmark-dot">.</span></Link><span className="proof-label">Private test garden</span></header>
     <section className="proof-world" aria-label="The Darwin test garden">
       <GardenCanvas garden={garden} now={data?.serverNow ?? 0} savedGrowth={growth} />
       <div className="proof-intro"><p className="proof-kicker">Darwin · A small beginning</p><h1>Life between visits.</h1><p>Three keepers. A little weather.<br />All the time in the world.</p></div>

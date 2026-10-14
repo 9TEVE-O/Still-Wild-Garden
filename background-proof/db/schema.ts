@@ -29,3 +29,15 @@ export const proofBaseline = sqliteTable("proof_baseline", {
   id: text("id").primaryKey(), gardenId: text("garden_id").notNull().references(() => worlds.id),
   startedAt: integer("started_at").notNull(), revision: integer("revision").notNull(), state: text("state").notNull(),
 });
+export const proofViewGate = sqliteTable("proof_view_gate", {
+  checkpointId: text("checkpoint_id").primaryKey().references(() => proofBaseline.id),
+  ownerAttestedAt: integer("owner_attested_at").notNull(), activeSessionsAtStart: integer("active_sessions_at_start").notNull(),
+  protocolVersion: text("protocol_version").notNull(),
+});
+export const viewSessions = sqliteTable("view_sessions", {
+  id: text("id").primaryKey(), openedAt: integer("opened_at").notNull(), lastSeenAt: integer("last_seen_at").notNull(),
+  closedAt: integer("closed_at"),
+}, t => [index("idx_view_sessions_opened_at").on(t.openedAt), index("idx_view_sessions_closed_at").on(t.closedAt)]);
+export const viewEvents = sqliteTable("view_events", {
+  id: text("id").primaryKey(), sessionId: text("session_id"), eventType: text("event_type").notNull(), occurredAt: integer("occurred_at").notNull(),
+}, t => [index("idx_view_events_time_type").on(t.occurredAt, t.eventType), index("idx_view_events_session").on(t.sessionId)]);
