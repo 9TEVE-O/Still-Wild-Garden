@@ -7,7 +7,7 @@ const HOUR = 3_600_000;
 let clock = Date.UTC(2026, 9, 6, 4, 35);
 class ClockDate extends Date { static now() { return clock; } }
 const sql = new DatabaseSync(':memory:');
-for (const migration of ['drizzle/0000_melodic_lucky_pierre.sql', 'drizzle/0001_scheduler_provenance.sql']) {
+for (const migration of ['drizzle/0000_melodic_lucky_pierre.sql', 'drizzle/0001_scheduler_provenance.sql', 'drizzle/0002_view_closure_gate.sql']) {
   sql.exec(fs.readFileSync(migration, 'utf8'));
 }
 sql.exec('PRAGMA foreign_keys = ON');
@@ -64,6 +64,10 @@ const get = (query, ...params) => sql.prepare(query).get(...params);
   const result = await response.json();
   assert.equal(result.schedulerExecutionId, scheduler.executionId);
   assert.equal(result.committedTicks, 1);
+  const missingScheduler = new Request('https://proof.example/api/background/tick', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trigger: 'schedule' }),
+  });
+  assert.equal((await api.POST(missingScheduler)).status, 400);
 
   const run = get('SELECT * FROM background_runs WHERE scheduler_execution_id = ?', scheduler.executionId);
   assert.ok(run);
@@ -78,6 +82,13 @@ const get = (query, ...params) => sql.prepare(query).get(...params);
   assert.ok(event);
   assert.equal(event.tick_id, tick.tick_id);
   assert.equal(event.revision, tick.revision);
+  const evidenceSnapshot = await background.snapshot();
+  const evidenceRun = evidenceSnapshot.runs.find(candidate => candidate.schedulerExecutionId === scheduler.executionId);
+  const evidenceTick = evidenceSnapshot.appliedTicks.find(candidate => candidate.runId === run.id);
+  const evidenceEvent = evidenceSnapshot.events.find(candidate => candidate.runId === run.id);
+  assert.equal(evidenceRun.id, run.id);
+  assert.equal(evidenceTick.tickId, tick.tick_id);
+  assert.equal(evidenceEvent.revision, tick.revision);
   assert.equal(get('SELECT revision FROM worlds WHERE id = ?', world.GARDEN_ID).revision, tick.revision);
 
   // A scheduler receipt can bind to at most one garden run.
@@ -109,7 +120,7 @@ const get = (query, ...params) => sql.prepare(query).get(...params);
       'No hosted Site, live D1 database, live scheduler, deployment or 24-hour proof is exercised here.'
     ],
     chain: { schedulerExecutionId: scheduler.executionId, gardenRunId: run.id, tickId: tick.tick_id, revision: tick.revision, eventId: event.id },
-    checks: ['scheduler metadata validated', 'execution ID persisted uniquely', 'execution ID joins to garden run', 'run joins to applied tick', 'tick revision matches world revision', 'event carries direct run ID', 'duplicate execution ID rejected']
+    checks: ['scheduler metadata validated', 'scheduled delivery without scheduler metadata rejected', 'execution ID persisted uniquely', 'execution ID joins to garden run', 'tick revision matches world revision', 'event carries direct run ID', 'read-only evidence exposes scheduler to run to tick to event chain', 'duplicate execution ID rejected']
   };
   fs.writeFileSync('project_docs/scheduler-provenance-test-evidence.json', JSON.stringify(evidence, null, 2) + '\n');
   console.log(JSON.stringify(evidence));

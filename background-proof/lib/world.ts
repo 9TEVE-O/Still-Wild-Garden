@@ -1,8 +1,11 @@
 export const HOUR = 3_600_000;
 export const RULES_VERSION = 2;
 export const GARDEN_ID = "darwin-proof-001";
-export const PROOF_ID = "absence-check-001";
-export const MAX_CATCH_UP = 6;
+export const PROOF_ID = "absence-check-002";
+// Recover missed intervals in bounded batches while allowing the hourly
+// scheduler to make measurable net progress against a growing backlog.
+export const MAX_CATCH_UP = 24;
+export const VIEW_PROTOCOL_VERSION = "stillwild-view-v1";
 export type Environment = {
   id: string; city: "darwin"; provider: "open-meteo:best_match" | "stillwild:fallback";
   validStart: number; validEnd: number; fetchedAt: number; sourceStatus: "modelled" | "stale" | "simulated";

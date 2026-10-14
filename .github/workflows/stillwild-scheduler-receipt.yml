@@ -2,14 +2,8 @@ name: stillwild-scheduler-receipt
 
 on:
   schedule:
-    # 00 UTC = 09:30 Australia/Darwin. The Stillwild relay runs at :35 Darwin.
-    - cron: "0 * * * *"
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/stillwild-scheduler-receipt.yml"
+    # :50 UTC is 15 minutes before the hourly Site task at :05 UTC.
+    - cron: "50 * * * *"
 
 permissions:
   contents: read

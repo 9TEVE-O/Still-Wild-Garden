@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     let scheduler: SchedulerExecution | undefined;
     try { scheduler = schedulerExecution(body.scheduler); }
     catch { return Response.json({ error: "Invalid scheduler provenance metadata" }, { status: 400 }); }
+    if (body.trigger === "schedule" && !scheduler) return Response.json({ error: "Scheduled delivery requires scheduler provenance metadata" }, { status: 400 });
     if (body.trigger !== "schedule" && scheduler) return Response.json({ error: "Scheduler metadata requires trigger=schedule" }, { status: 400 });
     if ("weather" in body) {
       try { if (!parseForecast(body.weather, Date.now(), "scheduler-relay").length) throw new Error("No completed intervals"); }
