@@ -21,6 +21,9 @@ export default function Home() {
       const recorded = await fetch("/api/view/session", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, event: "read" }) });
       if (!recorded.ok) throw new Error("View closure tracking is unavailable. Reload the page to try again.");
+      // A pagehide or cleanup that closed this session while its read was being recorded ends the read here,
+      // so no snapshot is fetched after the session's recorded close.
+      if (viewSession.current !== sessionId) return;
       const response = await fetch("/api/snapshot", { cache: "no-store", headers: { "X-Stillwild-View-Session": sessionId } });
       if (!response.ok) throw new Error("The garden is temporarily out of reach. Try again shortly.");
       setData(await response.json()); setError("");
