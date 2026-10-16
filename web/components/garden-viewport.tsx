@@ -51,7 +51,9 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
   }, [commit]);
 
   function zoom(nextScale: number) {
-    commit(zoomCamera(current.current, nextScale, { x: 0, y: 0 }, size()));
+    const next = zoomCamera(current.current, nextScale, { x: 0, y: 0 }, size());
+    commit(next);
+    if (next.scale === 1) setMoveOpen(false);
   }
 
   function move(dx: number, dy: number) {
@@ -134,12 +136,12 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
       <button type="button" className="view-button" aria-label="Zoom out of garden" title="Zoom out" disabled={view.scale <= 1} onClick={() => zoom(current.current.scale - .35)}><Minus size={18} /></button>
       <button type="button" className="view-button" aria-label="Reset garden view" title="Reset view" disabled={view.scale === 1 && view.x === 0 && view.y === 0} onClick={() => { commit(INITIAL_CAMERA); setMoveOpen(false); }}><RotateCcw size={15} /></button>
       {view.scale > 1 && <>
-        <button type="button" className="view-button" aria-label="Move garden without dragging" aria-expanded={moveOpen} aria-controls="garden-pan-pad" title="Move garden" onClick={() => setMoveOpen(v => !v)}><Move size={17} /></button>
+        <button type="button" className="view-button" aria-label="Move garden without dragging" aria-expanded={moveOpen} title="Move garden" onClick={() => setMoveOpen(v => !v)}><Move size={17} /></button>
         {moveOpen && <div className="garden-pan-pad" id="garden-pan-pad" role="group" aria-label="Move the zoomed garden">
-          <button type="button" className="view-button pan-up" aria-label="Move garden up" onClick={() => move(0, 38)}><ArrowUp size={17} /></button>
-          <button type="button" className="view-button pan-left" aria-label="Move garden left" onClick={() => move(38, 0)}><ArrowLeft size={17} /></button>
-          <button type="button" className="view-button pan-right" aria-label="Move garden right" onClick={() => move(-38, 0)}><ArrowRight size={17} /></button>
-          <button type="button" className="view-button pan-down" aria-label="Move garden down" onClick={() => move(0, -38)}><ArrowDown size={17} /></button>
+          <button type="button" className="view-button pan-up" aria-label="Explore upwards" onClick={() => move(0, 38)}><ArrowUp size={17} /></button>
+          <button type="button" className="view-button pan-left" aria-label="Explore to the left" onClick={() => move(38, 0)}><ArrowLeft size={17} /></button>
+          <button type="button" className="view-button pan-right" aria-label="Explore to the right" onClick={() => move(-38, 0)}><ArrowRight size={17} /></button>
+          <button type="button" className="view-button pan-down" aria-label="Explore downwards" onClick={() => move(0, -38)}><ArrowDown size={17} /></button>
         </div>}
       </>}
     </div>
