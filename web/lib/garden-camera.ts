@@ -15,6 +15,7 @@ function finite(value: number, fallback: number) {
 
 export function clampCamera(view: CameraView, size: CameraSize): CameraView {
   const scale = Math.min(MAX_CAMERA_ZOOM, Math.max(1, finite(view.scale, 1)));
+  if (scale === 1) return INITIAL_CAMERA;
   const width = Math.max(0, finite(size.width, 0));
   const height = Math.max(0, finite(size.height, 0));
   const limitX = (scale - 1) * width / 2;
