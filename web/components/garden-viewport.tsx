@@ -1,77 +1,98 @@
 "use client";
 
-import { useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import type { Garden } from "@/lib/garden";
 import { GardenCanvas } from "@/components/garden-canvas";
+import {
+  clampCamera, panCamera, zoomCamera, INITIAL_CAMERA, MAX_CAMERA_ZOOM,
+  type CameraPoint, type CameraSize, type CameraView,
+} from "@/lib/garden-camera";
 
-type View = { scale: number; x: number; y: number };
-type Point = { x: number; y: number };
-type Pinch = { distance: number; scale: number; x: number; y: number; anchorX: number; anchorY: number };
-const MAX_ZOOM = 2.8;
-const initialView: View = { scale: 1, x: 0, y: 0 };
+type Pinch = { distance: number; scale: number; anchor: CameraPoint; world: CameraPoint };
+function distance(a: CameraPoint, b: CameraPoint) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function midpoint(a: CameraPoint, b: CameraPoint): CameraPoint { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
-function distance(a: Point, b: Point) { return Math.hypot(a.x - b.x, a.y - b.y); }
-function midpoint(a: Point, b: Point): Point { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
-
-// Camera coordinates are view-only. No world seed, terrain position or persisted event is changed.
+// View coordinates are ephemeral. Neither gestures nor a ResizeObserver write world state.
 export function GardenViewport({ garden, now }: { garden: Garden | null; now: number }) {
   const viewport = useRef<HTMLDivElement>(null);
-  const pointers = useRef(new Map<number, Point>());
+  const pointers = useRef(new Map<number, CameraPoint>());
   const pinch = useRef<Pinch | null>(null);
-  const current = useRef<View>(initialView);
-  const [view, setView] = useState<View>(initialView);
+  const current = useRef<CameraView>(INITIAL_CAMERA);
+  const [view, setView] = useState<CameraView>(INITIAL_CAMERA);
 
-  function commit(scale: number, x: number, y: number) {
+  const size = useCallback((): CameraSize => {
+    const el = viewport.current;
+    return { width: el?.clientWidth ?? 0, height: el?.clientHeight ?? 0 };
+  }, []);
+
+  const commit = useCallback((next: CameraView) => {
+    const value = clampCamera(next, size());
+    current.current = value;
+    setView(value);
+  }, [size]);
+
+  useEffect(() => {
     const el = viewport.current;
     if (!el) return;
-    const s = Math.min(MAX_ZOOM, Math.max(1, scale));
-    const boundX = (s - 1) * el.clientWidth / 2;
-    const boundY = (s - 1) * el.clientHeight / 2;
-    const next = { scale: s, x: Math.max(-boundX, Math.min(boundX, x)), y: Math.max(-boundY, Math.min(boundY, y)) };
-    current.current = next;
-    setView(next);
-  }
+    const resize = new ResizeObserver(() => commit(current.current));
+    resize.observe(el);
+    const clearPointers = () => { pointers.current.clear(); pinch.current = null; };
+    const visibility = () => { if (document.hidden) clearPointers(); };
+    window.addEventListener("blur", clearPointers);
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      resize.disconnect();
+      window.removeEventListener("blur", clearPointers);
+      document.removeEventListener("visibilitychange", visibility);
+      clearPointers();
+    };
+  }, [commit]);
 
-  function adjustZoom(nextScale: number) {
-    const base = current.current;
-    if (nextScale <= 1) { commit(1, 0, 0); return; }
-    const ratio = nextScale / base.scale;
-    commit(nextScale, base.x * ratio, base.y * ratio);
+  function zoom(nextScale: number) {
+    commit(zoomCamera(current.current, nextScale, { x: 0, y: 0 }, size()));
   }
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Ignore a third pointer rather than disrupting an established two-finger pinch.
+    if (pointers.current.size >= 2) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
-      const center = midpoint(a, b);
       const rect = e.currentTarget.getBoundingClientRect();
+      const centre = midpoint(a, b);
+      const anchor = { x: centre.x - rect.left - rect.width / 2, y: centre.y - rect.top - rect.height / 2 };
       const old = current.current;
       pinch.current = {
         distance: Math.max(distance(a, b), 1),
-        scale: old.scale, x: old.x, y: old.y,
-        anchorX: (center.x - rect.left - rect.width / 2 - old.x) / old.scale,
-        anchorY: (center.y - rect.top - rect.height / 2 - old.y) / old.scale,
+        scale: old.scale,
+        anchor,
+        world: { x: (anchor.x - old.x) / old.scale, y: (anchor.y - old.y) / old.scale },
       };
     }
   }
 
   function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
-    const oldPoint = pointers.current.get(e.pointerId);
-    if (!oldPoint) return;
-    const nextPoint = { x: e.clientX, y: e.clientY };
-    pointers.current.set(e.pointerId, nextPoint);
+    const previous = pointers.current.get(e.pointerId);
+    if (!previous) return;
+    const point = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, point);
     if (pointers.current.size === 1 && current.current.scale > 1) {
-      commit(current.current.scale, current.current.x + nextPoint.x - oldPoint.x, current.current.y + nextPoint.y - oldPoint.y);
+      commit(panCamera(current.current, point.x - previous.x, point.y - previous.y, size()));
     } else if (pointers.current.size === 2 && pinch.current) {
       const [a, b] = [...pointers.current.values()];
-      const center = midpoint(a, b);
       const rect = e.currentTarget.getBoundingClientRect();
-      const origin = pinch.current;
-      const scale = Math.min(MAX_ZOOM, Math.max(1, origin.scale * distance(a, b) / origin.distance));
-      commit(scale, center.x - rect.left - rect.width / 2 - origin.anchorX * scale, center.y - rect.top - rect.height / 2 - origin.anchorY * scale);
+      const centre = midpoint(a, b);
+      const anchor = { x: centre.x - rect.left - rect.width / 2, y: centre.y - rect.top - rect.height / 2 };
+      const gesture = pinch.current;
+      const scale = Math.min(MAX_CAMERA_ZOOM, Math.max(1, gesture.scale * distance(a, b) / gesture.distance));
+      commit(clampCamera({
+        scale,
+        x: anchor.x - gesture.world.x * scale,
+        y: anchor.y - gesture.world.y * scale,
+      }, size()));
     }
   }
 
@@ -82,20 +103,20 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
   }
 
   function onKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
-    if (e.key === "+" || e.key === "=") { e.preventDefault(); adjustZoom(current.current.scale + .25); }
-    else if (e.key === "-") { e.preventDefault(); adjustZoom(current.current.scale - .25); }
-    else if (e.key === "0") { e.preventDefault(); commit(1, 0, 0); }
+    if (e.key === "+" || e.key === "=") { e.preventDefault(); zoom(current.current.scale + .25); }
+    else if (e.key === "-") { e.preventDefault(); zoom(current.current.scale - .25); }
+    else if (e.key === "0") { e.preventDefault(); commit(INITIAL_CAMERA); }
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key) && current.current.scale > 1) {
       e.preventDefault();
-      const { scale, x, y } = current.current;
-      commit(scale, x + (e.key === "ArrowRight" ? -32 : e.key === "ArrowLeft" ? 32 : 0), y + (e.key === "ArrowDown" ? -32 : e.key === "ArrowUp" ? 32 : 0));
+      commit(panCamera(current.current, e.key === "ArrowRight" ? -32 : e.key === "ArrowLeft" ? 32 : 0, e.key === "ArrowDown" ? -32 : e.key === "ArrowUp" ? 32 : 0, size()));
     }
   }
 
   return <>
+    <p id="garden-camera-help" className="sr-only">Pinch with two fingers to zoom. Drag to explore while zoomed. The zoom buttons work without touch gestures. When the garden is focused, use the arrow keys to move, plus and minus to zoom, or zero to reset.</p>
     <div
       ref={viewport} className="garden-viewport" role="region" tabIndex={0}
-      aria-label="Explore the garden. Pinch to zoom, drag to move when zoomed, or use the zoom buttons and arrow keys."
+      aria-label="Explore the living garden" aria-describedby="garden-camera-help"
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd}
       onPointerCancel={onPointerEnd} onLostPointerCapture={onPointerEnd} onKeyDown={onKeyDown}
     >
@@ -104,9 +125,9 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
       </div>
     </div>
     <div className="garden-view-controls chrome" role="group" aria-label="Garden zoom controls">
-      <button className="view-button" aria-label="Zoom in to garden" title="Zoom in" disabled={view.scale >= MAX_ZOOM} onClick={() => adjustZoom(current.current.scale + .35)}><Plus size={18} /></button>
-      <button className="view-button" aria-label="Zoom out of garden" title="Zoom out" disabled={view.scale <= 1} onClick={() => adjustZoom(current.current.scale - .35)}><Minus size={18} /></button>
-      <button className="view-button" aria-label="Reset garden view" title="Reset view" disabled={view.scale === 1 && view.x === 0 && view.y === 0} onClick={() => commit(1, 0, 0)}><RotateCcw size={15} /></button>
+      <button type="button" className="view-button" aria-label="Zoom in to garden" title="Zoom in" disabled={view.scale >= MAX_CAMERA_ZOOM} onClick={() => zoom(current.current.scale + .35)}><Plus size={18} /></button>
+      <button type="button" className="view-button" aria-label="Zoom out of garden" title="Zoom out" disabled={view.scale <= 1} onClick={() => zoom(current.current.scale - .35)}><Minus size={18} /></button>
+      <button type="button" className="view-button" aria-label="Reset garden view" title="Reset view" disabled={view.scale === 1 && view.x === 0 && view.y === 0} onClick={() => commit(INITIAL_CAMERA)}><RotateCcw size={15} /></button>
     </div>
   </>;
 }
