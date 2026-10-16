@@ -13,3 +13,29 @@
 .loop-export{border-top:1px solid #d1e7bd25;padding-top:22px;display:flex;flex-direction:column;gap:13px}.loop-export>p:not(.eyebrow){font-size:14px;line-height:1.7;color:#adbea2;margin:0}.loop-export>small{font-size:12px;line-height:1.6;color:#9aaf8f}.loop-result{border:1px solid #d4e8bf2c;border-radius:12px;padding:10px;background:#08150c}.loop-result>img{display:block;width:100%;border-radius:7px}.loop-result>p{font-size:12px;color:#b5cda5;padding:0 4px;line-height:1.8}.loop-result>p>span{color:#d5e9b8;display:block;font-size:10px;letter-spacing:1.2px;margin-top:5px}.loop-result .large-button{font-size:14px;padding:11px;min-height:44px}
 
 .bubble-overlay{touch-action:auto}.bubble-modules button{font-size:14px}.gift-dialog .fine-print{font-size:12px}.world-caption{font-size:13px}@media(max-width:600px){.dock-button{font-size:14px}.garden-dock .primary-button{padding-left:10px;padding-right:10px}.bubble-toggle{font-size:12px}.world-caption{font-size:12px}.coordinate{font-size:11px}.chapter-caption{font-size:14px}.bottom-area footer{font-size:11px}}
+
+
+/* Perceptual depth: visual-only camera, ghost typography and unmistakable controls. */
+.garden-app{--control-signal:#f1c87c;--control-ink:#17251b}
+.garden-space{isolation:isolate}
+.garden-viewport{position:absolute;inset:0;z-index:0;overflow:hidden;touch-action:none;cursor:grab;outline-offset:-5px}
+.garden-viewport:active{cursor:grabbing}
+.garden-viewport:focus-visible{outline:2px solid var(--control-signal)}
+.garden-view{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+.garden-backtype{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;user-select:none;overflow:hidden;font-family:Georgia,'Times New Roman',serif;font-size:clamp(112px,19vw,330px);font-weight:400;letter-spacing:-.12em;line-height:.73;color:#c7dac0;opacity:.13;text-shadow:0 0 55px #d9edcd26;mask-image:radial-gradient(ellipse 34% 34% at 50% 54%,transparent 22%,#000 93%)}
+.garden-backtype span:first-child{transform:translateX(-9vw)}
+.garden-backtype span:last-child{transform:translateX(10vw)}
+.chapter h1{font-size:clamp(48px,5.7vw,92px);line-height:.98;max-width:660px;letter-spacing:-.05em;text-shadow:0 4px 27px #0a120ed9}
+.chapter-caption{font-size:13px;line-height:1.65;max-width:420px}
+.garden-view-controls{position:absolute;z-index:5;right:4.4%;top:45%;display:flex;flex-direction:column;gap:8px}
+.view-button{width:44px;height:44px;display:grid;place-items:center;border:1px solid #f1c87c70;border-radius:50%;background:#0b1b13c9;color:var(--control-signal);box-shadow:0 7px 25px #0004;backdrop-filter:blur(12px);touch-action:manipulation}
+.view-button:hover:not(:disabled){background:#f1c87c24;border-color:var(--control-signal)}
+.view-button:disabled{opacity:.32;cursor:default}
+.garden-app button:focus-visible,.garden-app a:focus-visible{outline-color:var(--control-signal)}
+.garden-app .primary-button{background:var(--control-signal);color:var(--control-ink);border:1px solid #ffe1a3;box-shadow:0 4px 28px #f1c87c23,inset 0 1px 0 #fff8}
+.garden-app .primary-button:hover:not(:disabled),.garden-app .garden-dock .primary-button:hover:not(:disabled){background:#ffda99;color:var(--control-ink)}
+.garden-app .icon-button:hover,.garden-app .bubble-toggle:hover,.garden-app .dock-button:not(.primary-button):hover,.garden-app .plain-button:hover,.garden-app .glass-button:hover{color:var(--control-signal)}
+.garden-app .icon-button:focus-visible,.garden-app .dock-button:focus-visible,.garden-app .bubble-toggle:focus-visible{outline-color:var(--control-signal)}
+@media(max-width:900px){.chapter h1{font-size:clamp(44px,6vw,65px)}.garden-view-controls{right:3%;top:43%}}
+@media(max-width:600px){.chapter h1{font-size:clamp(42px,10.6vw,58px);max-width:330px}.chapter-caption{font-size:13px;max-width:270px}.garden-backtype{font-size:clamp(88px,25vw,145px);opacity:.10;mask-image:radial-gradient(ellipse 50% 26% at 50% 55%,transparent 20%,#000 94%)}.garden-view-controls{top:42%;right:12px;gap:6px}.view-button{width:44px;height:44px}.garden-viewport{inset:0}}
+@media(prefers-reduced-motion:reduce){.garden-view{will-change:auto}}
