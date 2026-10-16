@@ -55,3 +55,6 @@
 .garden-app .bubble-dismiss{width:44px;height:44px;z-index:2}
 @media(max-width:600px){.chapter h1{max-width:calc(100vw - 52px)}.garden-pan-pad{right:50px;top:35px}}
 @media(max-width:380px){.wordmark{font-size:27px}.pixel-mark{font-size:24px;margin-right:8px}.top-right{gap:8px}.bubble-toggle{width:44px;justify-content:center}.bubble-toggle span{display:none}.garden-app .topbar{padding-left:18px;padding-right:18px}}
+
+/* Atmospheric copy is decorative; let touches reach the garden underneath. */
+.garden-space .weather{pointer-events:none}
