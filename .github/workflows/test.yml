@@ -53,6 +53,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: node scripts/${{ matrix.verifier }}
+      - if: matrix.app == 'web'
+        run: node scripts/verify-camera.cjs
       # The renderer checks need a Node canvas. It is installed outside the app's lockfile so the
       # managed Site build and its dependencies stay unchanged.
       - if: matrix.app == 'web'
