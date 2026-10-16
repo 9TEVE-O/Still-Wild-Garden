@@ -39,3 +39,19 @@
 @media(max-width:900px){.chapter h1{font-size:clamp(44px,6vw,65px)}.garden-view-controls{right:3%;top:43%}}
 @media(max-width:600px){.chapter h1{font-size:clamp(42px,10.6vw,58px);max-width:330px}.chapter-caption{font-size:13px;max-width:270px}.garden-backtype{font-size:clamp(88px,25vw,145px);opacity:.10;mask-image:radial-gradient(ellipse 50% 26% at 50% 55%,transparent 20%,#000 94%)}.garden-view-controls{top:42%;right:12px;gap:6px}.view-button{width:44px;height:44px}.garden-viewport{inset:0}}
 @media(prefers-reduced-motion:reduce){.garden-view{will-change:auto}}
+
+
+/* Gesture-free panning appears only when a zoomed visitor asks to move. */
+.garden-view-controls{isolation:isolate}
+.garden-pan-pad{position:absolute;right:54px;top:42px;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:3px;padding:4px;border:1px solid #e1cd9e3b;border-radius:18px;background:#0b1b13ed;box-shadow:0 12px 30px #0006}
+.garden-pan-pad .view-button{border-color:#f1c87c45;background:#183023}
+.garden-pan-pad .pan-up{grid-column:2;grid-row:1}
+.garden-pan-pad .pan-left{grid-column:1;grid-row:2}
+.garden-pan-pad .pan-right{grid-column:3;grid-row:2}
+.garden-pan-pad .pan-down{grid-column:2;grid-row:3}
+.garden-app .icon-button{min-width:44px;min-height:44px}
+.garden-app .bubble-toggle{min-height:44px}
+.garden-app .module-icon{min-width:44px;min-height:44px}
+.garden-app .bubble-dismiss{width:44px;height:44px;z-index:2}
+@media(max-width:600px){.chapter h1{max-width:calc(100vw - 52px)}.garden-pan-pad{right:50px;top:35px}}
+@media(max-width:380px){.wordmark{font-size:27px}.pixel-mark{font-size:24px;margin-right:8px}.top-right{gap:8px}.bubble-toggle{width:44px;justify-content:center}.bubble-toggle span{display:none}.garden-app .topbar{padding-left:18px;padding-right:18px}}
