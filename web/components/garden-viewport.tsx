@@ -38,7 +38,13 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
     if (!el) return;
     const resize = new ResizeObserver(() => commit(current.current));
     resize.observe(el);
-    const clearPointers = () => { pointers.current.clear(); pinch.current = null; };
+    const clearPointers = () => {
+      for (const id of pointers.current.keys()) {
+        if (el.hasPointerCapture(id)) el.releasePointerCapture(id);
+      }
+      pointers.current.clear();
+      pinch.current = null;
+    };
     const visibility = () => { if (document.hidden) clearPointers(); };
     window.addEventListener("blur", clearPointers);
     document.addEventListener("visibilitychange", visibility);
