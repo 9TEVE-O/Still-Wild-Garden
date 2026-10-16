@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Toaster, toast } from "sonner";
 import { GardenBubble } from "@/components/garden-bubble";
-import { GardenCanvas } from "@/components/garden-canvas";
+import { GardenViewport } from "@/components/garden-viewport";
 import { gardenAt, type Garden } from "@/lib/garden";
 import { makeGift, saveFile, wallpaper } from "@/lib/gift";
 import { companionFile } from "@/lib/companion";
@@ -37,7 +37,6 @@ export default function Home() {
   const [loopUrl, setLoopUrl] = useState("");
   const [loopResult, setLoopResult] = useState<{ file: File; width: number; height: number } | null>(null);
   const audio = useRef<AudioContext | null>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
   const scene = gardenAt(garden, now + offset);
 
   useEffect(() => {
@@ -148,7 +147,8 @@ export default function Home() {
         <p className="chapter-caption">{garden ? scene.caption : "One seed. Then it’s out of your hands."}</p>
       </div>
       <div className="weather chrome"><Moon size={17} strokeWidth={1.4} /><div><span>A little after dusk</span><small>{garden ? "Quietly becoming" : "Everything is still"}</small></div></div>
-      <GardenCanvas ref={canvas} garden={garden} now={now + offset} />
+      <GardenViewport garden={garden} now={now + offset} />
+      <div className="garden-backtype" aria-hidden="true"><span>STILL</span><span>WILD</span></div>
       <div className="world-caption chrome"><span className="coordinate">{garden ? `SW · ${garden.seed.toString(16).slice(0, 6).toUpperCase()}` : "SW · ORIGIN"}</span><span className="world-caption-rule" /><span>{garden ? scene.note : "The smallest things hold entire worlds."}</span></div>
       {garden && <button className="keepers-peek chrome" onClick={() => setPanel("keepers")}><span className="keeper-pixels" aria-hidden="true"><i /><i /><i /></span><span>{scene.agents} {scene.agents === 1 ? "keeper" : "keepers"}, quietly at work</span><ArrowUpRight size={14} /></button>}
     </section>
