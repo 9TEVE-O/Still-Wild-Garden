@@ -68,3 +68,10 @@ Candidate change in source only; the public Site was not published or touched. N
 CI installs `@napi-rs/canvas` 1.0.11 outside the app's lockfile and runs `verify-growth.cjs --require-canvas`, so the renderer checks fail rather than skip if the canvas is missing.
 
 Not established: browser or phone rendering, the blind ordering test, performance on low-end phones and publication to the managed Site. The build also includes the unconfigured pull request #6 routes recorded in CURRENT_BUILD_STATE.md.
+
+
+## Perceptual-depth candidate — 2026-10-17
+
+The branch `feat/perceptual-depth-garden-20261017` introduces visual-only foreground/background layout and local pan/zoom gestures. The source inspection establishes no change to `lib/garden.ts`, persisted routes/schema, renderer world coordinates, gifts or Android package. GitHub's `web` CI runs TypeScript, persistence, growth and production build checks; their results must be read from the branch/PR run rather than inferred from the code change.
+
+**Not established by static review or CI:** Android Chrome two-finger gesture performance, view-control accessibility on-device, screen-reader announcements, touch interaction alongside Bubble mode, or final appearance at 320px/390px/desktop widths. Preserve the original garden and test interactions against a local or isolated fixture. No public Site publication is performed by the repository change.
