@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownToLine, ArrowUpRight, AudioLines, Check, CircleDot, Cloud, Expand, Film, Gift, Info, Leaf, LoaderCircle, Minimize, Moon, Sprout, VolumeX, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpRight, AudioLines, Check, CircleDot, Cloud, Expand, Film, Gift, Info, Leaf, LoaderCircle, Minimize, Sprout, VolumeX, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Toaster, toast } from "sonner";
@@ -137,7 +137,7 @@ export default function Home() {
     <div className="sky-grain" aria-hidden="true" />
     <header className="topbar chrome">
       <a className="wordmark" href="/" aria-label="Stillwild home"><span className="pixel-mark" aria-hidden="true">✳</span>stillwild<span className="wordmark-dot">.</span></a>
-      <div className="top-right"><button className={`bubble-toggle ${bubble ? "active" : ""}`} onClick={() => setBubble(v => !v)} aria-pressed={bubble}><CircleDot size={16} /><span>Bubble mode</span></button><span className="private-label"><Cloud size={14} /> A WORLD OF YOUR OWN</span><button className="icon-button" aria-label="About your garden" onClick={() => setPanel("about")}><Info size={19} /></button></div>
+      <div className="top-right"><button className={`bubble-toggle ${bubble ? "active" : ""}`} onClick={() => setBubble(v => !v)} aria-label="Toggle bubble mode" aria-pressed={bubble}><CircleDot size={16} /><span>Bubble mode</span></button><span className="private-label"><Cloud size={14} /> A WORLD OF YOUR OWN</span><button className="icon-button" aria-label="About your garden" onClick={() => setPanel("about")}><Info size={19} /></button></div>
     </header>
 
     <section className="garden-space" aria-label="Living pixel garden">
@@ -146,7 +146,7 @@ export default function Home() {
         <h1>{garden ? scene.stage : <>A world,<br /><em>waiting to happen.</em></>}</h1>
         <p className="chapter-caption">{garden ? scene.caption : "One seed. Then it’s out of your hands."}</p>
       </div>
-      <div className="weather chrome"><Moon size={17} strokeWidth={1.4} /><div><span>A little after dusk</span><small>{garden ? "Quietly becoming" : "Everything is still"}</small></div></div>
+      <div className="weather chrome"><Cloud size={17} strokeWidth={1.4} /><div><span>Under a quiet sky</span><small>{garden ? "Quietly becoming" : "Everything is still"}</small></div></div>
       <GardenViewport garden={garden} now={now + offset} />
       <div className="garden-backtype" aria-hidden="true"><span>STILL</span><span>WILD</span></div>
       <div className="world-caption chrome"><span className="coordinate">{garden ? `SW · ${garden.seed.toString(16).slice(0, 6).toUpperCase()}` : "SW · ORIGIN"}</span><span className="world-caption-rule" /><span>{garden ? scene.note : "The smallest things hold entire worlds."}</span></div>
