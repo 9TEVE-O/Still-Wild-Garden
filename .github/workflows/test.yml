@@ -52,6 +52,8 @@ jobs:
           node-version: "24"
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
+      - if: matrix.app == 'web'
+        run: node --experimental-strip-types scripts/verify-internal-auth.mjs
       - run: node scripts/${{ matrix.verifier }}
       # The renderer checks need a Node canvas. It is installed outside the app's lockfile so the
       # managed Site build and its dependencies stay unchanged.

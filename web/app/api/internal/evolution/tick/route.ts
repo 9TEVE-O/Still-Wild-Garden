@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { runEvolutionTick } from "@/db/evolution";
+import { isConfiguredScheduledToken, matchesScheduledBearer } from "@/lib/security/scheduled-token";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store" };
@@ -7,11 +8,11 @@ const HOUR_MS = 3_600_000;
 
 export async function POST(request: Request) {
   const token = env.STILLWILD_TICK_TOKEN;
-  if (!token) {
+  if (!isConfiguredScheduledToken(token)) {
     return Response.json({ error: "Scheduled garden tick is not configured" }, { status: 503, headers });
   }
 
-  if (request.headers.get("authorization") !== `Bearer ${token}`) {
+  if (!matchesScheduledBearer(request.headers.get("authorization"), token)) {
     return Response.json({ error: "Unauthorised scheduled tick" }, { status: 401, headers });
   }
 
