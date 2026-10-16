@@ -4,6 +4,10 @@ Current observation, 4 October 2026: the source below implements v1 age-based gr
 
 User: Steven Lees. Original delivery: private Sites garden with a modular movable web layer. On 28 September 2026 the owner confirmed website bubble operation and requested a bounded Android companion preserving the garden, floating across apps, with dismiss controls and an ongoing notification. Native source and a development APK are candidate work under that request. Independent native foundation closure and phone permission/runtime acceptance remain unexecuted.
 
+## Canonical observation invariant
+
+`OBSERVATION_INVARIANT.md` is the owner-approved, canonical, frozen observation contract for the garden. Observation-only actions may reconstruct and render canonical state but must not create or replace world state. Any visible garden change must be attributable to deterministic time or an authorised recorded garden event. Major landmarks and persistent spatial relationships are persistent garden facts.
+
 ## Behaviour and acceptance
 
 | Requirement | Acceptance | Verification |
