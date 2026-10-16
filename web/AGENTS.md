@@ -2,6 +2,8 @@
 
 Read project_docs/PROJECT_INDEX.md, then project_docs/CURRENT_BUILD_STATE.md before changing this site. Reconcile the checkpoint with source and observed evidence.
 
+Read project_docs/OBSERVATION_INVARIANT.md before changing rendering, persistence, reconstruction, session, login, reconnect, responsive-layout or device-transfer behaviour. It is APPROVED / CANON / FROZEN. Observation-only actions must never create, relocate, reseed, replace or otherwise mutate persistent garden reality; visible world changes require deterministic time or an authorised recorded garden event.
+
 The original hosting contract requested an owner-private garden. On 4 October 2026, Sites metadata reports the existing Site as public; this source sync does not alter its audience. Record that discrepancy and do not describe private access or separate-user ownership as established. Never replant, reset or delete its cloud state as a testing shortcut. Test only against local preview storage or an explicitly isolated test garden. The Sites platform owns hosting access. Changing audience requires an explicit user request and a review of garden ownership.
 
 Growth rules and seed file format are versioned. Existing version 1 seed files must remain usable. Keep agent behaviour isolated from network or external app actions. Do not claim simulation is a continuously running AI service. Distinguish the web bubble from the Android overlay candidate and its unexecuted phone acceptance checks.
