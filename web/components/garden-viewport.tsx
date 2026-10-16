@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Move, Minus, Plus, RotateCcw } from "lucide-react";
 import type { Garden } from "@/lib/garden";
 import { GardenCanvas } from "@/components/garden-canvas";
 import {
@@ -20,6 +20,7 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
   const pinch = useRef<Pinch | null>(null);
   const current = useRef<CameraView>(INITIAL_CAMERA);
   const [view, setView] = useState<CameraView>(INITIAL_CAMERA);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const size = useCallback((): CameraSize => {
     const el = viewport.current;
@@ -51,6 +52,10 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
 
   function zoom(nextScale: number) {
     commit(zoomCamera(current.current, nextScale, { x: 0, y: 0 }, size()));
+  }
+
+  function move(dx: number, dy: number) {
+    commit(panCamera(current.current, dx, dy, size()));
   }
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
@@ -113,7 +118,7 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
   }
 
   return <>
-    <p id="garden-camera-help" className="sr-only">Pinch with two fingers to zoom. Drag to explore while zoomed. The zoom buttons work without touch gestures. When the garden is focused, use the arrow keys to move, plus and minus to zoom, or zero to reset.</p>
+    <p id="garden-camera-help" className="sr-only">Pinch with two fingers to zoom. Drag to explore while zoomed. The zoom and move buttons work without touch gestures. When the garden is focused, use the arrow keys to move, plus and minus to zoom, or zero to reset.</p>
     <div
       ref={viewport} className="garden-viewport" role="region" tabIndex={0}
       aria-label="Explore the living garden" aria-describedby="garden-camera-help"
@@ -127,7 +132,16 @@ export function GardenViewport({ garden, now }: { garden: Garden | null; now: nu
     <div className="garden-view-controls chrome" role="group" aria-label="Garden zoom controls">
       <button type="button" className="view-button" aria-label="Zoom in to garden" title="Zoom in" disabled={view.scale >= MAX_CAMERA_ZOOM} onClick={() => zoom(current.current.scale + .35)}><Plus size={18} /></button>
       <button type="button" className="view-button" aria-label="Zoom out of garden" title="Zoom out" disabled={view.scale <= 1} onClick={() => zoom(current.current.scale - .35)}><Minus size={18} /></button>
-      <button type="button" className="view-button" aria-label="Reset garden view" title="Reset view" disabled={view.scale === 1 && view.x === 0 && view.y === 0} onClick={() => commit(INITIAL_CAMERA)}><RotateCcw size={15} /></button>
+      <button type="button" className="view-button" aria-label="Reset garden view" title="Reset view" disabled={view.scale === 1 && view.x === 0 && view.y === 0} onClick={() => { commit(INITIAL_CAMERA); setMoveOpen(false); }}><RotateCcw size={15} /></button>
+      {view.scale > 1 && <>
+        <button type="button" className="view-button" aria-label="Move garden without dragging" aria-expanded={moveOpen} aria-controls="garden-pan-pad" title="Move garden" onClick={() => setMoveOpen(v => !v)}><Move size={17} /></button>
+        {moveOpen && <div className="garden-pan-pad" id="garden-pan-pad" role="group" aria-label="Move the zoomed garden">
+          <button type="button" className="view-button pan-up" aria-label="Move garden up" onClick={() => move(0, 38)}><ArrowUp size={17} /></button>
+          <button type="button" className="view-button pan-left" aria-label="Move garden left" onClick={() => move(38, 0)}><ArrowLeft size={17} /></button>
+          <button type="button" className="view-button pan-right" aria-label="Move garden right" onClick={() => move(-38, 0)}><ArrowRight size={17} /></button>
+          <button type="button" className="view-button pan-down" aria-label="Move garden down" onClick={() => move(0, -38)}><ArrowDown size={17} /></button>
+        </div>}
+      </>}
     </div>
   </>;
 }
