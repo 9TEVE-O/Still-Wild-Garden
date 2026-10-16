@@ -68,3 +68,30 @@ Candidate change in source only; the public Site was not published or touched. N
 CI installs `@napi-rs/canvas` 1.0.11 outside the app's lockfile and runs `verify-growth.cjs --require-canvas`, so the renderer checks fail rather than skip if the canvas is missing.
 
 Not established: browser or phone rendering, the blind ordering test, performance on low-end phones and publication to the managed Site. The build also includes the unconfigured pull request #6 routes recorded in CURRENT_BUILD_STATE.md.
+
+
+## Perceptual-depth candidate — 2026-10-17
+
+The branch `feat/perceptual-depth-garden-20261017` introduces visual-only foreground/background layout and local pan/zoom gestures. The source inspection establishes no change to `lib/garden.ts`, persisted routes/schema, renderer world coordinates, gifts or Android package. GitHub's `web` CI runs TypeScript, persistence, growth and production build checks; their results must be read from the branch/PR run rather than inferred from the code change.
+
+**Not established by static review or CI:** Android Chrome two-finger gesture performance, view-control accessibility on-device, screen-reader announcements, touch interaction alongside Bubble mode, or final appearance at 320px/390px/desktop widths. Preserve the original garden and test interactions against a local or isolated fixture. No public Site publication is performed by the repository change.
+
+## Perceptual-depth remediation — 17 October 2026
+
+Repository: PR #19 branch `feat/perceptual-depth-garden-20261017`. Verified implementation commit `27631d69c93722a432b55d77caf17369b4f8ed40`. A documentation-only follow-up adds `DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md`.
+
+GitHub Actions `test` run [38935569447](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/38935569447) at this implementation commit: **PASS**. Its `web (web, verify-persistence.cjs)` job reports:
+
+| Exact CI step | Observed |
+|---|---|
+| `pnpm exec tsc --noEmit` | PASS |
+| `node scripts/verify-persistence.cjs` | PASS; isolated SQLite-backed route/database fixture |
+| `node scripts/verify-camera.cjs` | PASS; actual TypeScript camera math exercised through VM transpilation |
+| `node scripts/verify-growth.cjs --require-canvas` | PASS; existing scene/growth fixture |
+| `pnpm build` | PASS |
+
+The same revision's Python `test` and isolated `background-proof` jobs also passed. The separate `web-evolution-proof` workflow passed but does not prove the camera or background absence milestone. Earlier intermediate revisions had failing camera-verifier runs due to a CommonJS `exports` name collision and strict equality distinguishing `-0` from `0`. These were reproduced from CI logs and resolved in subsequent commits; do not treat those intermediate failures as final.
+
+Code corrections: viewport re-clamps on resize; pointer state clears on blur/visibility; third touch is ignored; zoom/pan geometry moved into pure `lib/garden-camera.ts`; optional non-dragging directional controls and accessible control names were added. Mobile control hit targets and title width were tightened. Time-neutral atmospheric copy replaced the unconditional dusk label.
+
+**Still NOT RUN:** actual browser/Android pointer QA, screenshot comparisons at 320–1440px, manual TalkBack/screen reader, focus order, contrast on rendered moving content, 200% text zoom and measured frame rate. Therefore automated CI passing is not a release approval or a WCAG conformance finding. No production seed/database, Android code or managed Site deployment was modified. See `DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md`.

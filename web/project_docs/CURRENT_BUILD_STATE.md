@@ -39,3 +39,18 @@ The original 4–5 October 2026 absence review was executed and remains INCONCLU
 Separate-user ownership is a later release gate. The Android candidate retains its earlier build evidence; phone acceptance remains open. Version 1 gifts retain local age-based behaviour.
 
 Read the root docs/audits/2026-10-05/ report and background-proof/project_docs/CURRENT_BUILD_STATE.md for current evidence. The next recorded gate is view-closure control before any second 24-hour window; a new window needs a distinct immutable checkpoint and the owner's authorisation.
+
+
+## Presentation-only depth candidate — 17 October 2026 (branch, not published)
+
+A separate GitHub branch `feat/perceptual-depth-garden-20261017` adds ghosted editorial background type, a larger foreground heading, one amber interactive signal, and a view-only camera with bounded touch pinch/pan, keyboard arrows and labelled zoom controls. Camera coordinates are component-local and are not saved to the garden. The canvas samples its untransformed layout size to avoid double-scaling its backing bitmap.
+
+The persistent garden, renderer rules, source art, time computation, network requests, gift exports, Android companion and database are unchanged. This is a candidate for review and Android device acceptance, not a deployed Site revision or a change to the approved observation invariant. Verify pinch between two fingers, single-finger pan only when zoomed, zoom bounds, button hit targets, bubble drag, immersive controls, keyboard access, legibility and reduced motion before publication. GitHub CI validates source/build separately from physical-device behaviour.
+
+## Perceptual-depth remediation checkpoint — 17 October 2026
+
+The PR #19 existing feature branch now includes fixes to viewport-size camera clamping, focus-loss pointer cleanup, exact 1x camera origin, third-finger handling, gesture-free directional navigation, touch-target dimensions and hardcoded dusk wording. A targeted geometry verifier is included in GitHub Actions without introducing a new runtime dependency. Source remains unpublished.
+
+GitHub Actions `test` run 38935569447 at implementation SHA `27631d69c93722a432b55d77caf17369b4f8ed40` passed TypeScript, camera, persistence, growth and web build checks. Subsequent documentation commits require their own revision-specific CI observation. Details and open evidence gates are in `VALIDATION.md` and `DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md`.
+
+Next permitted UI stage: reproduce phone pinch/pan, Bubble mode, accessibility and visual screenshots against the baseline; remediate observed defects within the feature branch. **Do not merge or publish without owner approval.** The canonical growth layer, original seed and separate background proof remain untouched.
