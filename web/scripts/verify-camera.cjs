@@ -8,9 +8,9 @@ const ts = require("typescript");
 
 const source = fs.readFileSync(path.join(__dirname, "../lib/garden-camera.ts"), "utf8");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-const exports = {};
-vm.runInNewContext(js, { exports, module: { exports } }, { filename: "garden-camera.js" });
-const { clampCamera, panCamera, zoomCamera, INITIAL_CAMERA, MAX_CAMERA_ZOOM } = exports;
+const compiledExports = {};
+vm.runInNewContext(js, { exports: compiledExports, module: { exports: compiledExports } }, { filename: "garden-camera.js" });
+const { clampCamera, panCamera, zoomCamera, INITIAL_CAMERA, MAX_CAMERA_ZOOM } = compiledExports;
 const viewport = { width: 390, height: 844 };
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-7, `${actual} != ${expected}`);
 
