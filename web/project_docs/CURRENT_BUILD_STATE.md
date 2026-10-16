@@ -39,3 +39,10 @@ The original 4–5 October 2026 absence review was executed and remains INCONCLU
 Separate-user ownership is a later release gate. The Android candidate retains its earlier build evidence; phone acceptance remains open. Version 1 gifts retain local age-based behaviour.
 
 Read the root docs/audits/2026-10-05/ report and background-proof/project_docs/CURRENT_BUILD_STATE.md for current evidence. The next recorded gate is view-closure control before any second 24-hour window; a new window needs a distinct immutable checkpoint and the owner's authorisation.
+
+
+## Presentation-only depth candidate — 17 October 2026 (branch, not published)
+
+A separate GitHub branch `feat/perceptual-depth-garden-20261017` adds ghosted editorial background type, a larger foreground heading, one amber interactive signal, and a view-only camera with bounded touch pinch/pan, keyboard arrows and labelled zoom controls. Camera coordinates are component-local and are not saved to the garden. The canvas samples its untransformed layout size to avoid double-scaling its backing bitmap.
+
+The persistent garden, renderer rules, source art, time computation, network requests, gift exports, Android companion and database are unchanged. This is a candidate for review and Android device acceptance, not a deployed Site revision or a change to the approved observation invariant. Verify pinch between two fingers, single-finger pan only when zoomed, zoom bounds, button hit targets, bubble drag, immersive controls, keyboard access, legibility and reduced motion before publication. GitHub CI validates source/build separately from physical-device behaviour.
