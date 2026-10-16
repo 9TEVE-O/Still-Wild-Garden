@@ -13,3 +13,5 @@ This index is relative to the web/ application directory. Current checkpoint upd
 Implementation: app/page.tsx composes the experience; components/garden-bubble.tsx is the floating view; lib/garden.ts owns growth; lib/render-garden.ts is the version 1 renderer kept for gifts and Android; lib/render-world.ts renders the live view with lib/growth.ts and the generated lib/growth-atlas.ts (source in design-assets/growth/); lib/gift.ts and lib/seed-runtime.ts create offline seed files; db/schema.ts and db/garden.ts own cloud persistence; app/api/garden/route.ts is the API.
 
 8. The root docs/audits/2026-10-05/ report and background-proof/ source record the isolated implementation and observed progress. The original 24-hour absence review is INCONCLUSIVE; background-proof/project_docs/CURRENT_BUILD_STATE.md owns current proof status.
+
+9. DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md records the scoped PR #19 visual preservation rules, layer map, camera remediation, source-backed findings and remaining mobile/browser acceptance requirements. It does not supersede the frozen Observation Invariant or background milestone.
