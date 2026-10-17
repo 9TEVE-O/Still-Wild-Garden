@@ -14,8 +14,13 @@ for(const p of renders){
     console.error('MISSING REAL RENDER '+p.file+'; run verify-growth.cjs --require-canvas first.');
     process.exit(2);
   }
-  assert.ok(fs.readFileSync(p.file).subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex')),'Valid PNG required: '+p.file);
+  const bytes=fs.readFileSync(p.file);
+  assert.ok(bytes.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex')),'Valid PNG required: '+p.file);
+  assert.equal(bytes.readUInt32BE(16),780,'Expected 390px at DPR2, width: '+p.file);
+  assert.equal(bytes.readUInt32BE(20),1688,'Expected 844px at DPR2, height: '+p.file);
+  assert.ok(Date.now()-fs.statSync(p.file).mtimeMs<30*60*1000,'Stale render; rerun verify-growth: '+p.file);
 }
+assert.equal(new Set(renders.map(p=>crypto.createHash('sha256').update(fs.readFileSync(p.file)).digest('hex'))).size,3,'Age renders must have three distinct image hashes');
 const challenge=crypto.randomUUID();
 const base=path.join(web,'.sites-runtime','blind-growth-'+challenge);
 const reviewer=path.join(base,'reviewer');
