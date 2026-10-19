@@ -111,13 +111,15 @@ export async function snapshot(logView = false, sessionId: string | null = null)
         (SELECT COUNT(*) FROM view_events v WHERE v.rowid > marker.rowid AND v.occurred_at < b.started_at + ? AND v.event_type = 'heartbeat') AS heartbeatEvents,
         (SELECT COUNT(*) FROM view_events v WHERE v.rowid > marker.rowid AND v.occurred_at < b.started_at + ? AND v.event_type = 'close') AS closeEvents,
         (SELECT COUNT(*) FROM view_sessions s WHERE s.opened_at < b.started_at + ?
-          AND (s.closed_at IS NULL OR s.closed_at >= b.started_at
+          AND (s.closed_at IS NULL
+            OR EXISTS (SELECT 1 FROM view_events o WHERE o.session_id = s.id AND o.event_type = 'open'
+              AND o.rowid > marker.rowid AND o.occurred_at < b.started_at + ?)
             OR (s.last_seen_at >= b.started_at AND s.last_seen_at < b.started_at + ?))
           AND EXISTS (SELECT 1 FROM view_events v WHERE v.session_id = s.id
             AND v.rowid > marker.rowid AND v.occurred_at < b.started_at + ?)) AS sessionsOverlappingWindow
       FROM proof_baseline b LEFT JOIN proof_view_gate g ON g.checkpoint_id = b.id
       LEFT JOIN view_events marker ON marker.id = ? WHERE b.id = ?`)
-      .bind(24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, CHECKPOINT_VIEW_EVENT_ID, PROOF_ID),
+      .bind(24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, CHECKPOINT_VIEW_EVENT_ID, PROOF_ID),
     db().prepare("SELECT id, started_at AS startedAt, revision FROM proof_baseline WHERE id = ?").bind(ORIGINAL_PROOF_ID),
     db().prepare("SELECT id, opened_at AS openedAt, last_seen_at AS lastSeenAt FROM view_sessions WHERE closed_at IS NULL ORDER BY opened_at LIMIT 50"),
     db().prepare("SELECT COUNT(*) AS n FROM view_sessions WHERE closed_at IS NULL"),
