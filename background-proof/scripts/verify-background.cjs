@@ -233,10 +233,24 @@ const snapshotRequest = sessionId => new Request('https://proof.example/api/snap
   clock += 1;
   await background.recordViewSession(lateView.sessionId,'close');
   await background.recordViewSession(delayed.sessionId,'close');
+  // A second successful close of a pre-checkpoint-closed session must not be hidden by
+  // its original close ID. No heartbeat or read from this session intervenes.
+  const markerRowId = get("SELECT rowid AS n FROM view_events WHERE id = ?",'view:checkpoint:absence-check-002').n;
+  assert.equal(get("SELECT COUNT(*) AS n FROM view_events WHERE session_id = ? AND rowid > ?",raced,markerRowId).n,0);
+  const beforeRepeatedClose = (await background.snapshot()).proof.viewCoverage;
+  clock = checkpoint.started_at + 2 * HOUR;
+  assert.equal((await sessionApi.POST(viewEvent(raced,'close'))).status,200);
+  clock = checkpoint.started_at + 24 * HOUR;
+  const repeatedCloseProof = (await background.snapshot()).proof;
+  assert.equal(get("SELECT COUNT(*) AS n FROM view_events WHERE session_id = ? AND event_type = 'close'",raced).n,2);
+  assert.equal(get("SELECT COUNT(*) AS n FROM view_events WHERE session_id = ? AND event_type = 'close' AND rowid > ?",raced,markerRowId).n,1);
+  assert.equal(repeatedCloseProof.viewCoverage.closeEvents,beforeRepeatedClose.closeEvents+1);
+  assert.equal(repeatedCloseProof.viewCoverage.sessionsOverlappingWindow,beforeRepeatedClose.sessionsOverlappingWindow+1);
+  assert.equal(repeatedCloseProof.allViewsClosedConfirmed,false);
   const wrongMedia = new Request('https://proof.example/api/background/tick',{method:'POST',body:'{}'}); assert.equal((await api.POST(wrongMedia)).status,415);
   const dbCheck = get('PRAGMA foreign_key_check'); assert.equal(dbCheck,undefined);
   const evidence = { status:'PASS', executedAt:new Date().toISOString(), scope:'Actual simulation, weather parser, database queries and API routes with SQLite transactional D1 adapter and controlled clock/weather; not deployed Cloudflare or 24-hour proof.',
-    checks:['snapshot never advances state','UTC preceding-hour rainfall','future weather excluded','input units validated','overlapping runs commit once','duplicate same-run tick no-op','atomic rollback on persistence failure','keeper planting changes saved world','outage uses labelled zero-rain fallback','24-tick bounded recovery makes net progress','original baselines remain immutable','scheduled delivery requires scheduler provenance','snapshot GET is read-only and independent of the view log','snapshot GET serves only open recorded view sessions','every refused snapshot read is logged with its reason and no raw header','unrecorded view read is refused','view sessions block checkpoint while active','stale unclosed view session blocks checkpoint','view opened during checkpoint transaction blocks checkpoint','close before open leaves session closed','checkpoint requires owner view-closure attestation','new immutable checkpoint and view gate','original and active checkpoints reported separately','24-hour read-only first return preserves closure proof','in-window activity from a closed tab invalidates closure proof','view opened during window invalidates closure proof','same-millisecond pre-checkpoint close does not invalidate closure','delayed post-checkpoint event cannot hide behind an earlier request timestamp'], ticks:32 };
+    checks:['snapshot never advances state','UTC preceding-hour rainfall','future weather excluded','input units validated','overlapping runs commit once','duplicate same-run tick no-op','atomic rollback on persistence failure','keeper planting changes saved world','outage uses labelled zero-rain fallback','24-tick bounded recovery makes net progress','original baselines remain immutable','scheduled delivery requires scheduler provenance','snapshot GET is read-only and independent of the view log','snapshot GET serves only open recorded view sessions','every refused snapshot read is logged with its reason and no raw header','unrecorded view read is refused','view sessions block checkpoint while active','stale unclosed view session blocks checkpoint','view opened during checkpoint transaction blocks checkpoint','close before open leaves session closed','checkpoint requires owner view-closure attestation','new immutable checkpoint and view gate','original and active checkpoints reported separately','24-hour read-only first return preserves closure proof','in-window activity from a closed tab invalidates closure proof','view opened during window invalidates closure proof','same-millisecond pre-checkpoint close does not invalidate closure','delayed post-checkpoint event cannot hide behind an earlier request timestamp','repeated close after checkpoint is recorded even when session closed earlier'], ticks:32 };
   fs.writeFileSync('project_docs/background-test-evidence.json',JSON.stringify(evidence,null,2)+'\n'); console.log(JSON.stringify(evidence));
   sql.close();
 })().catch(e => { console.error(e);process.exitCode=1; });
