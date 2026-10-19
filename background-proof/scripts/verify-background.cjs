@@ -211,7 +211,7 @@ const snapshotRequest = sessionId => new Request('https://proof.example/api/snap
   clock = checkpoint.started_at + 24 * HOUR;
   const zombie = (await background.snapshot()).proof;
   assert.equal(zombie.viewCoverage.heartbeatEvents,1); assert.equal(zombie.viewCoverage.openEvents,0);
-  assert.equal(zombie.allViewsClosedConfirmed,false); assert.equal(zombie.viewCoverage.sessionsOverlappingWindow,1); // The rejected heartbeat still updates last_seen_at and must count as overlap.
+  assert.equal(zombie.allViewsClosedConfirmed,false); assert.equal(zombie.viewCoverage.sessionsOverlappingWindow,0); // The rejected heartbeat records an event but does not update last_seen_at on a closed session.
   clock = checkpoint.started_at + 7 * HOUR; // the same tab closing again inside the window leaves a last-seen trace
   assert.equal((await sessionApi.POST(viewEvent(activeView.sessionId,'close'))).status,200);
   clock = checkpoint.started_at + 24 * HOUR;
