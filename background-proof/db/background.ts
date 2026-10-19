@@ -206,11 +206,13 @@ export async function recordViewSession(sessionId: string, event: ViewSessionEve
   }
   if (event === "close") {
     // A close that arrives before its open (a keepalive close racing a pending open) records a closed session.
+    // The session stays closed on retries, but each successful close must leave its own event:
+    // reusing the first close ID would hide a post-checkpoint close behind a pre-checkpoint row.
     await db().batch([
       db().prepare("INSERT INTO view_sessions (id, opened_at, last_seen_at, closed_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET closed_at = COALESCE(view_sessions.closed_at, excluded.closed_at), last_seen_at = excluded.last_seen_at")
         .bind(sessionId, now, now, now),
-      db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) VALUES (?, ?, 'close', ?) ON CONFLICT(id) DO NOTHING")
-        .bind(`view:${sessionId}:close`, sessionId, now),
+      db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) VALUES (?, ?, 'close', ?)")
+        .bind(crypto.randomUUID(), sessionId, now),
     ]);
     return { sessionId, event, at: now };
   }
