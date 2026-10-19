@@ -114,7 +114,7 @@ export async function snapshot(logView = false, sessionId: string | null = null)
           AND (s.closed_at IS NULL
             OR EXISTS (SELECT 1 FROM view_events o WHERE o.session_id = s.id AND o.event_type = 'open'
               AND o.rowid > marker.rowid AND o.occurred_at < b.started_at + ?)
-            OR (s.last_seen_at >= b.started_at AND s.last_seen_at < b.started_at + ?))
+            OR (s.last_seen_at > b.started_at AND s.last_seen_at < b.started_at + ?))
           AND EXISTS (SELECT 1 FROM view_events v WHERE v.session_id = s.id
             AND v.rowid > marker.rowid AND v.occurred_at < b.started_at + ?)) AS sessionsOverlappingWindow
       FROM proof_baseline b LEFT JOIN proof_view_gate g ON g.checkpoint_id = b.id
