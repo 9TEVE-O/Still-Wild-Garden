@@ -8,7 +8,7 @@ export const PROOF_ID = "absence-check-002";
 // Recover missed intervals in bounded batches while allowing the hourly
 // scheduler to make measurable net progress against a growing backlog.
 export const MAX_CATCH_UP = 24;
-export const VIEW_PROTOCOL_VERSION = "stillwild-view-v1";
+export const VIEW_PROTOCOL_VERSION = "stillwild-view-v2";
 export type Environment = {
   id: string; city: "darwin"; provider: "open-meteo:best_match" | "stillwild:fallback";
   validStart: number; validEnd: number; fetchedAt: number; sourceStatus: "modelled" | "stale" | "simulated";

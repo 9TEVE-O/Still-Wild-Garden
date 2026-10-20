@@ -80,8 +80,9 @@ export async function runBackground(trigger: "manual" | "schedule", now = Date.n
 }
 const VIEW_SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const isViewSessionId = (value: unknown): value is string => typeof value === "string" && VIEW_SESSION_ID.test(value);
-type ViewGateRow = { startedAt: number; ownerAttestedAt: number | null; activeSessionsAtStart: number | null; protocolVersion: string | null;
+type ViewGateRow = { startedAt: number; ownerAttestedAt: number | null; activeSessionsAtStart: number | null; protocolVersion: string | null; checkpointMarkerRowId: number | null;
   openEvents: number; snapshotEvents: number; heartbeatEvents: number; closeEvents: number; sessionsOverlappingWindow: number };
+const CHECKPOINT_VIEW_EVENT_ID = `view:checkpoint:${PROOF_ID}`;
 export class ViewClosureRequiredError extends Error {}
 export async function snapshot(logView = false, sessionId: string | null = null) {
   const now = Date.now();
@@ -99,16 +100,26 @@ export async function snapshot(logView = false, sessionId: string | null = null)
     db().prepare("SELECT tick_id AS tickId, revision, run_id AS runId, input_id AS inputId, committed_at AS committedAt FROM applied_ticks WHERE garden_id = ? ORDER BY revision DESC LIMIT 30")
       .bind(GARDEN_ID),
     // Any recorded view activity inside the window, and any session not closed before the start, counts against closure.
+    // The marker and checkpoint commit atomically. SQLite row order distinguishes events
+    // committed before the checkpoint from delayed requests committed afterwards, even if
+    // their request timestamps fall in the same millisecond or precede the checkpoint.
     db().prepare(`SELECT b.started_at AS startedAt, g.owner_attested_at AS ownerAttestedAt,
         g.active_sessions_at_start AS activeSessionsAtStart, g.protocol_version AS protocolVersion,
-        (SELECT COUNT(*) FROM view_events v WHERE v.occurred_at >= b.started_at AND v.occurred_at < b.started_at + ? AND v.event_type = 'open') AS openEvents,
-        (SELECT COUNT(*) FROM view_events v WHERE v.occurred_at >= b.started_at AND v.occurred_at < b.started_at + ? AND v.event_type = 'snapshot_read') AS snapshotEvents,
-        (SELECT COUNT(*) FROM view_events v WHERE v.occurred_at >= b.started_at AND v.occurred_at < b.started_at + ? AND v.event_type = 'heartbeat') AS heartbeatEvents,
-        (SELECT COUNT(*) FROM view_events v WHERE v.occurred_at >= b.started_at AND v.occurred_at < b.started_at + ? AND v.event_type = 'close') AS closeEvents,
-        (SELECT COUNT(*) FROM view_sessions s WHERE s.opened_at < b.started_at + ? AND (s.closed_at IS NULL OR s.closed_at >= b.started_at
-          OR (s.last_seen_at >= b.started_at AND s.last_seen_at < b.started_at + ?))) AS sessionsOverlappingWindow
-      FROM proof_baseline b LEFT JOIN proof_view_gate g ON g.checkpoint_id = b.id WHERE b.id = ?`)
-      .bind(24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, PROOF_ID),
+        marker.rowid AS checkpointMarkerRowId,
+        (SELECT COUNT(*) FROM view_events v WHERE v.rowid > marker.rowid AND v.occurred_at < b.started_at + ? AND v.event_type = 'open') AS openEvents,
+        (SELECT COUNT(*) FROM view_events v WHERE v.rowid > marker.rowid AND v.occurred_at < b.started_at + ? AND v.event_type = 'snapshot_read') AS snapshotEvents,
+        (SELECT COUNT(*) FROM view_events v WHERE v.rowid > marker.rowid AND v.occurred_at < b.started_at + ? AND v.event_type = 'heartbeat') AS heartbeatEvents,
+        (SELECT COUNT(*) FROM view_events v WHERE v.rowid > marker.rowid AND v.occurred_at < b.started_at + ? AND v.event_type = 'close') AS closeEvents,
+        (SELECT COUNT(*) FROM view_sessions s WHERE s.opened_at < b.started_at + ?
+          AND (s.closed_at IS NULL
+            OR EXISTS (SELECT 1 FROM view_events o WHERE o.session_id = s.id AND o.event_type = 'open'
+              AND o.rowid > marker.rowid AND o.occurred_at < b.started_at + ?)
+            OR (s.last_seen_at > b.started_at AND s.last_seen_at < b.started_at + ?))
+          AND EXISTS (SELECT 1 FROM view_events v WHERE v.session_id = s.id
+            AND v.rowid > marker.rowid AND v.occurred_at < b.started_at + ?)) AS sessionsOverlappingWindow
+      FROM proof_baseline b LEFT JOIN proof_view_gate g ON g.checkpoint_id = b.id
+      LEFT JOIN view_events marker ON marker.id = ? WHERE b.id = ?`)
+      .bind(24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, 24 * HOUR, CHECKPOINT_VIEW_EVENT_ID, PROOF_ID),
     db().prepare("SELECT id, started_at AS startedAt, revision FROM proof_baseline WHERE id = ?").bind(ORIGINAL_PROOF_ID),
     db().prepare("SELECT id, opened_at AS openedAt, last_seen_at AS lastSeenAt FROM view_sessions WHERE closed_at IS NULL ORDER BY opened_at LIMIT 50"),
     db().prepare("SELECT COUNT(*) AS n FROM view_sessions WHERE closed_at IS NULL"),
@@ -129,7 +140,7 @@ export async function snapshot(logView = false, sessionId: string | null = null)
   const original = records[8].results[0] as { id: string; startedAt: number; revision: number } | undefined;
   const unclosedSessions = records[9].results as { id: string; openedAt: number; lastSeenAt: number }[];
   const unclosedCount = (records[10].results[0] as { n: number } | undefined)?.n ?? 0;
-  const hasCompleteViewGate = Boolean(viewGate?.ownerAttestedAt && viewGate.activeSessionsAtStart === 0 && viewGate.protocolVersion === VIEW_PROTOCOL_VERSION);
+  const hasCompleteViewGate = Boolean(viewGate?.ownerAttestedAt && viewGate.activeSessionsAtStart === 0 && viewGate.protocolVersion === VIEW_PROTOCOL_VERSION && Number.isSafeInteger(viewGate.checkpointMarkerRowId));
   const viewWindowElapsed = Boolean(baseline && now >= baseline.startedAt + 24 * HOUR);
   const noViewActivity = Boolean(viewGate && viewGate.openEvents === 0 && viewGate.snapshotEvents === 0 && viewGate.heartbeatEvents === 0
     && viewGate.closeEvents === 0 && viewGate.sessionsOverlappingWindow === 0);
@@ -141,7 +152,7 @@ export async function snapshot(logView = false, sessionId: string | null = null)
     proof: { checkpointId: PROOF_ID, baseline: baseline ? { ...baseline, state: JSON.parse(baseline.state) } : null,
       earliestCheckAt: baseline ? baseline.startedAt + 24 * HOUR : null, independentScheduleLogsRequired: true,
       originalCheckpoint: original ? { ...original, earliestCheckAt: original.startedAt + 24 * HOUR } : null,
-      viewCoverage: viewGate ? { protocolVersion: viewGate.protocolVersion, ownerAttestedAt: viewGate.ownerAttestedAt,
+      viewCoverage: viewGate ? { protocolVersion: viewGate.protocolVersion, checkpointMarkerRecorded: Number.isSafeInteger(viewGate.checkpointMarkerRowId), ownerAttestedAt: viewGate.ownerAttestedAt,
         activeSessionsAtStart: viewGate.activeSessionsAtStart, openEvents: viewGate.openEvents, snapshotEvents: viewGate.snapshotEvents,
         heartbeatEvents: viewGate.heartbeatEvents, closeEvents: viewGate.closeEvents, sessionsOverlappingWindow: viewGate.sessionsOverlappingWindow,
         windowElapsed: viewWindowElapsed, instrumentationComplete: hasCompleteViewGate } : null,
@@ -167,6 +178,8 @@ export async function startAbsenceCheck(allViewsClosedAttested: boolean) {
       .bind(PROOF_ID, now, GARDEN_ID),
     db().prepare("INSERT INTO proof_view_gate (checkpoint_id, owner_attested_at, active_sessions_at_start, protocol_version) SELECT ?, ?, (SELECT COUNT(*) FROM view_sessions WHERE closed_at IS NULL), ? WHERE EXISTS (SELECT 1 FROM proof_baseline WHERE id = ? AND started_at = ?) ON CONFLICT(checkpoint_id) DO NOTHING")
       .bind(PROOF_ID, now, VIEW_PROTOCOL_VERSION, PROOF_ID, now),
+    db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) SELECT ?, NULL, 'checkpoint', ? WHERE EXISTS (SELECT 1 FROM proof_view_gate WHERE checkpoint_id = ? AND owner_attested_at = ?) ON CONFLICT(id) DO NOTHING")
+      .bind(CHECKPOINT_VIEW_EVENT_ID, now, PROOF_ID, now),
   ]);
   const evidence = await snapshot();
   // With the garden present, the conditional insert only skips the checkpoint when a session was unclosed at commit.
@@ -193,11 +206,13 @@ export async function recordViewSession(sessionId: string, event: ViewSessionEve
   }
   if (event === "close") {
     // A close that arrives before its open (a keepalive close racing a pending open) records a closed session.
+    // The session stays closed on retries, but each successful close must leave its own event:
+    // reusing the first close ID would hide a post-checkpoint close behind a pre-checkpoint row.
     await db().batch([
       db().prepare("INSERT INTO view_sessions (id, opened_at, last_seen_at, closed_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET closed_at = COALESCE(view_sessions.closed_at, excluded.closed_at), last_seen_at = excluded.last_seen_at")
         .bind(sessionId, now, now, now),
-      db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) VALUES (?, ?, 'close', ?) ON CONFLICT(id) DO NOTHING")
-        .bind(`view:${sessionId}:close`, sessionId, now),
+      db().prepare("INSERT INTO view_events (id, session_id, event_type, occurred_at) VALUES (?, ?, 'close', ?)")
+        .bind(crypto.randomUUID(), sessionId, now),
     ]);
     return { sessionId, event, at: now };
   }
