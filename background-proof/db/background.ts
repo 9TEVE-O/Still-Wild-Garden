@@ -3,6 +3,7 @@ import { advance, GARDEN_ID, HOUR, initialState, MAX_CATCH_UP, ORIGINAL_PROOF_ID
 import { archivedInput, collectWeather, missingInput, parseForecast } from "@/lib/weather";
 type Row = Omit<World, "state"> & { state: string };
 export type SchedulerExecution = { taskId: string; executionId: string; triggeredAt: number };
+export class DuplicateSchedulerExecutionError extends Error {}
 function db() { if (!env.DB) throw new Error("Proof storage unavailable"); return env.DB; }
 const worldQuery = "SELECT id, seed, born_at AS bornAt, rules_version AS rulesVersion, climate, state, revision, last_tick AS lastTick, updated_at AS updatedAt FROM worlds WHERE id = ?";
 export async function getWorld(): Promise<World | null> {
@@ -40,8 +41,19 @@ export async function commitTick(world: World, tickId: number, input: Environmen
 export async function runBackground(trigger: "manual" | "schedule", now = Date.now(), relay?: unknown, scheduler?: SchedulerExecution) {
   const runId = crypto.randomUUID(); const slot = Math.floor(now / HOUR);
   let count = 0; let weatherStatus = "unavailable";
-  await db().prepare("INSERT INTO background_runs (id, trigger, slot, started_at, status, scheduler_task_id, scheduler_execution_id, scheduler_triggered_at) VALUES (?, ?, ?, ?, 'running', ?, ?, ?)")
-    .bind(runId, trigger, slot, now, scheduler?.taskId ?? null, scheduler?.executionId ?? null, scheduler?.triggeredAt ?? null).run();
+  try {
+    await db().prepare("INSERT INTO background_runs (id, trigger, slot, started_at, status, scheduler_task_id, scheduler_execution_id, scheduler_triggered_at) VALUES (?, ?, ?, ?, 'running', ?, ?, ?)")
+      .bind(runId, trigger, slot, now, scheduler?.taskId ?? null, scheduler?.executionId ?? null, scheduler?.triggeredAt ?? null).run();
+  } catch (error) {
+    // The database's unique index is the authority. Read back the exact execution ID so
+    // an unrelated storage failure is not misreported as a duplicate delivery.
+    if (scheduler?.executionId) {
+      const recorded = await db().prepare("SELECT id FROM background_runs WHERE scheduler_execution_id = ?")
+        .bind(scheduler.executionId).first<{ id: string }>();
+      if (recorded) throw new DuplicateSchedulerExecutionError("Scheduler execution was already recorded");
+    }
+    throw error;
+  }
   console.info(JSON.stringify({ event: "stillwild_run_started", runId, callerDeclaredTrigger: trigger, callerDeclaredSchedulerExecutionId: scheduler?.executionId ?? null, slot, at: now }));
   try {
     await initialise(now);
