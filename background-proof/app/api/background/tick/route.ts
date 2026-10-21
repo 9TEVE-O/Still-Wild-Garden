@@ -1,4 +1,4 @@
-import { runBackground, type SchedulerExecution } from "@/db/background";
+import { DuplicateSchedulerExecutionError, runBackground, type SchedulerExecution } from "@/db/background";
 import { parseForecast } from "@/lib/weather";
 export const dynamic = "force-dynamic";
 // Owner-private Sites dispatch is the authenticated service boundary. Do not expose publicly.
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     return Response.json(await runBackground(body.trigger, Date.now(), body.weather, scheduler), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof SyntaxError) return Response.json({ error: "Invalid JSON" }, { status: 400 });
+    if (error instanceof DuplicateSchedulerExecutionError) return Response.json({ error: error.message }, { status: 409, headers: { "Cache-Control": "no-store" } });
     console.error("Stillwild background update failed", error); return Response.json({ error: "Background update temporarily unavailable" }, { status: 503 });
   }
 }
