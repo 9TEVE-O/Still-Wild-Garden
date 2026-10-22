@@ -97,8 +97,12 @@ const get = (query, ...params) => sql.prepare(query).get(...params);
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ trigger: 'schedule', scheduler, weather: fixture() }),
   });
-  assert.equal((await api.POST(duplicate)).status, 503);
+  const beforeDuplicateRevision = get('SELECT revision FROM worlds WHERE id = ?', world.GARDEN_ID).revision;
+  const duplicateResponse = await api.POST(duplicate);
+  assert.equal(duplicateResponse.status, 409);
+  assert.equal((await duplicateResponse.json()).error, 'Scheduler execution was already recorded');
   assert.equal(get('SELECT COUNT(*) AS n FROM background_runs WHERE scheduler_execution_id = ?', scheduler.executionId).n, 1);
+  assert.equal(get('SELECT revision FROM worlds WHERE id = ?', world.GARDEN_ID).revision, beforeDuplicateRevision);
 
   // Scheduler metadata cannot be attached to a manual trigger or widened with arbitrary fields.
   const manual = new Request('https://proof.example/api/background/tick', {
@@ -121,7 +125,7 @@ const get = (query, ...params) => sql.prepare(query).get(...params);
       'No hosted Site, live D1 database, live scheduler, deployment or 24-hour proof is exercised here.'
     ],
     chain: { schedulerExecutionId: scheduler.executionId, gardenRunId: run.id, tickId: tick.tick_id, revision: tick.revision, eventId: event.id },
-    checks: ['scheduler metadata validated', 'scheduled delivery without scheduler metadata rejected', 'execution ID persisted uniquely', 'execution ID joins to garden run', 'tick revision matches world revision', 'event carries direct run ID', 'read-only evidence exposes scheduler to run to tick to event chain', 'duplicate execution ID rejected']
+    checks: ['scheduler metadata validated', 'scheduled delivery without scheduler metadata rejected', 'execution ID persisted uniquely', 'execution ID joins to garden run', 'tick revision matches world revision', 'event carries direct run ID', 'read-only evidence exposes scheduler to run to tick to event chain', 'duplicate execution ID rejected as HTTP 409 with no new run or revision']
   };
   fs.writeFileSync('project_docs/scheduler-provenance-test-evidence.json', JSON.stringify(evidence, null, 2) + '\n');
   console.log(JSON.stringify(evidence));
