@@ -1,13 +1,13 @@
 # Current background-garden state
 
-Updated: 14 October 2026, Australia/Darwin.
+Live-state specimen: 14 October 2026. GitHub source reconciliation: 26 October 2026.
 Authority: approved canonical App Brief v0.2.
-Active stage: scheduler recovery throughput verified; the separate 24-hour view-closure test is not started, and its fail-closed gate is in source but not deployed.
+Active stage: scheduler recovery throughput verified; fail-closed view-closure source merged into `main` and source CI verified, but current managed-Site deployment and native D1 gate semantics are not verified. The separate second 24-hour absence window is not started or authorised.
 Scope: one owner-private Darwin test garden. The original public garden is unchanged.
 
 ## Deployed runtime
 
-Private Site version 5 is deployed at https://stillwild-background-proof.subzteveo.chatgpt.site from Site source commit `1579149cd9b13ee5f7513ef508d39c6c361fce2a`. It remains owner-only and uses the existing D1 binding. The additive `0002_view_closure_gate` migration is present in D1.
+As last directly recorded on 14 October, private Site version 5 was deployed at https://stillwild-background-proof.subzteveo.chatgpt.site from Site source commit `1579149cd9b13ee5f7513ef508d39c6c361fce2a`. That recorded version was owner-only and used the existing D1 binding. The additive `0002_view_closure_gate` migration is present in D1.
 
 The runtime now requires scheduler provenance for scheduled writes, recovers up to 24 hourly intervals per run, and exposes read-only scheduler, applied-tick and view-gate evidence. The page records open, close and snapshot-read events; heartbeats update a session's last-seen time without an event. `GET /api/evidence` stays read-only.
 
@@ -42,13 +42,15 @@ A local review of the version 5 gate reproduced two ways it can report full clos
 
 The source after this change blocks `absence-check-002` while any view session lacks a recorded close, however old its last heartbeat, and commits the check, checkpoint and gate in one D1 batch. `GET /api/snapshot` no longer writes, and it serves garden data only to a view session that D1 shows open; a missing, unknown or closed session gets no data. The page records every open, read, heartbeat and close through `POST /api/view/session`, including heartbeats and reads from an already-closed tab. In-window heartbeats, closes and overlapping sessions count against closure. `GET /api/evidence` lists unclosed sessions and reports `absence-check-001` separately from the new checkpoint. Local deterministic checks cover each case; this source is not deployed.
 
-## Verification
+## 14 October verification record
 
 Local deterministic SQLite checks pass, including a 30-hour backlog recovered as 24 + 6, immutable original checkpoints, active-view blocking, a read-only first return and invalidation when a view opens during the window. Scheduler-provenance checks pass. `pnpm exec tsc --noEmit`, the production build and targeted lint on modified TypeScript files pass.
 
 The GitHub repair was merged as commit `b85e3f8fab3ad6c00cb018d220eb385de916b5f3`. It moves the receipt workflow to :50 UTC and removes the unused scheduled workflow that reported success without dispatching. The first post-merge scheduled receipt still needs its live confirmation.
 
-## 19 October 2026 engineering verification — review candidate, NOT DEPLOYED
+## 19 October 2026 engineering verification — historical review candidate, NOT DEPLOYED
+
+Historical status below is retained as evidence of the 19 October review. PR #21 subsequently merged on 20 October; see the 26 October reconciliation before acting on its earlier draft/rollback instructions.
 
 This section records a **review-branch candidate**, not a change to the Site version 5 runtime or the completed 14 October native-D1 specimen. The existing deployment and original checkpoints remain unchanged.
 
@@ -62,6 +64,27 @@ This section records a **review-branch candidate**, not a change to the Site ver
 
 **Rollback and authority:** Reject or revert PR #21 to discard this review candidate. If a managed Site deployment is later approved, preserve its exact version/source and confirm rollback behaviour and database compatibility before publishing; do not erase the original checkpoint, seed, events or migrations. Do **not** deploy, start `absence-check-002`, change scheduling, close hosted sessions or claim full 24-hour acceptance on this evidence alone.
 
+## 26 October 2026 repository reconciliation — SOURCE VERIFIED, HOSTED GATE UNVERIFIED
+
+This section supersedes the **current PR status** stated in the historical 19 October candidate review, without changing the 14 October live D1 specimen or asserting a later hosted deployment.
+
+- **Merged source:** [PR #21](https://github.com/9TEVE-O/Still-Wild-Garden/pull/21) merged on 20 October 2026 as `c4c5541950caef85e37c37f8e59a90edde81f671`. It includes the marker/row-order query and the repeated-close regression at head `87c2e6263ff014c86fabf8d6877afece96df7a62`. [PR #23](https://github.com/9TEVE-O/Still-Wild-Garden/pull/23) merged the separate scheduler duplicate-delivery correction on 22 October. The inspected `main` head is `5b97a020df430b3186622c98edb35c22d59f7d9d`.
+- **Source-level verification:** [GitHub Actions push run 39873072714](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/39873072714) passed at that exact `main` SHA. All three jobs succeeded. The `background-proof/` job ran `pnpm exec tsc --noEmit`, `node scripts/verify-background.cjs`, `node scripts/verify-provenance.cjs`, and `pnpm build`. The SQLite fixture tests cover stale unclosed sessions, checkpoint insertion races, marker order with tied milliseconds and delayed events, repeated close after checkpoint, rejected closed-session reads, and unchanged original proof baselines. These are isolated-adapter results, **not** native D1 acceptance.
+- **Current receipt scope:** [GitHub Actions receipt run 40255781156](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/40255781156) completed successfully on 26 October with event `schedule` at the inspected `main` SHA. That receipt alone does not prove an authenticated Site dispatch, saved D1 ticks, or a 24-hour absence result.
+- **Hosted verification missing:** This review did **not** use managed Sites tools, make an authenticated Site read, run a native Cloudflare D1 view-marker transaction test, or verify the current published Site version/source and privacy boundary. The latest directly supported deployment identity remains the 14 October Site version 5 record; it must be freshly read before any publish decision.
+- **Preserved:** No managed Site, live D1 data, garden seed/birth time, checkpoint, view session, service credential, scheduler setting, or review automation was changed by this GitHub-only review. `absence-check-001` remains INCONCLUSIVE; `absence-check-002` has neither been started nor authorised.
+
+**Gate verdict:** Source implementation and repository CI: **PASS** at the SHA above. Native provider semantics, exact deployed source, owner-private access and controlled deployment: **NOT ESTABLISHED**. Authority to start another 24-hour window: **NOT GRANTED**.
+
 ## Next gate
+
+1. Read the exact current private managed Site version/source and owner-private access through the authorised Sites workflow. Read current `GET /api/evidence` using that Site's private service credential without navigating to the garden view or writing data. Preserve the returned proof/baseline/session facts as a new dated native record; do not assume the 14 October snapshot is still current.
+2. Verify `stillwild-view-v2` checkpoint-marker and row-order behaviour against native Cloudflare D1 **in an isolated fixture**. Check atomicity, same-millisecond events, delayed request timestamps and repeated closes. Do not run destructive tests or create a checkpoint in either existing Site database.
+3. Only after provider compatibility and rollback are evidenced, seek a separate owner decision on publishing the exact reviewed source to the existing private Site. A GitHub merge or green CI run cannot deploy it. Verify Site version/source, privacy and preserved D1 records after any separately authorised publication.
+4. **Do not authorise or start `absence-check-002` here.** Once deployment is independently verified, confirm all garden tabs are closed, review `proof.unclosedViewSessions`, and close stale session records only after independently confirming their tabs are gone and receiving the appropriate owner authority. A future owner-authorised checkpoint must use the fail-closed attestation gate exactly once. The later 24-hour assessment still requires zero in-window view activity and independent scheduler, Worker, run, tick and event corroboration.
+
+<!-- 14 October operational runbook retained below for traceability; follow the latest gate above instead. -->
+
+## Historical 14 October next-gate runbook (superseded)
 
 Create `absence-check-002` only through the fail-closed gate: deploy that source as a new owner-authorised Site version before attesting. Then close every Stillwild garden tab; in `GET /api/evidence`, close each session still listed under `proof.unclosedViewSessions` through `POST /api/view/session` only after confirming its tab is gone, until the count is 0. The owner then attests closure and starts `absence-check-002` once; do not restart it. Leave the garden page closed and make the first due return through `GET /api/evidence`. A 24-hour PASS still requires zero in-window view events plus independent hourly receipt, run, tick and event corroboration.
