@@ -76,6 +76,18 @@ This section supersedes the **current PR status** stated in the historical 19 Oc
 
 **Gate verdict:** Source implementation and repository CI: **PASS** at the SHA above. Native provider semantics, exact deployed source, owner-private access and controlled deployment: **NOT ESTABLISHED**. Authority to start another 24-hour window: **NOT GRANTED**.
 
+## 26 October 2026 isolated Cloudflare Wrangler D1 test — PASS, LOCAL ONLY
+
+This is a new test against Cloudflare's supported Wrangler 4.92.0 local D1 runtime, using a **fresh temporary persistence directory**, not the managed Site, the live D1 binding or a remote Cloudflare database.
+
+- **Fixture:** `background-proof/scripts/fixtures/view-closure-wrangler-local.sql`; existing `0000`, `0001` and `0002` D1 migrations applied before test assertions.
+- **Execution:** [GitHub Actions run 40291792053](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/40291792053), background-proof job `121468330509`, commit `a82a31f4ff18e02ed4b7707c792f355757a7a715`. The production build, TypeScript, existing deterministic SQLite and provenance checks, plus new Wrangler local D1 step all succeeded. All three repository CI jobs succeeded.
+- **Observed:** Wrangler returned `WRANGLER_LOCAL_D1_VIEW_CLOSURE_PASS` with **9 successful SQL assertions**. Cases include stale unclosed session rejection, conditional checkpoint creation, same-millisecond pre-marker exclusion, late-committed earlier-timestamp inclusion, repeated close evidence, post-marker activity invalidation, missing-marker refusal and original-baseline preservation.
+- **Provider limitations:** Wrangler `--local` uses Cloudflare's local simulation, **not remote/hosted D1**. These SQL-file commands do not independently verify remote D1's `db.batch()` atomicity in the deployed Worker, service authentication, the exact managed Site source, hosted view events or any 24-hour absence claim.
+- **Data preservation:** State was created only under GitHub's disposable CI runner directory and deleted at the end of the step. Neither existing managed Site nor its data was accessed or changed by this test.
+
+**Revised gate verdict:** merged source **PASS**, existing CI **PASS**, isolated Wrangler local D1 SQL **PASS (9/9)**. Hosted native D1 / deployment identity / privacy controls **NOT ESTABLISHED**. Deployment and `absence-check-002` **NOT AUTHORISED BY THIS TEST**.
+
 ## Next gate
 
 1. Read the exact current private managed Site version/source and owner-private access through the authorised Sites workflow. Read current `GET /api/evidence` using that Site's private service credential without navigating to the garden view or writing data. Preserve the returned proof/baseline/session facts as a new dated native record; do not assume the 14 October snapshot is still current.
