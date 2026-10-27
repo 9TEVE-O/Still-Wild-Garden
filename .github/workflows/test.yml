@@ -68,3 +68,23 @@ jobs:
       - if: matrix.app == 'background-proof'
         run: node scripts/verify-provenance.cjs
       - run: pnpm build
+      # Test the migrated SQLite schema through Cloudflare Wrangler's D1 local emulator.
+      # The state directory is ephemeral and separate from either managed Site.
+      - if: matrix.app == 'background-proof'
+        name: Verify isolated Wrangler D1 view-closure ordering
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$(mktemp -d)"
+          trap 'rm -rf "$state"' EXIT
+          for migration in \
+            drizzle/0000_melodic_lucky_pierre.sql \
+            drizzle/0001_scheduler_provenance.sql \
+            drizzle/0002_view_closure_gate.sql; do
+            pnpm exec wrangler d1 execute site-creator-d1 \
+              --local --config dist/server/wrangler.json --persist-to "$state" \
+              --file "$migration"
+          done
+          pnpm exec wrangler d1 execute site-creator-d1 \
+            --local --config dist/server/wrangler.json --persist-to "$state" \
+            --file scripts/fixtures/view-closure-wrangler-local.sql
