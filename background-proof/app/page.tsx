@@ -95,7 +95,7 @@ export default function Home() {
         </div>
         <div className="proof-keeper-grid">
           {keeperStories.map(keeper => {
-            const lastEvent = data?.events.find(event => event.payload.keeper === keeper.id);
+            const lastEvent = data?.events.find(event => event.payload.keeper === keeper.id && event.payload.type !== "rain-collected");
             return <article className="proof-keeper-card" key={keeper.id}>
               <div className="proof-keeper-card-heading"><h3>{keeper.id}</h3><p>{keeper.role}</p></div>
               <p className="proof-keeper-count"><strong>{world?.state.keepers[keeper.id].completed ?? "…"}</strong><span>{keeper.countLabel}</span></p>
