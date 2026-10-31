@@ -67,6 +67,15 @@ jobs:
           CODEX_PRIMARY_RUNTIME_NODE_MODULES: ${{ runner.temp }}/canvas/node_modules
       - if: matrix.app == 'background-proof'
         run: node scripts/verify-provenance.cjs
+      - if: matrix.app == 'background-proof'
+        name: Verify keeper ledger logic and intentional mutations
+        run: node scripts/verify-keeper-logic.cjs --output=keeper-logic-receipt.json
+      - if: matrix.app == 'background-proof'
+        uses: actions/upload-artifact@v4
+        with:
+          name: keeper-logic-fixture-gate
+          path: background-proof/keeper-logic-receipt.json
+          if-no-files-found: error
       - run: pnpm build
       # Test the migrated SQLite schema through Cloudflare Wrangler's D1 local emulator.
       # The state directory is ephemeral and separate from either managed Site.
