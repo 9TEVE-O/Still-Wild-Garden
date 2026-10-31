@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Independently check mutation receipts against the unmodified checkout."""
 
 from __future__ import annotations
