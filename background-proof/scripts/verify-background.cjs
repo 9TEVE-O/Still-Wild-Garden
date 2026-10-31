@@ -54,17 +54,23 @@ const world = load('lib/world.ts');
 // Keeper cards must describe actual keeper work, never environmental rainfall.
 // This exercises the same TypeScript helper imported by the Next.js page.
 const keeperEvents = load('lib/keeper-events.ts');
-const keeperEvent = (id, type, keeper, committedAt) => ({
-  id, committedAt, payload: { type, keeper, text: type, change: {} },
+const keeperEvent = (id, type, keeper, committedAt, change = {}) => ({
+  id, committedAt, payload: { type, keeper, text: type, change },
 });
 const rain = keeperEvent('rain', 'rain-collected', 'Dew', 4000);
-const spring = keeperEvent('spring', 'spring-water-collected', 'Dew', 3000);
+const spring = keeperEvent('spring', 'spring-water-collected', 'Dew', 3000, { water: 4 });
+const zeroSpring = keeperEvent('zero-spring', 'spring-water-collected', 'Dew', 5000, { water: 0 });
+const zeroRoots = keeperEvent('zero-roots', 'roots-watered', 'Dew', 1000, { water: 0 });
 const roots = keeperEvent('roots', 'roots-watered', 'Dew', 2000);
 const pip = keeperEvent('pip', 'seed-planted', 'Pip', 1500);
 const moss = keeperEvent('moss', 'habitat-made', 'Moss', 1000);
 const unknown = keeperEvent('future', 'unrecognised-future-event', 'Dew', 5000);
 assert.equal(keeperEvents.latestKeeperAction(undefined, 'Dew'), undefined);
 assert.equal(keeperEvents.latestKeeperAction([rain], 'Dew'), undefined);
+assert.equal(keeperEvents.latestKeeperAction([zeroSpring], 'Dew'), undefined);
+assert.equal(keeperEvents.latestKeeperAction([zeroSpring, spring], 'Dew')?.id, 'spring');
+assert.equal(keeperEvents.latestKeeperAction([zeroSpring, roots], 'Dew')?.id, 'roots');
+assert.equal(keeperEvents.latestKeeperAction([zeroSpring, zeroRoots], 'Dew')?.id, 'zero-roots');
 assert.equal(keeperEvents.latestKeeperAction([rain, spring, roots], 'Dew')?.id, 'spring');
 assert.equal(keeperEvents.latestKeeperAction([unknown, rain, spring], 'Dew')?.id, 'spring');
 assert.equal(keeperEvents.latestKeeperAction([rain, roots], 'Dew')?.id, 'roots');
