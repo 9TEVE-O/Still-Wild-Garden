@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Five bounded source mutations for the garden memory-scope repair.
 
 Only copies under TemporaryDirectory are mutated. No stored garden or live site is opened.
