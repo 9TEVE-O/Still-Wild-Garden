@@ -4,6 +4,7 @@ import Link from "next/link";
 import { GardenCanvas } from "@/components/garden-canvas";
 import { gardenAt, type Garden } from "@/lib/garden";
 import type { World, Consequence } from "@/lib/world";
+import { latestKeeperAction } from "@/lib/keeper-events";
 type Snapshot = { world: World | null; serverNow: number; completedTicks: number;
   events: { id: string; committedAt: number; payload: Consequence }[];
   runs: { id: string; startedAt: number; status: string; committedTicks: number }[];
@@ -95,7 +96,7 @@ export default function Home() {
         </div>
         <div className="proof-keeper-grid">
           {keeperStories.map(keeper => {
-            const lastEvent = data?.events.find(event => event.payload.keeper === keeper.id);
+            const lastEvent = latestKeeperAction(data?.events, keeper.id);
             return <article className="proof-keeper-card" key={keeper.id}>
               <div className="proof-keeper-card-heading"><h3>{keeper.id}</h3><p>{keeper.role}</p></div>
               <p className="proof-keeper-count"><strong>{world?.state.keepers[keeper.id].completed ?? "…"}</strong><span>{keeper.countLabel}</span></p>
