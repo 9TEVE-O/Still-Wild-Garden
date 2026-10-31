@@ -17,16 +17,19 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[dev]"
-      - run: ruff check src tests scripts/verify-background.py
+      - run: ruff check src tests scripts/verify-background.py scripts/verify-zone-mutations.py scripts/check-zone-mutation-receipt.py
       - run: pytest -q
       - run: python scripts/verify-background.py --output background-smoke.json
       - run: python -O scripts/verify-background.py --output background-smoke-optimized.json
+      - run: python scripts/verify-zone-mutations.py --output zone-mutation-receipt.json
+      - run: python scripts/check-zone-mutation-receipt.py --receipt zone-mutation-receipt.json
       - uses: actions/upload-artifact@v4
         with:
           name: isolated-background-smoke
           path: |
             background-smoke.json
             background-smoke-optimized.json
+            zone-mutation-receipt.json
           if-no-files-found: error
 
   web:

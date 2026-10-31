@@ -128,6 +128,13 @@ class ZoneInput(BaseModel):
     exposure: dict[str, Any] = Field(default_factory=dict)
     notes: str | None = Field(default=None, max_length=1000)
 
+    @model_validator(mode="after")
+    def reject_reserved_zone_id(self) -> ZoneInput:
+        # Keep zone registration consistent with GardenEvent memory namespaces.
+        if self.id == "garden":
+            raise ValueError("zone id 'garden' is reserved for whole-garden observations")
+        return self
+
 
 class OrganismInput(BaseModel):
     id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9._:-]+$")
