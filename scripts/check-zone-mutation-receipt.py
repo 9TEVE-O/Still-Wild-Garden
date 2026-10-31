@@ -26,6 +26,9 @@ EXPECTED = {
     "M05-whole-zone-renamed": (
         "src/stillwild/engine.py", "test_unzoned_and_named_zone_memories_remain_separate",
     ),
+    "M06-zone-registration-bypass": (
+        "src/stillwild/realworld.py", "test_reserved_zone_rejected_before_sensor_registration",
+    ),
 }
 
 
@@ -65,9 +68,9 @@ def main() -> None:
         )
 
     mutants = receipt["mutants"]
-    require(len(mutants) == 5 and receipt["mutant_count"] == 5, "expected five runs")
+    require(len(mutants) == 6 and receipt["mutant_count"] == 6, "expected five runs")
     require({item["id"] for item in mutants} == set(EXPECTED), "wrong mutant identities")
-    require(receipt["detected_count"] == 5, "mutant kill count incorrect")
+    require(receipt["detected_count"] == 6, "mutant kill count incorrect")
     for mutant in mutants:
         path, test = EXPECTED[mutant["id"]]
         require(mutant["path"] == path, "wrong mutation path")
@@ -77,11 +80,11 @@ def main() -> None:
         require(mutant["exit_code"] == 1 and not mutant["timed_out"], "no valid failure")
         require(mutant["detected"] is True, "mutation escaped")
         require(
-            f"FAILED tests/test_engine.py::{test}" in mutant["test_excerpt"],
+            f"FAILED tests/{'test_realworld.py' if test == 'test_reserved_zone_rejected_before_sensor_registration' else 'test_engine.py'}::{test}" in mutant["test_excerpt"],
             "missing test-specific mutant failure evidence",
         )
 
-    print(f"INDEPENDENT VERIFICATION PASS: {len(mutants)}/5 mutants killed; "
+    print(f"INDEPENDENT VERIFICATION PASS: {len(mutants)}/{len(EXPECTED)} mutants killed; "
           "baseline and post-repair tests pass; pinned source unchanged")
 
 
