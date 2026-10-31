@@ -15,5 +15,9 @@ export function latestKeeperAction(
   keeper: Consequence["keeper"],
 ): SavedKeeperEvent | undefined {
   return events?.find(event =>
-    event.payload.keeper === keeper && performedActions[keeper].has(event.payload.type));
+    event.payload.keeper === keeper
+    && performedActions[keeper].has(event.payload.type)
+    && !(keeper === "Dew"
+      && event.payload.type === "spring-water-collected"
+      && event.payload.change.water === 0));
 }
