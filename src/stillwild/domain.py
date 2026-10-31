@@ -24,8 +24,11 @@ class GardenEvent(BaseModel):
     def validate_sensor_readings(self) -> GardenEvent:
         # The unzoned whole garden already uses "garden" as its memory-key namespace.
         # Reject an explicit zone of that name rather than silently mixing histories.
-        if self.zone_id == "garden":
-            raise ValueError("zone_id 'garden' is reserved for whole-garden observations")
+        if self.zone_id is not None:
+            if not self.zone_id.strip():
+                raise ValueError("zone_id must not be blank")
+            if self.zone_id == "garden":
+                raise ValueError("zone_id 'garden' is reserved for whole-garden observations")
         if self.type == "sensor.soil_moisture":
             if "percent" in self.payload:
                 value = self.payload["percent"]
