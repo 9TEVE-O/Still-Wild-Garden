@@ -263,3 +263,10 @@ def test_unzoned_and_named_zone_memories_remain_separate(tmp_path):
     memories = {item["key"]: item for item in repo.list_memories()}
     assert memories["soil_moisture_state:garden"]["value"]["percent"] == 30
     assert memories["soil_moisture_state:north-bed"]["value"]["percent"] == 12
+
+
+@pytest.mark.parametrize("blank_zone", ["", " ", "\t"])
+def test_blank_zone_is_rejected(blank_zone):
+    """An empty explicit zone must not alias the whole-garden memory namespace."""
+    with pytest.raises(ValidationError, match="zone_id must not be blank"):
+        GardenEvent(type="wildlife.observation", zone_id=blank_zone)
