@@ -1,4 +1,4 @@
-"""Five bounded source mutations for the garden memory-scope repair.
+"""Six bounded source mutations for the garden memory-scope repair.
 
 Only copies under TemporaryDirectory are mutated. No stored garden or live site is opened.
 This is a focused adapter to pytest, not a general-purpose mutation engine.
@@ -17,11 +17,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = ("src/stillwild/domain.py", "src/stillwild/engine.py")
+SOURCES = ("src/stillwild/domain.py", "src/stillwild/engine.py", "src/stillwild/realworld.py")
 TEST_NAMES = (
     "test_explicit_garden_zone_is_rejected",
     "test_blank_zone_is_rejected",
     "test_unzoned_and_named_zone_memories_remain_separate",
+    "test_reserved_zone_rejected_before_sensor_registration",
 )
 MUTATIONS = (
     (
@@ -49,6 +50,11 @@ MUTATIONS = (
         'zone = event.zone_id or "garden"', 'zone = event.zone_id or "global"',
         TEST_NAMES[2],
     ),
+    (
+        "M06-zone-registration-bypass", SOURCES[2],
+        'if self.id == "garden":', 'if self.id == "Garden":',
+        TEST_NAMES[3],
+    ),
 )
 
 
@@ -60,7 +66,7 @@ def test(root: Path) -> dict:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(root / "src") + os.pathsep + env.get("PYTHONPATH", "")
     command = (
-        sys.executable, "-m", "pytest", "-q", "tests/test_engine.py",
+        sys.executable, "-m", "pytest", "-q", "tests/test_engine.py", "tests/test_realworld.py",
         "-k", " or ".join(TEST_NAMES),
     )
     try:
@@ -111,7 +117,7 @@ def main() -> int:
             result = test(scratch)
             detected = (
                 result["exit_code"] == 1
-                and f"FAILED tests/test_engine.py::{failed_test}" in result["summary"]
+                and f"FAILED tests/{'test_realworld.py' if failed_test == TEST_NAMES[3] else 'test_engine.py'}::{failed_test}" in result["summary"]
                 and not result["timed_out"]
             )
             mutants.append({
@@ -144,7 +150,7 @@ def main() -> int:
     }
     output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"Receipt: {output}")
-    if not (len(mutants) == 5 and all(m["detected"] for m in mutants)
+    if not (len(mutants) == 6 and all(m["detected"] for m in mutants)
             and before == after and post_repair["exit_code"] == 0):
         return 1
     return 0
