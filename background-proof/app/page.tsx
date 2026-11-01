@@ -4,12 +4,18 @@ import Link from "next/link";
 import { GardenCanvas } from "@/components/garden-canvas";
 import { gardenAt, type Garden } from "@/lib/garden";
 import type { World, Consequence } from "@/lib/world";
+import { latestKeeperAction } from "@/lib/keeper-events";
 type Snapshot = { world: World | null; serverNow: number; completedTicks: number;
   events: { id: string; committedAt: number; payload: Consequence }[];
   runs: { id: string; startedAt: number; status: string; committedTicks: number }[];
   proof: { status: string; earliestCheckAt: number | null; baseline: { startedAt: number } | null;
     originalCheckpoint: { id: string; startedAt: number; earliestCheckAt: number } | null } };
 const date = (ms: number) => new Date(ms).toLocaleString("en-AU", { timeZone: "Australia/Darwin", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const keeperStories = [
+  { id: "Pip", role: "Finds space and sows seeds", countLabel: "saved plantings" },
+  { id: "Dew", role: "Collects water and tends roots", countLabel: "saved waterings" },
+  { id: "Moss", role: "Makes room for life to grow", countLabel: "saved habitat changes" },
+] as const;
 export default function Home() {
   const [data, setData] = useState<Snapshot | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
   const viewSession = useRef<string | null>(null);
@@ -80,6 +86,30 @@ export default function Home() {
     </section>
     <section className="proof-journal" aria-label="Saved garden activity">
       <div className="proof-stats"><span><strong>{world?.state.plants ?? "…"}</strong> rooted seeds</span><span><strong>{world?.state.water ?? "…"}</strong> water in store</span><span><strong>{world?.state.habitat ?? "…"}</strong> places for growth</span></div>
+      <section className="proof-keeper-ledger" aria-labelledby="proof-keeper-ledger-heading">
+        <div className="proof-keeper-ledger-heading">
+          <div>
+            <p className="proof-ledger-kicker">From the saved garden</p>
+            <h2 id="proof-keeper-ledger-heading">The keepers have been here.</h2>
+          </div>
+          <p>Each count comes from a committed world snapshot. These changes were saved by the background updater, not calculated when you opened this page.</p>
+        </div>
+        <div className="proof-keeper-grid">
+          {keeperStories.map(keeper => {
+            const lastEvent = latestKeeperAction(data?.events, keeper.id);
+            return <article className="proof-keeper-card" key={keeper.id}>
+              <div className="proof-keeper-card-heading"><h3>{keeper.id}</h3><p>{keeper.role}</p></div>
+              <p className="proof-keeper-count"><strong>{world?.state.keepers[keeper.id].completed ?? "…"}</strong><span>{keeper.countLabel}</span></p>
+              <div className="proof-keeper-last">
+                <span className="proof-ledger-kicker">Latest listed action</span>
+                {lastEvent ? <><p>{lastEvent.payload.text}</p><time dateTime={new Date(lastEvent.committedAt).toISOString()}>{date(lastEvent.committedAt)} ACST</time></>
+                  : <p>{world ? "No action by this keeper in the returned event list." : "Waiting for saved garden activity."}</p>}
+              </div>
+            </article>;
+          })}
+        </div>
+        <p className="proof-ledger-boundary">{world ? `World revision ${world.revision} · ${data?.completedTicks ?? 0} committed hourly ticks. ` : "No saved world has been returned yet. "}Saved activity is evidence of progress, not proof of a completed 24-hour absence test.</p>
+      </section>
       <div className="proof-journal-heading"><h2>While the garden rests</h2><button className="proof-refresh" disabled={loading} onClick={() => void load()}>{loading ? "Refreshing…" : "Refresh view"}</button></div>
       {error && <p role="alert" className="error-message">{error}</p>}
       <p className="proof-muted">{world ? `Last saved ${date(world.updatedAt)} ACST. Each visit reads what is already here.` : "The background service will plant this separate test garden."}</p>
