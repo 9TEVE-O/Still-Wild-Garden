@@ -58,6 +58,46 @@ def _register(service):
     )
 
 
+def test_reserved_zone_rejected_before_sensor_registration(tmp_path):
+    repo, service = _service(tmp_path)
+    _register(service)
+    app = FastAPI()
+    app.include_router(build_realworld_router(service, mutation_dependencies=()))
+    client = TestClient(app)
+    original_zones = service.store.list_zones("darwin-test")
+
+    rejected = client.post(
+        "/real/zones",
+        json={"id": "garden", "garden_id": "darwin-test", "name": "Reserved"},
+    )
+    assert rejected.status_code == 422
+    assert "reserved for whole-garden" in rejected.text
+    assert service.store.list_zones("darwin-test") == original_zones
+    assert repo.list_events() == []
+
+    zone = client.post(
+        "/real/zones",
+        json={"id": "east-bed", "garden_id": "darwin-test", "name": "East bed"},
+    )
+    assert zone.status_code == 201
+    sensor = client.post(
+        "/real/sensors",
+        json={
+            "id": "east-soil", "garden_id": "darwin-test", "zone_id": "east-bed",
+            "kind": "soil_moisture", "unit": "%", "source": "east-probe",
+        },
+    )
+    assert sensor.status_code == 201
+    reading = client.post(
+        "/real/sensor-readings",
+        json={"sensor_id": "east-soil", "value": 25, "forecast_rain_mm_24h": 0},
+    )
+    assert reading.status_code == 201
+    events = repo.list_events()
+    assert len(events) == 1
+    assert events[0]["zone_id"] == "east-bed"
+
+
 def test_real_registry_and_sensor_reading_feed_event_ledger(tmp_path):
     repo, service = _service(tmp_path)
     _register(service)

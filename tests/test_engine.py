@@ -240,3 +240,33 @@ def test_natural_plant_stages_are_recognised(tmp_path, condition, decision):
     plant = next(item for item in result["agents"] if item["agent"] == "plant")
     assert plant["decision"] == decision
     assert plant["unknowns"] == []
+
+
+def test_explicit_garden_zone_is_rejected():
+    """A named 'garden' zone must not overwrite the unzoned garden's memory."""
+    with pytest.raises(ValidationError, match="reserved for whole-garden"):
+        GardenEvent(type="wildlife.observation", zone_id="garden")
+
+
+def test_unzoned_and_named_zone_memories_remain_separate(tmp_path):
+    repo = Repository(str(tmp_path / "garden.db"))
+    engine = GardenEngine(repo)
+    engine.ingest(GardenEvent(
+        type="sensor.soil_moisture",
+        payload={"percent": 30},
+    ))
+    engine.ingest(GardenEvent(
+        type="sensor.soil_moisture",
+        zone_id="north-bed",
+        payload={"percent": 12, "forecast_rain_mm_24h": 0},
+    ))
+    memories = {item["key"]: item for item in repo.list_memories()}
+    assert memories["soil_moisture_state:garden"]["value"]["percent"] == 30
+    assert memories["soil_moisture_state:north-bed"]["value"]["percent"] == 12
+
+
+@pytest.mark.parametrize("blank_zone", ["", " ", "\t"])
+def test_blank_zone_is_rejected(blank_zone):
+    """An empty explicit zone must not alias the whole-garden memory namespace."""
+    with pytest.raises(ValidationError, match="zone_id must not be blank"):
+        GardenEvent(type="wildlife.observation", zone_id=blank_zone)
