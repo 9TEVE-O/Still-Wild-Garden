@@ -115,13 +115,16 @@ export async function runEvolutionTick(
   const runId = `${previous.gardenId}:${previous.rulesVersion}:${environment.tickId}:run`;
   const createdAt = environment.tickId * 3_600_000;
   // The authoritative state transition runs first. Every consequence write that follows is gated on
-  // the garden row already reflecting THIS run's transition (new revision + this tick id), so a
-  // losing overlapping run — one whose guarded UPDATE changed no rows because a concurrent run with a
-  // different tick already advanced the state — persists nothing: no applied tick, run record,
-  // environment interval or event. D1 executes a batch as one sequential transaction, so the guard
-  // observes this run's own UPDATE and the whole batch is all-or-nothing on the state advance.
+  // the garden row already carrying THIS run's transition — its new revision, this tick id, AND this
+  // run's updated_at stamp — so only the run whose guarded UPDATE actually committed persists any
+  // consequence rows. A losing overlapping run (its UPDATE changed no rows because a concurrent run
+  // advanced the state first) persists nothing — no applied tick, run record, environment interval or
+  // event — whether it carried a different tick or the same tick with different inputs. The
+  // updated_at stamp is what distinguishes the two runs in the same-tick case, where revision and
+  // last_tick_id alone would match both. D1 executes a batch as one sequential transaction, so the
+  // guard observes this run's own UPDATE and the whole batch is all-or-nothing on the state advance.
   const committedGuard =
-    "WHERE EXISTS (SELECT 1 FROM evolution_gardens WHERE garden_id = ? AND revision = ? AND last_tick_id = ?)";
+    "WHERE EXISTS (SELECT 1 FROM evolution_gardens WHERE garden_id = ? AND revision = ? AND last_tick_id = ? AND updated_at = ?)";
   const statements = [
     database()
       .prepare(
@@ -153,6 +156,7 @@ export async function runEvolutionTick(
         previous.gardenId,
         advanced.state.revision,
         environment.tickId,
+        now,
       ),
     ...advanced.events.map((event: GardenEvent) =>
       database()
@@ -172,6 +176,7 @@ export async function runEvolutionTick(
           previous.gardenId,
           advanced.state.revision,
           environment.tickId,
+          now,
         ),
     ),
     database()
@@ -187,6 +192,7 @@ export async function runEvolutionTick(
         previous.gardenId,
         advanced.state.revision,
         environment.tickId,
+        now,
       ),
     database()
       .prepare(
@@ -204,6 +210,7 @@ export async function runEvolutionTick(
         previous.gardenId,
         advanced.state.revision,
         environment.tickId,
+        now,
       ),
   ];
 

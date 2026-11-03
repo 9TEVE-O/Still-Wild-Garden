@@ -145,6 +145,34 @@ const snapshotRoute = load('app/api/garden/snapshot/route.ts', { '@/db/evolution
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM background_runs WHERE tick_id = ?').get(raceTickId).n, 0, 'no orphan run record');
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM garden_events WHERE tick_id = ?').get(raceTickId).n, 0, 'no orphan event');
 
+  // Same-tick overlap with divergent inputs: a winner and a loser read the same prior state and apply
+  // the SAME tick, but with different precipitation, so they compute different events. event_id is
+  // derived from the tick, not the weather, so the loser's extra event would NOT key-collide with the
+  // winner's — the updated_at stamp in committedGuard is what keeps the loser's row out. Only the
+  // winner's event set (here empty: the winner's precipitation waters nothing) may persist for the tick.
+  const sameTick = tickId + 100_000;
+  const priorRevision = JSON.parse(
+    sql.prepare('SELECT state_json FROM evolution_gardens WHERE garden_id = ?').get(types.PROOF_GARDEN_ID).state_json,
+  ).revision;
+  const winnerRevision = priorRevision + 1;
+  const winnerNow = sameTick * 3_600_000 + 500;
+  const loserNow = sameTick * 3_600_000 + 1500;
+  const realBatchSameTick = env.DB.batch;
+  env.DB.batch = async (statements) => {
+    env.DB.batch = realBatchSameTick; // one-shot: commit the winner's same-tick, no-event outcome before the loser's batch
+    sql.prepare('UPDATE evolution_gardens SET revision = ?, last_tick_id = ?, updated_at = ? WHERE garden_id = ?')
+      .run(winnerRevision, sameTick, winnerNow, types.PROOF_GARDEN_ID);
+    return realBatchSameTick(statements);
+  };
+  // The loser runs precipitation 0, which waters the dry plant, so it computes a keeper.watered event
+  // the winner did not. Its event id differs from (here, the absence of) the winner's, so only the
+  // updated_at guard keeps it from persisting against the winner's committed state.
+  const racedSameTick = await evolution.runEvolutionTick({ ...environment, tickId: sameTick, precipitationMm: 0 }, loserNow);
+  assert.equal(racedSameTick.applied, false, 'a same-tick loser must not report applied');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM garden_events WHERE tick_id = ?').get(sameTick).n, 0, 'a same-tick loser must not persist an event the winner did not');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM applied_ticks WHERE tick_id = ?').get(sameTick).n, 0, 'a same-tick loser must not persist an applied tick');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM background_runs WHERE tick_id = ?').get(sameTick).n, 0, 'a same-tick loser must not persist a run record');
+
   const evidence = {
     status: 'PASS',
     scope: 'Local SQLite-backed D1 adapter. Proves deterministic Dew consequence, persistence, duplicate-tick idempotency and read-only return. Does not prove deployed hourly scheduling or a real one-hour absence.',
