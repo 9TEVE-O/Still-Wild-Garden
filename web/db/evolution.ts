@@ -114,22 +114,15 @@ export async function runEvolutionTick(
 
   const runId = `${previous.gardenId}:${previous.rulesVersion}:${environment.tickId}:run`;
   const createdAt = environment.tickId * 3_600_000;
+  // The authoritative state transition runs first. Every consequence write that follows is gated on
+  // the garden row already reflecting THIS run's transition (new revision + this tick id), so a
+  // losing overlapping run — one whose guarded UPDATE changed no rows because a concurrent run with a
+  // different tick already advanced the state — persists nothing: no applied tick, run record,
+  // environment interval or event. D1 executes a batch as one sequential transaction, so the guard
+  // observes this run's own UPDATE and the whole batch is all-or-nothing on the state advance.
+  const committedGuard =
+    "WHERE EXISTS (SELECT 1 FROM evolution_gardens WHERE garden_id = ? AND revision = ? AND last_tick_id = ?)";
   const statements = [
-    database()
-      .prepare(
-        "INSERT INTO environment_intervals (garden_id, rules_version, tick_id, provider, source_status, precipitation_mm, temperature_c, payload_json, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(garden_id, rules_version, tick_id) DO NOTHING",
-      )
-      .bind(
-        previous.gardenId,
-        previous.rulesVersion,
-        environment.tickId,
-        environment.provider,
-        environment.sourceStatus,
-        environment.precipitationMm,
-        environment.temperatureC,
-        JSON.stringify(environment),
-        now,
-      ),
     database()
       .prepare(
         "UPDATE evolution_gardens SET revision = ?, last_tick_id = ?, state_json = ?, updated_at = ? WHERE garden_id = ? AND revision = ? AND (last_tick_id IS NULL OR last_tick_id < ?)",
@@ -143,10 +136,28 @@ export async function runEvolutionTick(
         previous.revision,
         environment.tickId,
       ),
+    database()
+      .prepare(
+        `INSERT INTO environment_intervals (garden_id, rules_version, tick_id, provider, source_status, precipitation_mm, temperature_c, payload_json, fetched_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? ${committedGuard} ON CONFLICT(garden_id, rules_version, tick_id) DO NOTHING`,
+      )
+      .bind(
+        previous.gardenId,
+        previous.rulesVersion,
+        environment.tickId,
+        environment.provider,
+        environment.sourceStatus,
+        environment.precipitationMm,
+        environment.temperatureC,
+        JSON.stringify(environment),
+        now,
+        previous.gardenId,
+        advanced.state.revision,
+        environment.tickId,
+      ),
     ...advanced.events.map((event: GardenEvent) =>
       database()
         .prepare(
-          "INSERT INTO garden_events (event_id, garden_id, rules_version, tick_id, event_type, keeper, plant_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(event_id) DO NOTHING",
+          `INSERT INTO garden_events (event_id, garden_id, rules_version, tick_id, event_type, keeper, plant_id, payload_json, created_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? ${committedGuard} ON CONFLICT(event_id) DO NOTHING`,
         )
         .bind(
           event.id,
@@ -158,16 +169,28 @@ export async function runEvolutionTick(
           event.plantId,
           JSON.stringify(event.payload),
           createdAt,
+          previous.gardenId,
+          advanced.state.revision,
+          environment.tickId,
         ),
     ),
     database()
       .prepare(
-        "INSERT INTO applied_ticks (garden_id, rules_version, tick_id, state_revision, applied_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(garden_id, rules_version, tick_id) DO NOTHING",
+        `INSERT INTO applied_ticks (garden_id, rules_version, tick_id, state_revision, applied_at) SELECT ?, ?, ?, ?, ? ${committedGuard} ON CONFLICT(garden_id, rules_version, tick_id) DO NOTHING`,
       )
-      .bind(previous.gardenId, previous.rulesVersion, environment.tickId, advanced.state.revision, now),
+      .bind(
+        previous.gardenId,
+        previous.rulesVersion,
+        environment.tickId,
+        advanced.state.revision,
+        now,
+        previous.gardenId,
+        advanced.state.revision,
+        environment.tickId,
+      ),
     database()
       .prepare(
-        "INSERT INTO background_runs (run_id, garden_id, rules_version, tick_id, status, event_count, started_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(run_id) DO NOTHING",
+        `INSERT INTO background_runs (run_id, garden_id, rules_version, tick_id, status, event_count, started_at, finished_at) SELECT ?, ?, ?, ?, ?, ?, ?, ? ${committedGuard} ON CONFLICT(run_id) DO NOTHING`,
       )
       .bind(
         runId,
@@ -178,11 +201,14 @@ export async function runEvolutionTick(
         advanced.events.length,
         now,
         now,
+        previous.gardenId,
+        advanced.state.revision,
+        environment.tickId,
       ),
   ];
 
   const results = await database().batch(statements);
-  const stateChanges = Number(results[1]?.meta?.changes ?? 0);
+  const stateChanges = Number(results[0]?.meta?.changes ?? 0);
   if (stateChanges !== 1) {
     return { applied: false, reason: "concurrent_or_duplicate_tick", snapshot: await getEvolutionSnapshot(previous.gardenId) };
   }
