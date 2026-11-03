@@ -382,23 +382,37 @@ class Repository:
     ) -> list[dict[str, Any]]:
         # Outcomes belong to council recommendations. Attribution uses the agent runs that
         # contributed to the same triggering event; this intentionally measures usefulness,
-        # not causal credit.
+        # not causal credit. Each agent is scored over its most recent ``limit_per_agent``
+        # resolved recommendations, so the window reflects recent behaviour rather than all
+        # history — this is what feeds the low-utility evolution-candidate threshold.
         with self.connection(connection) as conn:
             rows = conn.execute(
                 """
-                SELECT agent, COUNT(*) AS n, AVG(utility_score) AS avg_score
-                FROM (
+                WITH recommendation_scores AS (
                     SELECT ar.agent AS agent, r.id AS recommendation_id,
+                           r.created_at AS created_at,
                            AVG(o.utility_score) AS utility_score
                     FROM outcomes o
                     JOIN recommendations r ON r.id = o.recommendation_id
                     JOIN agent_runs ar ON ar.event_id = r.event_id
                     WHERE ar.agent != 'council'
                     GROUP BY ar.agent, r.id
-                ) AS recommendation_scores
+                ),
+                ranked AS (
+                    SELECT agent, recommendation_id, utility_score,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY agent
+                               ORDER BY created_at DESC, recommendation_id DESC
+                           ) AS recency_rank
+                    FROM recommendation_scores
+                )
+                SELECT agent, COUNT(*) AS n, AVG(utility_score) AS avg_score
+                FROM ranked
+                WHERE recency_rank <= ?
                 GROUP BY agent
                 ORDER BY n DESC
-                """
+                """,
+                (limit_per_agent,),
             ).fetchall()
             return [
                 {"agent": row["agent"], "n": row["n"], "avg_score": row["avg_score"]}
