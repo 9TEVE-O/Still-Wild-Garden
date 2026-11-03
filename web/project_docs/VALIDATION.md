@@ -69,6 +69,17 @@ CI installs `@napi-rs/canvas` 1.0.11 outside the app's lockfile and runs `verify
 
 Not established: browser or phone rendering, the blind ordering test, performance on low-end phones and publication to the managed Site. The build also includes the unconfigured pull request #6 routes recorded in CURRENT_BUILD_STATE.md.
 
+### Re-validated — 2026-11-03
+
+Source only; the public Site was not published or touched. Node 22.23.4 and pnpm 10.28.0 in a cloud session; `@napi-rs/canvas` 1.0.11 installed outside the repository exactly as CI does (`npm install --no-save --no-package-lock --prefix` + `CODEX_PRIMARY_RUNTIME_NODE_MODULES`).
+
+| Executed check | Result and scope |
+|---|---|
+| `node scripts/verify-growth.cjs --require-canvas --record` | PASS. Atlas digest matches its index (60 sprites, 256 x 142). Exact parity with the version 1 plant count across 5 seeds and 10 ages; stages never go backwards; deterministic output; 78 spots kept clear of the first sprout. Pixel-identical to the version 1 renderer when no extra plants are visible. Unchanged version 1 sources and art for Android (provenance digests match). Phone-size renders regenerated at day 7, 40 and 400 (390 x 844 at device-pixel-ratio cap 2); day-400 GIF loop closes at 144,259 bytes. growth-evidence.json refreshed |
+| `pnpm exec tsc --noEmit` | PASS |
+
+The five-stage growth layer is built, deterministic and automated-verified. The day 7 / 40 / 400 renders are generated for the owner's blind ordering review. Still not established and still owner-gated: the human blind ordering test itself, on-device browser/phone rendering, low-end phone performance, and publication to the managed Site. The layer remains a candidate — unpublished and unmerged into any Site revision.
+
 
 ## Perceptual-depth candidate — 2026-10-17
 
