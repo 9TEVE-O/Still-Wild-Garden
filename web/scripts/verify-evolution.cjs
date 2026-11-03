@@ -121,6 +121,30 @@ const snapshotRoute = load('app/api/garden/snapshot/route.ts', { '@/db/evolution
   assert.equal(afterReopen.snapshot.events[0].type, 'keeper.watered');
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM gardens').get().n, 0, 'legacy garden changed after reopen');
 
+  // Overlapping-tick race: a concurrent winner advances the garden between this run's read and its
+  // batch. The losing run carries a different, newer tick id, so its own inserts never key-collide;
+  // the regression is that it used to still persist an applied tick, a committed run record, an
+  // environment interval and a watering event although the garden state never advanced to its tick.
+  const raceTickId = tickId + 1;
+  const countOf = (table) => sql.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+  const tables = ['garden_events', 'applied_ticks', 'background_runs', 'environment_intervals'];
+  const countsBefore = Object.fromEntries(tables.map((t) => [t, countOf(t)]));
+  const realBatch = env.DB.batch;
+  env.DB.batch = async (statements) => {
+    env.DB.batch = realBatch; // one-shot: only the racing run sees the injected concurrent winner
+    sql.prepare('UPDATE evolution_gardens SET revision = revision + 1, last_tick_id = ? WHERE garden_id = ?')
+      .run(9_999_999, types.PROOF_GARDEN_ID);
+    return realBatch(statements);
+  };
+  const raced = await evolution.runEvolutionTick({ ...environment, tickId: raceTickId }, raceTickId * 3_600_000 + 1000);
+  assert.equal(raced.applied, false, 'a losing overlapping tick must not report applied');
+  assert.equal(raced.reason, 'concurrent_or_duplicate_tick', 'a losing overlapping tick must be reported as such');
+  const countsAfter = Object.fromEntries(tables.map((t) => [t, countOf(t)]));
+  assert.deepEqual(countsAfter, countsBefore, 'a losing overlapping tick must persist no rows');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM applied_ticks WHERE tick_id = ?').get(raceTickId).n, 0, 'no orphan applied tick');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM background_runs WHERE tick_id = ?').get(raceTickId).n, 0, 'no orphan run record');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM garden_events WHERE tick_id = ?').get(raceTickId).n, 0, 'no orphan event');
+
   const evidence = {
     status: 'PASS',
     scope: 'Local SQLite-backed D1 adapter. Proves deterministic Dew consequence, persistence, duplicate-tick idempotency and read-only return. Does not prove deployed hourly scheduling or a real one-hour absence.',

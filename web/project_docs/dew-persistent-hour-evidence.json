@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "scope": "Local SQLite-backed D1 adapter. Proves deterministic Dew consequence, persistence, duplicate-tick idempotency and read-only return. Does not prove deployed hourly scheduling or a real one-hour absence.",
+  "gardenId": "proof-darwin-v2",
+  "tickId": 400000,
+  "dewEvent": {
+    "id": "proof-darwin-v2:2:400000:dew:plant-001",
+    "gardenId": "proof-darwin-v2",
+    "tickId": 400000,
+    "type": "keeper.watered",
+    "keeper": "dew",
+    "plantId": "plant-001",
+    "payload": {
+      "moistureBefore": 12,
+      "moistureAfter": 20,
+      "waterUsed": 8,
+      "precipitationMm": 0,
+      "environmentStatus": "simulated",
+      "reason": "Plant moisture 12.0 was below the 25% watering threshold."
+    },
+    "createdAt": 1440000000000
+  },
+  "revision": 1,
+  "legacyGardenRows": 0,
+  "duplicateTickRejected": true,
+  "readOnlyReturn": true,
+  "survivesConnectionReopen": true
+}
