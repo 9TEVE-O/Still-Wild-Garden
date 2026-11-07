@@ -10,6 +10,10 @@ from .domain import AgentOutput, GardenEvent
 TAXON_EVENT_TYPES = {"plant.observation", "wildlife.observation", "fungi.observation"}
 
 
+class DuplicateEventError(ValueError):
+    """An event with this ID has already been stored."""
+
+
 class SimulatedGardenError(RuntimeError):
     """Raised instead of mixing a real observation into a simulated garden."""
 
@@ -43,7 +47,15 @@ class GardenEngine:
                 "this database hosts a simulated garden; record real observations in a "
                 "separate garden database"
             )
-        seq = self.repo.add_event(event, connection=conn)
+        try:
+            seq = self.repo.add_event(event, connection=conn)
+        except sqlite3.IntegrityError as exc:
+            if (
+                exc.sqlite_errorcode == sqlite3.SQLITE_CONSTRAINT_UNIQUE
+                and str(exc) == "UNIQUE constraint failed: events.id"
+            ):
+                raise DuplicateEventError(f"event {event.id!r} already exists") from exc
+            raise
         return self.process(event, seq=seq, conn=conn)
 
     def process(

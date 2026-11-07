@@ -17,7 +17,7 @@ from .background import ScheduleConflict, ensure_schedule_compatible, run_due
 from .config import settings
 from .db import Repository
 from .domain import ExperimentInput, GardenEvent, OutcomeInput, StateSnapshot
-from .engine import GardenEngine, SimulatedGardenError
+from .engine import DuplicateEventError, GardenEngine, SimulatedGardenError
 from .realworld import RealWorldError, RealWorldService, build_realworld_router
 from .wild import SOURCE as WILD_SOURCE
 from .wild import RealGardenError, Wild, WildBusyError
@@ -136,7 +136,7 @@ def ingest_event(event: GardenEvent) -> dict:
         )
     try:
         return engine.ingest(event)
-    except SimulatedGardenError as exc:
+    except (SimulatedGardenError, DuplicateEventError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 

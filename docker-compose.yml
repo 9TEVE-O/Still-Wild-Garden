@@ -1,10 +1,19 @@
 
 services:
+  # Upgrade existing root-owned SQLite volumes before either service starts.
+  data-permissions:
+    build: .
+    user: "0:0"
+    command: ["chown", "-R", "stillwild:stillwild", "/data"]
+    volumes:
+      - stillwild-data:/data
+
   api:
     build: .
     command: uvicorn stillwild.api:app --host 0.0.0.0 --port 8000
     environment:
       STILLWILD_DB_PATH: /data/stillwild.db
+      STILLWILD_AUTOMATION_AUTHORITY: ${STILLWILD_AUTOMATION_AUTHORITY:-false}
       STILLWILD_WILD_SIM: ${STILLWILD_WILD_SIM:-false}
       STILLWILD_WILD_SEED: ${STILLWILD_WILD_SEED:-7}
       STILLWILD_WILD_DAYS_PER_TICK: ${STILLWILD_WILD_DAYS_PER_TICK:-1}
@@ -17,6 +26,9 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - stillwild-data:/data
+    depends_on:
+      data-permissions:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   worker:
@@ -24,6 +36,7 @@ services:
     command: python -m stillwild.worker
     environment:
       STILLWILD_DB_PATH: /data/stillwild.db
+      STILLWILD_AUTOMATION_AUTHORITY: ${STILLWILD_AUTOMATION_AUTHORITY:-false}
       STILLWILD_TICK_SECONDS: ${STILLWILD_TICK_SECONDS:-300}
       STILLWILD_CATCH_UP_LIMIT: ${STILLWILD_CATCH_UP_LIMIT:-6}
       STILLWILD_WORKER_ID: worker-1
@@ -32,6 +45,9 @@ services:
       STILLWILD_WILD_DAYS_PER_TICK: ${STILLWILD_WILD_DAYS_PER_TICK:-1}
     volumes:
       - stillwild-data:/data
+    depends_on:
+      data-permissions:
+        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:

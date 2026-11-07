@@ -162,9 +162,10 @@ def _now() -> str:
 
 class Repository:
     def __init__(self, path: str):
+        if path == ":memory:":
+            raise ValueError(":memory: is unsupported; use a file-backed SQLite database")
         self.path = path
-        if path != ":memory:":
-            Path(path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
+        Path(path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
         self.init()
 
     @contextmanager
