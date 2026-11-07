@@ -18,3 +18,14 @@ build/
 .idea/
 .vscode/
 .DS_Store/
+
+# Published web source uses build/ for source tooling.
+!web/build/
+!web/build/**
+*.keystore
+*.jks
+*.tsbuildinfo
+
+# Background proof also keeps its source tooling under build/.
+!background-proof/build/
+!background-proof/build/**

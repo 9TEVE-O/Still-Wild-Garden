@@ -1,0 +1,56 @@
+{
+  "subject_commit": "31af17f7711224219d0378c99f9068f4570ab339",
+  "source_snapshot_sha256": "1488cf09597c6ddb8fd3147a24c71e19b157f183d4322835da74cc0648abf91d",
+  "recorded_at_utc": "2026-10-04T11:29:53.678396+00:00",
+  "python": "3.12.14",
+  "packages": {
+    "fastapi": "0.142.2",
+    "pydantic": "2.13.5",
+    "starlette": "1.7.0",
+    "httpx": "0.28.1",
+    "pytest": "8.4.2",
+    "ruff": "0.16.10",
+    "uvicorn": "0.54.0"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q",
+      "exit_code": 0,
+      "asserted_result": "80 passed",
+      "warning": "Starlette HTTPX TestClient deprecation; no failing assertions"
+    },
+    {
+      "command": ".venv/bin/ruff check src tests scripts/verify-background.py",
+      "exit_code": 0,
+      "asserted_result": "All checks passed"
+    },
+    {
+      "command": "node --check (extracted dashboard script)",
+      "exit_code": 0,
+      "scope": "JavaScript syntax only; no visual browser acceptance"
+    },
+    {
+      "command": "python scripts/verify-background.py --output docs/audits/2026-10-04/local-process-smoke.json",
+      "exit_code": 0,
+      "scope": "Short local simulated progression before first return; not 24-hour or hosted proof",
+      "pre_return_day": 3,
+      "read_changed_state": false
+    },
+    {
+      "command": "python -m pip wheel . --no-deps",
+      "exit_code": 0,
+      "asserted_result": "background.py and static/garden.html included in wheel"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "scope": "Whitespace only"
+    }
+  ],
+  "limits": [
+    "No Docker container or production host was launched.",
+    "No 24-hour proof, Darwin collector, pixel adapter, owner-isolation test or phone acceptance executed.",
+    "Web runtime code and assets unchanged; historical web check results were not rerun."
+  ],
+  "smoke_sha256": "c8dc34e104dfec4f244d07e9283ea57468ced051cccfa9a72b50af63700ee70c"
+}

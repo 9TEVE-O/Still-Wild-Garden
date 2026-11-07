@@ -1,143 +1,60 @@
-
 # Still Wild Garden
 
-**A forever-growing garden that evolves over time with the help of agents.**
+A quiet pixel garden that develops at its own pace. No tasks, score, streaks or punishment for leaving.
 
-Stillwild is a persistent agentic ecological system. It is designed to keep observing, reasoning and accumulating evidence even when nobody has the app open.
+[Open the published garden](https://stillwild-garden.subzteveo.chatgpt.site/)
 
-The first working spine implements:
+The repository now holds three distinct runtimes:
 
-- durable garden events
-- persistent garden memory
-- specialised garden agents
-- a wildness/intervention gate
-- a council that resolves recommendations
-- bounded experiments
-- delayed outcome recording
-- evidence-based agent evolution candidates
-- a long-running background worker
-- reconnectable Server-Sent Events (SSE)
-- explicit action authority boundaries
+| Location | Purpose | Current boundary |
+|---|---|---|
+| [web/](web/README.md) | Public pixel garden, gifts and Android companion candidate | Site version 2; one shared origin; version 1 age-based growth. Source adds an unpublished five-stage growth layer |
+| [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Private test Site version 4 per its current-state record; original 24-hour absence review INCONCLUSIVE; no new window started |
+| [src/stillwild/](docs/EXPERIMENTAL_BACKEND_README.md) | Experimental Python agent service, isolated real-garden registry/weather ingestion, and opt-in Wild simulation | Separate SQLite runtime; model-derived Open-Meteo values; no connection to either pixel app |
 
-## Run
+The public app and the original seed and birth time are preserved. GitHub updates do not deploy either managed Site.
 
-```bash
+## Current background milestone
+
+The [approved v0.2 brief](web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md) governs this bounded milestone: scheduled jobs must save outcomes before a viewer returns. The first garden uses completed UTC-hour weather intervals, finite-state keeper actions and read-only snapshots with refresh. SSE remains deferred; the prompt catalog remains parked; future LLM use is undecided.
+
+The private background-test source was recovered from Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, and imported under `background-proof/`. Its D1 database is separate from the public origin. [Its current-state record](background-proof/project_docs/CURRENT_BUILD_STATE.md) owns the proof's status, including the later version 4 scheduler-provenance deployment.
+
+On 5 October 2026, native database reads showed **22 unique committed hourly ticks, revision 22 and 31 saved consequence events** at that cutoff. All 22 tick run IDs matched successful Worker log entries. Recorded planting, habitat and water changes reconcile with the saved world. This establishes background progress within the observed window.
+
+**The original 4–5 October 2026 absence review was executed and remains INCONCLUSIVE.** Saved progress is evidenced within that window; complete view closure and historical scheduler identity were not established. A later bootstrap-rerun specimen linked one independently recorded execution to one saved keeper consequence. It does not establish hourly scheduling or a full absence PASS. Records through 5 October show the original garden and its checkpoint (`absence-check-001`, started 4 October 2026, 16:57:51 ACST) preserved. Never restart or overwrite that checkpoint; a new 24-hour window needs a distinct immutable checkpoint and the owner's authorisation.
+
+Separate personal ownership is a later release gate. The Android candidate still needs physical-device acceptance.
+
+## Run locally
+
+For either web app, use Node.js 24 and the pinned `pnpm@11.25.0`. Each directory has its own lockfile, schema and local D1 database. Follow [web instructions](web/README.md) or [background-proof instructions](background-proof/README.md).
+
+The separate Python service runs from the repository root:
+
+```sh
 docker compose up --build
 ```
 
-Then open:
+Open `http://localhost:8000/docs`. The optional [Wild simulation](docs/EXPERIMENTAL_BACKEND_README.md#the-wild-a-garden-that-grows-on-its-own) uses its own Docker project and simulated inputs. Physical actions are off by default.
 
-```text
-http://localhost:8000/docs
-```
+## Checks and next work
 
-Health:
+Current local checks: **124 Python tests and Ruff pass** (re-run 13 October 2026), legacy-web TypeScript and persistence checks pass, and background-proof TypeScript, transactional SQLite checks and production build pass. [CI](.github/workflows/test.yml) checks Python and both web apps. The [corrected hosted CI run](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/37272473974) passes Python and both web-app jobs.
 
-```bash
-curl http://localhost:8000/health
-```
+The [Project Auditor report](docs/audits/2026-10-05/REPORT.md) records the reviewed revisions, findings, remediation and remaining gates. [Native evidence](docs/audits/2026-10-05/background-native-evidence.json) and [correlation](docs/audits/2026-10-05/background-correlation.json) preserve the observed progress without claiming full absence.
 
-## Send a real garden observation
+The opt-in Python Wild also has a protected background foundation. Cron and worker use the
+same UTC slot transaction, catch up in bounded batches and save run receipts with outcomes.
+Scheduler and operator keys have separate scopes; unconfigured HTTP writes are disabled.
+The Docker API binds to localhost. [Background foundation instructions](docs/BACKGROUND_FOUNDATION.md)
+cover credentials, manual simulation controls, agent duties and a short isolated process check.
+The Wild uses simulated conditions and remains separate from both pixel gardens. Its audit and
+local evidence are retained at [the 4 October audit](docs/audits/2026-10-04/AUDIT.md).
 
-```bash
-curl -X POST http://localhost:8000/events \
-  -H "content-type: application/json" \
-  -d '{
-    "type": "sensor.soil_moisture",
-    "zone_id": "north-bed",
-    "source": "soil-sensor-01",
-    "payload": {
-      "percent": 17.2,
-      "forecast_rain_mm_24h": 0
-    }
-  }'
-```
+The imported web app's historical checks cover TypeScript, production build, persistence,
+GIF/renderer, Android-scene and local Worker/D1 behavior. [The sync record](web/project_docs/GITHUB_SYNC.md)
+and [import evidence](web/project_docs/repository-verification.json) bind those checks to the import.
+None of these local checks establishes the required hosted 24-hour absence proof.
 
-Stillwild stores the observation, routes it to relevant agents, applies the wildness gate, records a council recommendation and updates evidence-linked memory.
-
-## Stream garden events
-
-```js
-const source = new EventSource("http://localhost:8000/stream");
-
-source.addEventListener("garden_event", (event) => {
-  const gardenEvent = JSON.parse(event.data);
-  console.log("garden changed", gardenEvent);
-});
-```
-
-The stream uses durable event sequence IDs. Reconnection can resume from `Last-Event-ID` without treating the browser as the source of truth.
-
-## Background life
-
-The `worker` container wakes on a configurable interval and emits a `system.tick`. It runs independently of any connected user.
-
-```text
-STILLWILD_TICK_SECONDS=300
-```
-
-If your host cannot run a permanent worker, schedule:
-
-```text
-POST /tasks/tick
-```
-
-from the host's cron/scheduler.
-
-## Authority
-
-Automatic physical action is **off by default**.
-
-```text
-STILLWILD_AUTOMATION_AUTHORITY=false
-```
-
-Agents may propose watering, inspection or another intervention. Stillwild does not claim an action happened until an authorised actuator integration returns telemetry.
-
-## Event types
-
-The initial agents understand these event families:
-
-- `sensor.soil_moisture`
-- `sensor.temperature`
-- `sensor.humidity`
-- `sensor.light`
-- `weather.forecast`
-- `weather.rain`
-- `plant.observation`
-- `wildlife.observation`
-- `fungi.observation`
-- `system.tick`
-
-Unknown event types are still durably stored and observed. New agents can be added without changing the event ledger.
-
-## API surface
-
-- `GET /health`
-- `POST /events`
-- `GET /events`
-- `GET /stream`
-- `GET /state`
-- `POST /experiments`
-- `POST /outcomes`
-- `POST /tasks/tick`
-
-## Principle
-
-Stillwild should not optimise the garden into submission.
-
-Its default loop is:
-
-```text
-observe
-  -> model
-  -> interpret
-  -> experiment when uncertain
-  -> intervene only when justified
-  -> measure
-  -> remember
-  -> evaluate the agents themselves
-  -> adapt through tested changes
-```
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system boundary and next layers.
+The next recorded gate is view-closure control, implemented and verified before any second 24-hour window is authorised (see the proof's current-state record). Preserve both managed Sites and their current data; GitHub changes do not deploy either Site.

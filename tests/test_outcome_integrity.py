@@ -1,4 +1,5 @@
 import pytest
+from conftest import OPERATOR_HEADERS
 from fastapi.testclient import TestClient
 
 from stillwild import api
@@ -33,7 +34,7 @@ def test_recommendation_accepts_only_one_outcome(tmp_path):
 def test_duplicate_outcome_returns_http_conflict(tmp_path):
     api.repo = Repository(str(tmp_path / "api.db"))
     api.engine = GardenEngine(api.repo, automation_authority=False)
-    client = TestClient(api.app)
+    client = TestClient(api.app, headers=OPERATOR_HEADERS)
 
     event = client.post(
         "/events",

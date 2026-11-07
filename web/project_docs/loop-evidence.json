@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "width": 800,
+  "height": 320,
+  "frames": 60,
+  "durationMs": 6000,
+  "bytes": 121484,
+  "maxChangedPixelFraction": 0.0178359375,
+  "maxChangedIndexedFraction": 0.0041796875,
+  "exactPeriodicBoundary": true,
+  "decodedFrames": 60,
+  "decodedLoopReset": true,
+  "growthFixtures": "passed",
+  "offlineRuntimeSyntax": "passed",
+  "note": "Actual shared renderer and encoder executed with a Node canvas; not a browser or phone-device test."
+}

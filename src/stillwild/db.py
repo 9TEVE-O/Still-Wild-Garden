@@ -113,7 +113,47 @@ CREATE TABLE IF NOT EXISTS leases (
     holder TEXT NOT NULL,
     expires_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS worlds (
+    name TEXT PRIMARY KEY,
+    state_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS background_schedules (
+    name TEXT PRIMARY KEY,
+    config_json TEXT NOT NULL,
+    last_slot_end_ms INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS background_runs (
+    id TEXT PRIMARY KEY,
+    schedule_name TEXT NOT NULL,
+    through_slot_end_ms INTEGER NOT NULL,
+    trigger TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    result_json TEXT,
+    error TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_background_runs_started_id
+ON background_runs(started_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS background_ticks (
+    schedule_name TEXT NOT NULL,
+    slot_end_ms INTEGER NOT NULL,
+    run_id TEXT NOT NULL REFERENCES background_runs(id),
+    result_json TEXT NOT NULL,
+    committed_at TEXT NOT NULL,
+    PRIMARY KEY (schedule_name, slot_end_ms)
+);
 """
+
+# Memories keep a full evidence tally but only the most recent evidence ids, so a
+# long-lived garden does not rewrite an ever-growing list on every observation.
+MAX_MEMORY_EVIDENCE_IDS = 50
 
 
 def _now() -> str:
@@ -144,9 +184,12 @@ class Repository:
             conn.close()
 
     @contextmanager
-    def transaction(self) -> Iterator[sqlite3.Connection]:
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+    def transaction(
+        self, existing: sqlite3.Connection | None = None
+    ) -> Iterator[sqlite3.Connection]:
+        with self.connection(existing) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             yield conn
 
     def init(self) -> None:
@@ -279,11 +322,20 @@ class Repository:
             return [self._recommendation(row) for row in rows]
 
     def add_outcome(
-        self, recommendation_id: str, outcome: str, utility_score: float, notes: str | None
+        self,
+        recommendation_id: str,
+        outcome: str,
+        utility_score: float,
+        notes: str | None,
+        connection: sqlite3.Connection | None = None,
     ) -> str:
+        """Resolve a recommendation and return its outcome ID, optionally in a shared transaction.
+
+        Raise KeyError for a missing recommendation or ValueError if already resolved."""
         outcome_id = str(uuid4())
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             recommendation = conn.execute(
                 "SELECT status FROM recommendations WHERE id = ?", (recommendation_id,)
             ).fetchone()
@@ -304,26 +356,63 @@ class Repository:
             )
         return outcome_id
 
-    def agent_scores(self, limit_per_agent: int = 20) -> list[dict[str, Any]]:
-        # Outcomes belong to council recommendations. Attribution uses the agent runs that
-        # contributed to the same triggering event; this intentionally measures usefulness,
-        # not causal credit.
+    def outcomes_for(self, recommendation_ids: list[str]) -> dict[str, dict[str, Any]]:
+        """Return recorded outcomes and utility scores keyed by the requested recommendation IDs."""
+        if not recommendation_ids:
+            return {}
+        marks = ",".join("?" for _ in recommendation_ids)
         with self.connection() as conn:
             rows = conn.execute(
+                f"""
+                SELECT recommendation_id, outcome, utility_score FROM outcomes
+                WHERE recommendation_id IN ({marks})
+                """,
+                recommendation_ids,
+            ).fetchall()
+            return {
+                row["recommendation_id"]: {
+                    "outcome": row["outcome"],
+                    "utility_score": row["utility_score"],
+                }
+                for row in rows
+            }
+
+    def agent_scores(
+        self, limit_per_agent: int = 20, connection: sqlite3.Connection | None = None
+    ) -> list[dict[str, Any]]:
+        # Outcomes belong to council recommendations. Attribution uses the agent runs that
+        # contributed to the same triggering event; this intentionally measures usefulness,
+        # not causal credit. Each agent is scored over its most recent ``limit_per_agent``
+        # resolved recommendations, so the window reflects recent behaviour rather than all
+        # history — this is what feeds the low-utility evolution-candidate threshold.
+        with self.connection(connection) as conn:
+            rows = conn.execute(
                 """
-                SELECT agent, COUNT(*) AS n, AVG(utility_score) AS avg_score
-                FROM (
+                WITH recommendation_scores AS (
                     SELECT ar.agent AS agent, r.id AS recommendation_id,
+                           r.created_at AS created_at,
                            AVG(o.utility_score) AS utility_score
                     FROM outcomes o
                     JOIN recommendations r ON r.id = o.recommendation_id
                     JOIN agent_runs ar ON ar.event_id = r.event_id
                     WHERE ar.agent != 'council'
                     GROUP BY ar.agent, r.id
-                ) AS recommendation_scores
+                ),
+                ranked AS (
+                    SELECT agent, recommendation_id, utility_score,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY agent
+                               ORDER BY created_at DESC, recommendation_id DESC
+                           ) AS recency_rank
+                    FROM recommendation_scores
+                )
+                SELECT agent, COUNT(*) AS n, AVG(utility_score) AS avg_score
+                FROM ranked
+                WHERE recency_rank <= ?
                 GROUP BY agent
                 ORDER BY n DESC
-                """
+                """,
+                (limit_per_agent,),
             ).fetchall()
             return [
                 {"agent": row["agent"], "n": row["n"], "avg_score": row["avg_score"]}
@@ -339,6 +428,10 @@ class Repository:
         status: str = "observation",
         connection: sqlite3.Connection | None = None,
     ) -> None:
+        """Update a memory, retaining its evidence tally and the most recent evidence IDs.
+
+        Only IDs absent from the retained window increase an existing tally.
+        Join the supplied connection when provided."""
         with self.connection(connection) as conn:
             if not conn.in_transaction:
                 conn.execute("BEGIN IMMEDIATE")
@@ -349,8 +442,10 @@ class Repository:
             count = len(evidence)
             if existing:
                 old = json.loads(existing["evidence_json"])
+                added = [item for item in evidence if item not in old]
                 evidence = list(dict.fromkeys(old + evidence))
-                count = max(int(existing["evidence_count"]), len(evidence))
+                count = max(int(existing["evidence_count"]) + len(added), len(evidence))
+            evidence = evidence[-MAX_MEMORY_EVIDENCE_IDS:]
             conn.execute(
                 """
                 INSERT INTO memories(key,value_json,confidence,evidence_count,evidence_json,status,last_verified)
@@ -433,10 +528,12 @@ class Repository:
         expected_improvement: str,
         risk: str,
         test_method: str,
+        connection: sqlite3.Connection | None = None,
     ) -> str:
         candidate_id = str(uuid4())
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             duplicate = conn.execute(
                 """
                 SELECT id FROM evolution_candidates
@@ -468,8 +565,10 @@ class Repository:
             )
         return candidate_id
 
-    def list_evolution_candidates(self, limit: int = 50) -> list[dict[str, Any]]:
-        with self.connection() as conn:
+    def list_evolution_candidates(
+        self, limit: int = 50, connection: sqlite3.Connection | None = None
+    ) -> list[dict[str, Any]]:
+        with self.connection(connection) as conn:
             rows = conn.execute(
                 """
                 SELECT * FROM evolution_candidates
@@ -479,11 +578,21 @@ class Repository:
             ).fetchall()
             return [dict(row) for row in rows]
 
-    def try_acquire_lease(self, name: str, holder: str, ttl_seconds: int) -> bool:
+    def try_acquire_lease(
+        self,
+        name: str,
+        holder: str,
+        ttl_seconds: int,
+        connection: sqlite3.Connection | None = None,
+    ) -> bool:
+        """Acquire or renew a lease unless another holder has an unexpired claim.
+
+        Return whether acquisition succeeded, optionally using the supplied connection."""
         now = datetime.now(UTC)
         expires = now + timedelta(seconds=ttl_seconds)
-        with self.connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             row = conn.execute(
                 "SELECT holder,expires_at FROM leases WHERE name = ?", (name,)
             ).fetchone()
@@ -499,6 +608,146 @@ class Repository:
                 (name, holder, expires.isoformat()),
             )
             return True
+
+    def release_lease(
+        self, name: str, holder: str, connection: sqlite3.Connection | None = None
+    ) -> None:
+        """Delete a lease only if it still belongs to the specified holder."""
+        with self.connection(connection) as conn:
+            conn.execute("DELETE FROM leases WHERE name = ? AND holder = ?", (name, holder))
+
+    def has_real_observations(self, connection: sqlite3.Connection | None = None) -> bool:
+        # Anything other than periodic ticks and events whose payload says "simulated": true
+        # is treated as a real-world observation.
+        """Return whether any non-tick event lacks a literal JSON true simulation flag."""
+        with self.connection(connection) as conn:
+            row = conn.execute(
+                """
+                SELECT 1 FROM events
+                WHERE type != 'system.tick'
+                  AND COALESCE(json_type(payload_json, '$.simulated'), '') != 'true'
+                LIMIT 1
+                """
+            ).fetchone()
+            return row is not None
+
+    def has_real_garden_registry(self, connection: sqlite3.Connection | None = None) -> bool:
+        """Return whether any real garden is registered, if the real-world schema exists."""
+        with self.connection(connection) as conn:
+            registry_exists = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='real_gardens'"
+            ).fetchone()
+            if registry_exists is None:
+                return False
+            return conn.execute("SELECT 1 FROM real_gardens LIMIT 1").fetchone() is not None
+
+    def has_world(self, connection: sqlite3.Connection | None = None) -> bool:
+        """Return whether any simulated world exists, optionally within a shared transaction."""
+        with self.connection(connection) as conn:
+            return conn.execute("SELECT 1 FROM worlds LIMIT 1").fetchone() is not None
+
+    def claim_world(
+        self, name: str, state: dict[str, Any], connection: sqlite3.Connection | None = None
+    ) -> bool:
+        # Claiming happens under the same write lock as event ingestion, so a real
+        # observation and a new simulated garden can never both land in one database.
+        """Create a world if absent under a write lock, refusing real observations.
+
+        Return False for a real garden; otherwise preserve any existing world and return True.
+        Join the supplied connection when provided."""
+        with self.connection(connection) as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
+            if self.has_real_observations(connection=conn) or self.has_real_garden_registry(
+                connection=conn
+            ):
+                return False
+            conn.execute(
+                "INSERT OR IGNORE INTO worlds(name,state_json,updated_at) VALUES (?,?,?)",
+                (name, json.dumps(state, separators=(",", ":")), _now()),
+            )
+            return True
+
+    def load_world(
+        self, name: str, connection: sqlite3.Connection | None = None
+    ) -> dict[str, Any] | None:
+        """Return the decoded state of a named world, or None if it does not exist."""
+        with self.connection(connection) as conn:
+            row = conn.execute(
+                "SELECT state_json FROM worlds WHERE name = ?", (name,)
+            ).fetchone()
+            return json.loads(row["state_json"]) if row else None
+
+    def save_world_if_revision(
+        self,
+        name: str,
+        state: dict[str, Any],
+        expected_revision: int,
+        connection: sqlite3.Connection | None = None,
+    ) -> bool:
+        """Replace a world's state only if its stored revision matches, returning success."""
+        # A fencing check: the save only lands if nobody else has saved the world since the
+        # caller loaded it, so a stale writer can never overwrite newer state.
+        with self.connection(connection) as conn:
+            cur = conn.execute(
+                """
+                UPDATE worlds SET state_json = ?, updated_at = ?
+                WHERE name = ? AND COALESCE(json_extract(state_json, '$.revision'), 0) = ?
+                """,
+                (json.dumps(state, separators=(",", ":")), _now(), name, expected_revision),
+            )
+            return cur.rowcount == 1
+
+    def save_world(
+        self, name: str, state: dict[str, Any], connection: sqlite3.Connection | None = None
+    ) -> None:
+        """Insert or replace a named world state, optionally within a shared transaction."""
+        with self.connection(connection) as conn:
+            conn.execute(
+                """
+                INSERT INTO worlds(name,state_json,updated_at) VALUES (?,?,?)
+                ON CONFLICT(name) DO UPDATE SET
+                    state_json=excluded.state_json,
+                    updated_at=excluded.updated_at
+                """,
+                (name, json.dumps(state, separators=(",", ":")), _now()),
+            )
+
+    def start_background_run(self, schedule: str, through_ms: int, trigger: str) -> str:
+        run_id = str(uuid4())
+        with self.connection() as conn:
+            conn.execute(
+                """INSERT INTO background_runs
+                (id,schedule_name,through_slot_end_ms,trigger,status,started_at)
+                VALUES (?,?,?,?,?,?)""",
+                (run_id, schedule, through_ms, trigger, "started", _now()),
+            )
+        return run_id
+
+    def finish_background_run(
+        self, run_id: str, status: str, result: dict | None = None,
+        error: str | None = None, connection: sqlite3.Connection | None = None,
+    ) -> None:
+        with self.connection(connection) as conn:
+            conn.execute(
+                """UPDATE background_runs SET status=?,finished_at=?,result_json=?,error=?
+                WHERE id=?""",
+                (status, _now(), json.dumps(result) if result is not None else None, error, run_id),
+            )
+
+    def list_background_runs(self, limit: int = 50) -> list[dict[str, Any]]:
+        with self.connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM background_runs ORDER BY started_at DESC, id DESC LIMIT ?",
+                (min(limit, 100),),
+            ).fetchall()
+            runs = []
+            for row in rows:
+                run = dict(row)
+                encoded = run.pop("result_json")
+                run["result"] = json.loads(encoded) if encoded else None
+                runs.append(run)
+            return runs
 
     @staticmethod
     def _event(row: sqlite3.Row) -> dict[str, Any]:

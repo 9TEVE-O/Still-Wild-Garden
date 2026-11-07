@@ -1,4 +1,5 @@
 
+from conftest import OPERATOR_HEADERS
 from fastapi.testclient import TestClient
 
 from stillwild import api
@@ -9,7 +10,7 @@ from stillwild.engine import GardenEngine
 def make_client(tmp_path) -> TestClient:
     api.repo = Repository(str(tmp_path / "api.db"))
     api.engine = GardenEngine(api.repo, automation_authority=False)
-    return TestClient(api.app)
+    return TestClient(api.app, headers=OPERATOR_HEADERS)
 
 
 def test_health(tmp_path):

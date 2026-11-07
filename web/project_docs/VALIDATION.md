@@ -1,0 +1,139 @@
+# Validation evidence — 2026-09-26
+
+| Check | Observed result | Scope |
+|---|---|---|
+| TypeScript `tsc --noEmit` | PASS | Full authored TypeScript |
+| Sites production build | PASS (initial); final build runs as part of publication | Worker/SSR/client compilation |
+| Generated D1 migration | Inspected; local Wrangler D1 execution passed | Additive one-table schema |
+| `node scripts/verify-persistence.cjs` | PASS | Actual route/query code with a SQLite-backed D1 adapter; empty read, idempotent planting, five repeats, reopen persistence, wrong-origin 403, mutation 400, media-type 415 |
+| `node scripts/verify-garden.cjs` | PASS | Actual shared renderer with Node canvas and actual codec; independent GIF decoder |
+| GIF result | 121,484 bytes; 800×320; 60 frames; 6 seconds | See loop-evidence.json; exact t=0/t=T equality, complete decode, opaque loop reset |
+| Maximum changed pixels per adjacent raw frame | 1.78359375% | At least 98.21640625% stationary pixels in the measured fixture |
+| Offline runtime | Syntax PASS; no network primitive in runtime | `seedRuntime.toString()` compiled closure-free; not a full device HTML compatibility test |
+| Art | Both generated originals and optimised frame inspected | Original pixel-art assets plus deterministic compositing |
+| Supervised preview | Reported running; HTTP access returned 502 | Preview access limitation; no working source was changed to compensate |
+
+Not established: native OS integration, actual AirDrop/Quick Share transport, mobile HTML opening, browser pointer/keyboard/screenshot QA, live cloud planting or WebMCP tool registration/execution. The required control-browser skill is unavailable; no alternate browser automation was improvised. These limits do not make source/build checks equivalent to device tests.
+
+Private hosting completion was verified through native Sites deployment status. The assistant left the original publication unplanted; the owner's 28 September screenshots subsequently show Day 2. No production garden was planted or reset by these checks.
+
+## Android companion increment — 2026-09-28
+
+Owner evidence: two phone screenshots show the expanded website bubble with the orb at different positions, and the owner reports that it works well inside the website. They also report that it does not follow other apps, consistent with the web implementation. Native execution is not inferred from this evidence.
+
+| Executed check | Result and scope |
+|---|---|
+| `node node_modules/typescript/bin/tsc --noEmit` | PASS after same-garden export and shared native scene source were added |
+| Sites `build-site.mjs` | PASS: Worker, client and SSR compilation with Save for Android |
+| `node scripts/build-android-scene.cjs` | Bundled the original growth/renderer and both art assets; source hashes recorded |
+| `node scripts/verify-android.cjs` | PASS: 146-byte original identity export, five-age exact pixel parity, pause/resume and provenance checks; Node canvas/VM, not Android WebView |
+| Java JUnit `GardenRecordTest` | 4 tests PASS via JDK 17 + JUnit 4.13.2 + org.json 20240303, including the actual web-export fixture, uint32 maximum/zero and malformed/type/version/range/gift rejection |
+| Native SDK compilation | PASS through scripts/build-android-sdk.py: actual Android Java/resources/assets, SDK platform 35, build tools 35.0.0, D8 and zipalign |
+| APK signature | Verified v2/v3; development signing identity, not production/store signing. Exact size/source hashes and APK digest in android/releases/build-evidence.json |
+| Gradle wrapper | Generated with official Gradle 8.11.1; distribution SHA-256 pinned |
+| Full Gradle Android build | NOT COMPLETED: its JVM could not reach its configured repository proxy. Direct SDK compilation above is separate positive evidence |
+
+Device acceptance remains OPEN. No emulator/phone installation, native WebView image decoding, Messenger/YouTube overlay, gesture/rotation routing, notification action, permission denial/revocation or lock-screen lifecycle was executed here. Native independent foundation review, release-key continuity and store suitability are unestablished. See android/README.md for the specific phone checks. Website persistence/gift/GIF implementations were not changed, so earlier evidence retains only its original scope. No production read/write was used to obtain a real seed for these tests.
+
+## GitHub source import — 2026-10-04
+
+Saved Site version 2 source `bcf2d5210282e3683502be5066d745f920ffb191` was imported under web/ in the user's GitHub repository. The concurrently added Python backend and its tests are preserved at the root; they are not connected to the pixel garden. Runtime files and the applied schema migration are unchanged. The latest v0.2 source brief records approved canonical authority for the bounded background milestone, through the owner's `/approved / action` on 4 October 2026. Scheduled execution is confirmed and SSE is deferred. Approval of the brief does not establish background execution.
+
+Fresh TypeScript and production build checks passed. The existing persistence, GIF/renderer and Android-scene verifiers were re-executed and passed; their evidence records retained identical contents. GITHUB_SYNC.md and repository-verification.json record this execution and source-comparison scope. Java/native compilation and physical-device checks were not repeated.
+
+Sites metadata now reports the Site as public with one shared origin and no linked schedules, in contrast to the original private-delivery descriptions above. This GitHub update changes no hosting audience or production data. There is no executed pixel-garden background updater, connected weather integration, separate-user isolation test or 24-hour absence proof. The preserved Python backend has a separate worker/SSE prototype; its presence does not establish this milestone.
+
+The preserved Python backend at commit `d123b97cbf86a1a0d989ccce8a5d6be561f11734` was checked locally with its unchanged runtime/tests: 21 pytest tests and Ruff passed. Its original runtime, Docker/CI configuration and architecture remain unchanged in GitHub; the root README and ignore rules are merged, and the original backend README is archived. This establishes local backend checks, not connection to the pixel garden or a deployed unattended proof.
+
+## Repository evidence reconciliation — 2026-10-05
+
+The previous no-updater statement describes the original web app at import. A separate private test app was subsequently implemented and published; its recovered version 3 source is now in background-proof/. Neither this legacy runtime nor the Python backend is connected to it.
+
+Fresh local TypeScript and persistence checks pass for the unchanged legacy code. The current Python source at baseline commit edd4fec25c6835fe305a3896d3391fa039ea48b5, including the Wild simulation, passes 56 tests and Ruff. Background-proof TypeScript, the transactional SQLite verifier and production build pass. Node version is 24.19.0; pnpm is 11.25.0. No native compilation or phone checks were repeated.
+
+Native D1 and Worker evidence supports 22 unique committed test-garden ticks and 31 saved consequence events. These observations establish progress, not the completed absence proof. The 24-hour gate, separate personal ownership and Android device acceptance remain open. Root docs/audits/2026-10-05/ contains revision binding, execution evidence and limitations. New CI covers TypeScript, the applicable SQLite verifier and production build for each web app; hosted CI execution must be checked separately.
+
+## Five-stage growth layer — 2026-10-13
+
+Candidate change in source only; the public Site was not published or touched. Node 22.22.0 and pnpm 11.25.0 in a cloud session; Node canvas from `@napi-rs/canvas` installed outside the repository.
+
+| Executed check | Result and scope |
+|---|---|
+| `pnpm exec tsc --noEmit` | PASS |
+| `eslint` on the new and changed TypeScript files | PASS |
+| `node scripts/verify-growth.cjs --record` | PASS. Atlas digest matches its index (60 sprites, 256 x 142). Exact parity with the version 1 plant count across 5 seeds and 10 ages. Stages never go backwards. Deterministic output. 78 spots kept clear of the first sprout. Unchanged version 1 sources and art for Android. Pixel-identical output to the version 1 renderer when no extra plants are visible. Phone-size renders at day 7, 40 and 400 (390 x 844 points at the live canvas's device pixel ratio cap of 2). A day-400 GIF loop closes exactly at 144,259 bytes. See growth-evidence.json |
+| `verify-persistence.cjs`, `verify-evolution.cjs`, `verify-garden.cjs`, `verify-android.cjs` | PASS. `verify-garden.cjs` measured 125,569 bytes with this session's canvas build against the recorded 121,484; the recorded loop-evidence.json was left unchanged because the version 1 path did not change |
+| `pnpm build` | PASS; the atlas ships at `/art/growth/stillwild-growth-atlas.png` |
+
+CI installs `@napi-rs/canvas` 1.0.11 outside the app's lockfile and runs `verify-growth.cjs --require-canvas`, so the renderer checks fail rather than skip if the canvas is missing.
+
+Not established: browser or phone rendering, the blind ordering test, performance on low-end phones and publication to the managed Site. The build also includes the unconfigured pull request #6 routes recorded in CURRENT_BUILD_STATE.md.
+
+### Re-validated — 2026-11-03
+
+Source only; the public Site was not published or touched. Node 22.23.4 and pnpm 10.28.0 in a cloud session; `@napi-rs/canvas` 1.0.11 installed outside the repository exactly as CI does (`npm install --no-save --no-package-lock --prefix` + `CODEX_PRIMARY_RUNTIME_NODE_MODULES`).
+
+| Executed check | Result and scope |
+|---|---|
+| `node scripts/verify-growth.cjs --require-canvas --record` | PASS. Atlas digest matches its index (60 sprites, 256 x 142). Exact parity with the version 1 plant count across 5 seeds and 10 ages; stages never go backwards; deterministic output; 78 spots kept clear of the first sprout. Pixel-identical to the version 1 renderer when no extra plants are visible. Unchanged version 1 sources and art for Android (provenance digests match). Phone-size renders regenerated at day 7, 40 and 400 (390 x 844 at device-pixel-ratio cap 2); day-400 GIF loop closes at 144,259 bytes. growth-evidence.json refreshed |
+| `pnpm exec tsc --noEmit` | PASS |
+
+The five-stage growth layer is built, deterministic and automated-verified. The day 7 / 40 / 400 renders are generated for the owner's blind ordering review. Still not established and still owner-gated: the human blind ordering test itself, on-device browser/phone rendering, low-end phone performance, and publication to the managed Site. The layer remains a candidate — unpublished and unmerged into any Site revision.
+
+
+## Perceptual-depth candidate — 2026-10-17
+
+The branch `feat/perceptual-depth-garden-20261017` introduces visual-only foreground/background layout and local pan/zoom gestures. The source inspection establishes no change to `lib/garden.ts`, persisted routes/schema, renderer world coordinates, gifts or Android package. GitHub's `web` CI runs TypeScript, persistence, growth and production build checks; their results must be read from the branch/PR run rather than inferred from the code change.
+
+**Not established by static review or CI:** Android Chrome two-finger gesture performance, view-control accessibility on-device, screen-reader announcements, touch interaction alongside Bubble mode, or final appearance at 320px/390px/desktop widths. Preserve the original garden and test interactions against a local or isolated fixture. No public Site publication is performed by the repository change.
+
+## Perceptual-depth remediation — 17 October 2026
+
+Repository: PR #19 branch `feat/perceptual-depth-garden-20261017`. Verified implementation commit `27631d69c93722a432b55d77caf17369b4f8ed40`. A documentation-only follow-up adds `DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md`.
+
+GitHub Actions `test` run [38935569447](https://github.com/9TEVE-O/Still-Wild-Garden/actions/runs/38935569447) at this implementation commit: **PASS**. Its `web (web, verify-persistence.cjs)` job reports:
+
+| Exact CI step | Observed |
+|---|---|
+| `pnpm exec tsc --noEmit` | PASS |
+| `node scripts/verify-persistence.cjs` | PASS; isolated SQLite-backed route/database fixture |
+| `node scripts/verify-camera.cjs` | PASS; actual TypeScript camera math exercised through VM transpilation |
+| `node scripts/verify-growth.cjs --require-canvas` | PASS; existing scene/growth fixture |
+| `pnpm build` | PASS |
+
+The same revision's Python `test` and isolated `background-proof` jobs also passed. The separate `web-evolution-proof` workflow passed but does not prove the camera or background absence milestone. Earlier intermediate revisions had failing camera-verifier runs due to a CommonJS `exports` name collision and strict equality distinguishing `-0` from `0`. These were reproduced from CI logs and resolved in subsequent commits; do not treat those intermediate failures as final.
+
+## Health check + species/ambient candidate — 2026-11-07
+
+Source only; the public Site was not published or touched. Node 22.23.4 and pnpm 11.25.0 in a cloud session; `@napi-rs/canvas` 1.0.11 installed outside the app's lockfile exactly as CI does (`npm install --no-save --no-package-lock --prefix` + `CODEX_PRIMARY_RUNTIME_NODE_MODULES`). Branch `ccr-f1566601-kxlckx`.
+
+**Health check (whole web CI chain re-run live at this HEAD):**
+
+| Executed check | Result and scope |
+|---|---|
+| `node node_modules/typescript/bin/tsc --noEmit` | PASS |
+| `node --experimental-strip-types scripts/verify-internal-auth.mjs` | PASS (12 scheduled-tick credential boundary assertions) |
+| `node scripts/verify-persistence.cjs` | PASS; SQLite-backed route/database fixture (empty read, idempotent plant, 5 repeats, reopen persistence, 403/400/415) |
+| `node scripts/verify-camera.cjs` | PASS |
+| `node scripts/verify-growth.cjs --require-canvas` | PASS; see below |
+| `node scripts/verify-garden.cjs` | PASS; 6s GIF 125,569 bytes, exact periodic boundary, full decode |
+| `node scripts/verify-android.cjs` | PASS; version 1 provenance digests match (gift/Android drawing unchanged) |
+| `node scripts/verify-evolution.cjs` | PASS; deterministic Dew consequence, duplicate-tick idempotency, read-only return |
+| `pnpm build` | PASS |
+
+`verify-provenance.cjs` and `verify-background.cjs` belong to the isolated `background-proof` app, not web; they were not run from `web/`.
+
+**Species + ambient candidate verification:**
+
+| Executed check | Result and scope |
+|---|---|
+| `verify-growth.cjs --require-canvas` | PASS. Atlas digest unchanged (`32d5c5…`, 60 sprites, 256×142). Exact version 1 plant-count parity across 5 seeds and 10 ages; stages never regress; deterministic; 78 spots clear of the first sprout. **Pixel-identical to the version 1 renderer when no extra plants are visible** — species tint runs only inside the extra-plant loop. Version 1 sources and art unchanged for Android (provenance digests match). New species checks: deterministic per `(seed, k)`, palette membership, and a full day-400 garden (seed 4288523180) showing 6 species with emerald the majority (emerald 22; jade 18; fern 18; amber 10; rose 5; violet 5). Phone-size day 7/40/400 renders regenerated; day-400 GIF loop closes at 143,563 bytes |
+| `tsc --noEmit` | PASS with the new `Species` types, `components/ambient-sky.tsx` and the `render-world.ts` tint |
+
+Implementation notes: the species layer is a canvas foliage tint keyed to the garden seed, confined to `lib/render-world.ts`'s extra-plant loop and reset every iteration, so the keepers, motes, stream and background stay identical to the frozen renderer. `components/ambient-sky.tsx` is a separate decorative overlay (twinkling stars, water shimmer, drifting fireflies) that reads no garden and writes no state, honouring `prefers-reduced-motion`.
+
+Not established: on-device browser/phone rendering, the five-stage blind ordering test, low-end phone performance, accessibility review of the overlay on real hardware, and publication to the managed Site. The candidate is unpublished and unmerged into any Site revision; publish stays owner-gated.
+
+Code corrections: viewport re-clamps on resize; pointer state clears on blur/visibility; third touch is ignored; zoom/pan geometry moved into pure `lib/garden-camera.ts`; optional non-dragging directional controls and accessible control names were added. Mobile control hit targets and title width were tightened. Time-neutral atmospheric copy replaced the unconditional dusk label.
+
+**Still NOT RUN:** actual browser/Android pointer QA, screenshot comparisons at 320–1440px, manual TalkBack/screen reader, focus order, contrast on rendered moving content, 200% text zoom and measured frame rate. Therefore automated CI passing is not a release approval or a WCAG conformance finding. No production seed/database, Android code or managed Site deployment was modified. See `DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md`.

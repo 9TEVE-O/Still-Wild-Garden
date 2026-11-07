@@ -1,0 +1,37 @@
+{
+  "check": "isolated-local-process-smoke-v1",
+  "status": "passed",
+  "scope": "Short local simulated progression before first return; not 24-hour or hosted proof",
+  "requested_no_view_seconds": 3,
+  "tick_seconds": 1,
+  "worker_started_at": "2026-10-04T11:20:41.024323+00:00",
+  "worker_stopped_at": "2026-10-04T11:20:44.026146+00:00",
+  "first_return_at": "2026-10-04T11:20:44.390098+00:00",
+  "pre_return": {
+    "day": 3,
+    "revision": 4,
+    "seed": 7,
+    "world_sha256": "5ac3b0964cb879360b5695cd5c5d424218ed1a6256f7254e786b09e0a932c1e9",
+    "event_count": 42,
+    "ticks": [
+      {
+        "run_id": "81d93aec-2590-40d1-a002-b330e9acfa6e",
+        "slot_end_ms": 1791112841000,
+        "committed_at": "2026-10-04T11:20:41.129551+00:00"
+      },
+      {
+        "run_id": "aa005e6c-ecfe-48e4-81de-3ebdc17c98fd",
+        "slot_end_ms": 1791112842000,
+        "committed_at": "2026-10-04T11:20:42.133838+00:00"
+      },
+      {
+        "run_id": "0bc91afc-18ef-4e2e-9215-baef2d04eded",
+        "slot_end_ms": 1791112843000,
+        "committed_at": "2026-10-04T11:20:43.137368+00:00"
+      }
+    ]
+  },
+  "read_changed_state": false,
+  "anonymous_tick_status": 401,
+  "worker_log": "INFO:stillwild.background:background_run {\"backlog_slots\": 0, \"committed_slots\": 1, \"last_slot_end_ms\": 1791112841000, \"run_id\": \"81d93aec-2590-40d1-a002-b330e9acfa6e\", \"status\": \"completed\", \"wild\": {\"date\": \"2027-03-02\", \"day\": 1, \"events\": 24, \"revision\": 2}}\nINFO:stillwild.background:background_run {\"backlog_slots\": 0, \"committed_slots\": 1, \"last_slot_end_ms\": 1791112842000, \"run_id\": \"aa005e6c-ecfe-48e4-81de-3ebdc17c98fd\", \"status\": \"completed\", \"wild\": {\"date\": \"2027-03-03\", \"day\": 2, \"events\": 8, \"revision\": 3}}\nINFO:stillwild.background:background_run {\"backlog_slots\": 0, \"committed_slots\": 1, \"last_slot_end_ms\": 1791112843000, \"run_id\": \"0bc91afc-18ef-4e2e-9215-baef2d04eded\", \"status\": \"completed\", \"wild\": {\"date\": \"2027-03-04\", \"day\": 3, \"events\": 7, \"revision\": 4}}\n"
+}

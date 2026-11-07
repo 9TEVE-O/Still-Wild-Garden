@@ -108,6 +108,7 @@ class PlantAgent:
         return event.type == "plant.observation"
 
     def run(self, event: GardenEvent, repo: Repository) -> AgentOutput:
+        """Classify plant condition and propose inspection when stress warrants diagnosis."""
         condition = str(event.payload.get("condition", "unknown")).lower()
         if condition in {"declining", "stressed", "wilting", "yellowing"}:
             return AgentOutput(
@@ -123,12 +124,20 @@ class PlantAgent:
                     "checks": ["soil moisture", "sun exposure", "pests", "recent disturbance"],
                 },
             )
-        if condition in {"thriving", "stable", "flowering", "fruiting"}:
+        if condition in {"thriving", "stable", "flowering", "fruiting", "seeding", "dormant"}:
             return AgentOutput(
                 agent=self.name,
                 decision="NO_ACTION",
                 summary=f"Plant is reported as {condition}; no intervention is justified.",
                 confidence=0.86,
+                evidence_event_ids=[event.id],
+            )
+        if condition in {"germinating", "establishing", "died back"}:
+            return AgentOutput(
+                agent=self.name,
+                decision="WATCH",
+                summary=f"Plant is {condition}, a natural life-cycle stage; keep observing.",
+                confidence=0.75,
                 evidence_event_ids=[event.id],
             )
         return AgentOutput(

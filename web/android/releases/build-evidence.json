@@ -1,0 +1,28 @@
+{
+  "status": "COMPILED_AND_SIGNATURE_VERIFIED",
+  "method": "Official SDK aapt2, JDK javac --release 8, D8, zipalign and apksigner",
+  "sdk": 35,
+  "buildTools": "35.0.0",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "apkBytes": 332447,
+  "apkSha256": "e074ccb45603c549d21b5db7d79656ebf0659d14000957dfbc3b363f1864bfd1",
+  "sourceSha256": {
+    "android/app/src/main/AndroidManifest.xml": "c39263a33d3b9d67d3cc5f9e0d8c237c0fe0c94d67ed092ed3558dba17a6388d",
+    "android/app/src/main/assets/garden.html": "5ddad57be843d12337e07cc4fcfc0b9e84e05b5da86c5193a7a901388442b64e",
+    "android/app/src/main/assets/provenance.json": "6515e917fdeef777421b05418d6bb07190dd428efc8385a915395ebd762f01bf",
+    "android/app/src/main/assets/sapling.png": "6e60f391e4153b8b15fc2f442493ec8894c997f4ff31c324c658553286be095a",
+    "android/app/src/main/java/garden/stillwild/companion/GardenOverlayService.java": "8ff42af19da0c65a07073ebaabf1a865dbf191f4f6269061029c781428375105",
+    "android/app/src/main/java/garden/stillwild/companion/GardenRecord.java": "f0303e52cb752bc83aad5a7d179f0b4bb79092d8c2db59f99015391e5b82a842",
+    "android/app/src/main/java/garden/stillwild/companion/GardenStore.java": "7a5cc6cdd68bb84af2584936134dc7d4c78008ed6bc8cf7e4d1cd54b99c3ff13",
+    "android/app/src/main/java/garden/stillwild/companion/GardenWebView.java": "719313154b7dd491756f853ea84b5edfa8f07ebb79648d8e96272c9c3d30ea48",
+    "android/app/src/main/java/garden/stillwild/companion/MainActivity.java": "a48b108f08ae77f17ab754933d758780c63003ba4389ca4f3e8fbeba479d2ce4",
+    "android/app/src/main/res/drawable/ic_garden.xml": "db52175af9b1c1fa05f0ec9219135a69dbacae3d5b8bb28cd88e5c981fa6f150",
+    "android/app/src/main/res/values/styles.xml": "af39c6efbbee0c6471098d5ff89de225da42955711fd674725ba795f6af76c75",
+    "scripts/build-android-sdk.py": "841c500ebb1de6f0e8520b60c93c91faeb969663c0bae4eac6a2b480a5f05579"
+  },
+  "signing": "Development key, APK signature schemes v2/v3",
+  "gradleBuild": "Not completed in this environment: Gradle JVM could not reach its configured repository proxy",
+  "deviceExecution": "NOT EXECUTED",
+  "independentNativeFoundationClosure": "UNEXECUTED"
+}

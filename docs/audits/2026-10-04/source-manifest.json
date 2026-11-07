@@ -1,0 +1,30 @@
+{
+  "implementation_commit": "31af17f7711224219d0378c99f9068f4570ab339",
+  "snapshot_sha256": "1488cf09597c6ddb8fd3147a24c71e19b157f183d4322835da74cc0648abf91d",
+  "files": {
+    ".env.example": "79a8c4e361a66c97e0847d2ff4ab61c5146a19ad3f4ae8f178e641186aa64903",
+    ".github/workflows/test.yml": "67ae25d8d2c31b17647ef2e05a6320b1e6041d2c31d306243bdcda4fbcf255c3",
+    "Dockerfile": "5f153d58236cc8bbf078af1dfa8b5ed14f93a93cc4a784d00cf98897ca08f73d",
+    "docker-compose.yml": "0304993790463901fb46bb2e137c1568473d7efbf6461970906b93ca79344214",
+    "pyproject.toml": "c73a9ee0085de1917fc7f10970cacfdf68080f88ccec315190f41a6ce3eeb0d0",
+    "scripts/verify-background.py": "8392d21c1fd89e25479a15fdd345f754565cd29b576537eae8e595e8f7926b8f",
+    "src/stillwild/__init__.py": "471875d581e107b5456f3fde842145878a14d8d2544f14843e4bb8c81eb01f74",
+    "src/stillwild/agents.py": "b8f80c847709fe845b848e2a96c8f27ac55ef977ea4921a7c6b646eaa4ea4ada",
+    "src/stillwild/api.py": "6862fe721784ee168852edf8d2c9b39cc02ae92248d8c189d759da35a1cd92b2",
+    "src/stillwild/background.py": "1fb1d85e2232d2fcd6e9860fce0249847f17fff21e46c7db780e51c73f4a0f44",
+    "src/stillwild/config.py": "3772909636363dc6fe851a8ff357918a081635332a73f29dce10561f1288f304",
+    "src/stillwild/db.py": "97ef8051fc92af951d38516f31288d90b08e6212f121b51dfba21fb3d551ad79",
+    "src/stillwild/domain.py": "d9a3516c7411fc0c6044db9803560911ff53b411a7448819d8a827db137a4226",
+    "src/stillwild/engine.py": "72b95f571b8755b0bc40ef83129751cc89f989c149ffe5e7a612f27f6c0d88ed",
+    "src/stillwild/static/garden.html": "f81dacfb9a36bb41204d2f15805d201f28a4bfd8840e0aa4e523f13eff30769e",
+    "src/stillwild/wild.py": "deed28e780a21e46bcd33b1feaf7eefc60aaf960ec01ad47c2b67a5e0abf4454",
+    "src/stillwild/worker.py": "bc78ec1aab6d40b840ae4b46fbf64572d0e5df62d30ccf119db75ed63223c7a3",
+    "tests/conftest.py": "069d5a73ef6efd5128d79e84cc35575e68065882c92e26ab1dccdf29e8acb152",
+    "tests/test_api.py": "0bb89eda8f37099b71143191e0013cafed49d89bc8ec48845f802f55286eca76",
+    "tests/test_background.py": "e56fbd7fa50d28c7ac7bd693009e230c71ed73bc758ad16049ed534fdb9a83fe",
+    "tests/test_engine.py": "adab6e7dced3e9bec6fdcf5c59c112a6df1c18f9fea070fef3336663a25d26ab",
+    "tests/test_outcome_integrity.py": "880fc647fb48412c39ab37bbde760054c0d611aef2135ee2bab382295821fd47",
+    "tests/test_wild.py": "df1946ef605489da6d73d67d0699322119508e0ea4ed9f7d1e7ad56956f2a0fc",
+    "tests/test_worker.py": "b8343ba37ee38984cfe6ed5c2e9216fbd827e805f342f26ffd96e637859b53c7"
+  }
+}

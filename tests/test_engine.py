@@ -93,29 +93,6 @@ def test_outcomes_can_create_evolution_candidate(tmp_path):
     assert any(item["agent"] == "water" for item in candidates)
 
 
-def test_scores_aggregate_outcomes_across_recommendations(tmp_path):
-    repo = Repository(str(tmp_path / "garden.db"))
-    engine = GardenEngine(repo)
-    recommendation_ids = [
-        engine.ingest(
-            GardenEvent(
-                type="sensor.soil_moisture",
-                payload={"percent": 14, "forecast_rain_mm_24h": 0},
-            )
-        )["recommendation_id"]
-        for _ in range(5)
-    ]
-
-    for recommendation_id, utility_score in zip(
-        recommendation_ids, [0.2, 0.4, 0.6, 0.8, 1.0], strict=True
-    ):
-        repo.add_outcome(recommendation_id, "useful", utility_score, None)
-
-    water_score = next(score for score in repo.agent_scores() if score["agent"] == "water")
-    assert water_score["n"] == 5
-    assert water_score["avg_score"] == pytest.approx(0.6)
-
-
 @pytest.mark.parametrize(
     ("payload", "event_type"),
     [
@@ -207,3 +184,89 @@ def test_concurrent_candidate_checks_create_one_candidate(tmp_path):
 
     assert candidate_ids[0] == candidate_ids[1]
     assert len(repo.list_evolution_candidates()) == 1
+
+
+def test_memory_keeps_full_tally_but_bounded_evidence(tmp_path):
+    """Verify evidence trimming preserves the total count and most recent observation ID."""
+    from stillwild.db import MAX_MEMORY_EVIDENCE_IDS
+
+    repo = Repository(str(tmp_path / "garden.db"))
+    total = MAX_MEMORY_EVIDENCE_IDS + 10
+    for index in range(total):
+        repo.upsert_memory("busy", {"n": index}, 0.8, [f"event-{index}"])
+
+    memory = repo.list_memories()[0]
+    assert memory["evidence_count"] == total
+    assert len(memory["evidence_event_ids"]) == MAX_MEMORY_EVIDENCE_IDS
+    assert memory["evidence_event_ids"][-1] == f"event-{total - 1}"
+
+
+def test_species_records_accumulate_in_memory(tmp_path):
+    """Verify repeated wildlife observations update one taxon memory with zone and evidence."""
+    repo = Repository(str(tmp_path / "garden.db"))
+    engine = GardenEngine(repo)
+    for _ in range(2):
+        engine.ingest(
+            GardenEvent(
+                type="wildlife.observation",
+                zone_id="pond",
+                source="human",
+                payload={"taxon": "Dragonfly"},
+            )
+        )
+
+    memory = {item["key"]: item for item in repo.list_memories()}
+    record = memory["taxon_record:wildlife:dragonfly"]
+    assert record["evidence_count"] == 2
+    assert record["value"]["last_zone"] == "pond"
+
+
+@pytest.mark.parametrize(
+    ("condition", "decision"),
+    [("germinating", "WATCH"), ("died back", "WATCH"), ("dormant", "NO_ACTION")],
+)
+def test_natural_plant_stages_are_recognised(tmp_path, condition, decision):
+    """Verify natural life stages yield the expected decision without classification unknowns."""
+    repo = Repository(str(tmp_path / "garden.db"))
+    engine = GardenEngine(repo)
+    result = engine.ingest(
+        GardenEvent(
+            type="plant.observation",
+            zone_id="bed-1",
+            source="human",
+            payload={"condition": condition},
+        )
+    )
+    plant = next(item for item in result["agents"] if item["agent"] == "plant")
+    assert plant["decision"] == decision
+    assert plant["unknowns"] == []
+
+
+def test_explicit_garden_zone_is_rejected():
+    """A named 'garden' zone must not overwrite the unzoned garden's memory."""
+    with pytest.raises(ValidationError, match="reserved for whole-garden"):
+        GardenEvent(type="wildlife.observation", zone_id="garden")
+
+
+def test_unzoned_and_named_zone_memories_remain_separate(tmp_path):
+    repo = Repository(str(tmp_path / "garden.db"))
+    engine = GardenEngine(repo)
+    engine.ingest(GardenEvent(
+        type="sensor.soil_moisture",
+        payload={"percent": 30},
+    ))
+    engine.ingest(GardenEvent(
+        type="sensor.soil_moisture",
+        zone_id="north-bed",
+        payload={"percent": 12, "forecast_rain_mm_24h": 0},
+    ))
+    memories = {item["key"]: item for item in repo.list_memories()}
+    assert memories["soil_moisture_state:garden"]["value"]["percent"] == 30
+    assert memories["soil_moisture_state:north-bed"]["value"]["percent"] == 12
+
+
+@pytest.mark.parametrize("blank_zone", ["", " ", "\t"])
+def test_blank_zone_is_rejected(blank_zone):
+    """An empty explicit zone must not alias the whole-garden memory namespace."""
+    with pytest.raises(ValidationError, match="zone_id must not be blank"):
+        GardenEvent(type="wildlife.observation", zone_id=blank_zone)

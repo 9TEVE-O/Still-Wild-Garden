@@ -1,6 +1,8 @@
 
 # Stillwild architecture v0.1
 
+Scope: the experimental Python backend and its opt-in Wild simulation. This reference does not govern the approved pixel-garden background milestone or establish connection to web/ or background-proof/.
+
 Stillwild is designed as a persistent ecological system, not a browser session.
 
 ## Core loop
@@ -16,7 +18,8 @@ The API and worker are separate processes.
 - **API** accepts observations, exposes state, records experiments/outcomes, and streams durable events with Server-Sent Events.
 - **Worker** continues periodic evaluation while no user is connected.
 - **SQLite/WAL** is the first durable state store. It is intentionally replaceable with PostgreSQL later.
-- **Lease** prevents multiple workers from performing the same periodic tick concurrently.
+- **Scheduled slot transaction** prevents cron retries and multiple workers from duplicating
+  a completed UTC slot. A separate lease and revision fence protect manual Wild advances.
 
 If the hosting platform does not support a continuously running worker, schedule `POST /tasks/tick` with an external cron. Browser presence is never required.
 
@@ -26,10 +29,26 @@ If the hosting platform does not support a continuously running worker, schedule
 - `agent_runs`: what each agent concluded and why
 - `recommendations`: council decisions
 - `outcomes`: delayed evaluation supplied by telemetry or a human
-- `memories`: evidence-linked garden memory
+- `memories`: evidence-linked garden memory (keeps the full evidence count but only the 50 most recent evidence ids)
 - `experiments`: bounded ecological experiments
 - `evolution_candidates`: proposed agent changes, never silent self-modification
 - `leases`: background worker coordination
+- `worlds`: persistent state of simulated gardens (the Wild)
+- `background_schedules`: pinned configuration and the last committed UTC slot
+- `background_ticks`: unique committed slots linked to their originating run
+- `background_runs`: started, completed, duplicate and failed execution attempts
+
+## Protected background progression
+
+The worker and `POST /tasks/tick` share `stillwild.background.run_due`. Each bounded batch
+commits evaluation, optional simulated growth, slot markers and its completed receipt in
+one transaction. Retries do not create another tick. Restart recovery processes a bounded
+backlog from the saved cursor. Reads do not invoke this updater.
+
+The task endpoint requires a scheduler bearer token. Other mutation routes and run-history
+reads require a separate operator token. Unconfigured API writes are disabled. This is
+service authorization, not authenticated personal garden ownership. See
+[the background foundation](BACKGROUND_FOUNDATION.md) for configuration and evidence limits.
 
 ## Authority boundary
 
@@ -59,6 +78,36 @@ source.addEventListener("garden_event", (event) => {
   console.log(gardenEvent);
 });
 ```
+
+## The Wild (simulated garden)
+
+`stillwild.wild` is an opt-in (`STILLWILD_WILD_SIM=true`), seeded ecosystem that gives the
+agents years of experience in minutes:
+
+- World state lives in the `worlds` table and advances one simulated day at a time. Each day
+  uses its own seeded random stream, so a world grows identically however its days are batched.
+  A manual advance commits each day's events, judgements and world state in a transaction
+  that also renews the `wild-sim` lease. Scheduled advances join their enclosing bounded
+  batch transaction, including outcomes and evolution candidates. A crash rolls back
+  the uncommitted transaction. Each save is fenced on a world
+  revision, so an advance that was overtaken (even one that later re-acquired the lease)
+  cannot commit stale state.
+- Each simulated day emits ordinary events (`sensor.temperature`, `weather.rain`,
+  `sensor.soil_moisture` with a forecast, `plant.observation`, `wildlife.observation`,
+  `fungi.observation`). They all go through `GardenEngine.ingest`, with source `wild-sim` and
+  `"simulated": true`.
+- **Ground-truth judging.** Irrigation proposals are judged 3 simulated days later and plant
+  inspections 10 days later. Each is scored on whether drought damage, rain or recovery followed,
+  and the result is recorded as a normal outcome, which can raise evolution candidates. The
+  outcome notes say the action was never executed.
+- **Guards.** A `wild-sim` lease stops two processes advancing the same world. A new world
+  claims its database in the same write transaction that confirms no real observation exists.
+  After that, `GardenEngine.ingest` rejects real observations inside its own transaction, so
+  real and simulated evidence can never mix, whichever side writes first. Simulation status is
+  trusted only from the in-process Wild: `POST /events` rejects the `simulated` payload flag and
+  the `wild-sim` source, so clients cannot disguise real observations as simulated.
+
+`GET /garden` renders the world live from `GET /wild` and `/stream`.
 
 ## Agent evolution
 

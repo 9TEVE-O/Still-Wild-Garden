@@ -1,0 +1,172 @@
+{
+  "unique_tick_keys": 22,
+  "committed_ticks": 22,
+  "worker_log_matched_tick_count": 22,
+  "matches": [
+    {
+      "run_id": "96c23f91-a2c8-42d0-b53f-c057058bd96a",
+      "tick_id": 497528,
+      "revision": 1,
+      "committed_at": 1791101348219
+    },
+    {
+      "run_id": "e3c51d54-5968-481c-b372-240c87b21dbf",
+      "tick_id": 497529,
+      "revision": 2,
+      "committed_at": 1791105038237
+    },
+    {
+      "run_id": "7810d490-81fc-4fb3-baf5-df8df2bd6fb3",
+      "tick_id": 497530,
+      "revision": 3,
+      "committed_at": 1791108659668
+    },
+    {
+      "run_id": "44997f55-1617-443b-940d-d435168b8d27",
+      "tick_id": 497531,
+      "revision": 4,
+      "committed_at": 1791111904071
+    },
+    {
+      "run_id": "9cac9797-01de-44bf-a8ee-f2e0b12f6e6a",
+      "tick_id": 497532,
+      "revision": 5,
+      "committed_at": 1791115670943
+    },
+    {
+      "run_id": "7438e03c-8c39-42f1-b60b-07b4d2f302d6",
+      "tick_id": 497533,
+      "revision": 6,
+      "committed_at": 1791119143251
+    },
+    {
+      "run_id": "4219ddd1-4982-472e-ad68-b0e12fb11007",
+      "tick_id": 497534,
+      "revision": 7,
+      "committed_at": 1791123231853
+    },
+    {
+      "run_id": "9cd65603-71b7-4dc5-ba71-f1fb68e0f1f9",
+      "tick_id": 497535,
+      "revision": 8,
+      "committed_at": 1791126331538
+    },
+    {
+      "run_id": "102b95e5-6d48-4c32-91ec-1e70535fc941",
+      "tick_id": 497536,
+      "revision": 9,
+      "committed_at": 1791130255627
+    },
+    {
+      "run_id": "e231d7f9-2b3b-4576-ae50-0366d05199c3",
+      "tick_id": 497537,
+      "revision": 10,
+      "committed_at": 1791133705600
+    },
+    {
+      "run_id": "40b9fa35-d9e6-44ad-bd17-563496a452cf",
+      "tick_id": 497538,
+      "revision": 11,
+      "committed_at": 1791137131804
+    },
+    {
+      "run_id": "8061a8b9-73bf-4da9-ab75-4f0a4bae191c",
+      "tick_id": 497539,
+      "revision": 12,
+      "committed_at": 1791140921195
+    },
+    {
+      "run_id": "8a759a0b-793d-42df-b9c5-f1fa1f60222f",
+      "tick_id": 497540,
+      "revision": 13,
+      "committed_at": 1791144405905
+    },
+    {
+      "run_id": "07ba401e-618c-48a7-96c8-d114ca9116a6",
+      "tick_id": 497541,
+      "revision": 14,
+      "committed_at": 1791147861339
+    },
+    {
+      "run_id": "1e89fd9a-ec6e-430e-a8b2-018870dd1564",
+      "tick_id": 497542,
+      "revision": 15,
+      "committed_at": 1791151758492
+    },
+    {
+      "run_id": "dd0c502e-c1ec-440f-b190-697919cd8ca9",
+      "tick_id": 497543,
+      "revision": 16,
+      "committed_at": 1791155617931
+    },
+    {
+      "run_id": "80af6314-3a9e-490a-9e1b-3c02e22b839b",
+      "tick_id": 497544,
+      "revision": 17,
+      "committed_at": 1791158826375
+    },
+    {
+      "run_id": "f0091002-5da7-4b42-a11c-f663c698dac0",
+      "tick_id": 497545,
+      "revision": 18,
+      "committed_at": 1791162195318
+    },
+    {
+      "run_id": "c69460f0-c929-4da1-a49a-173cd53553fe",
+      "tick_id": 497546,
+      "revision": 19,
+      "committed_at": 1791166119489
+    },
+    {
+      "run_id": "ed2771a8-1c07-4a12-9ea9-9f5ed547106e",
+      "tick_id": 497547,
+      "revision": 20,
+      "committed_at": 1791169871231
+    },
+    {
+      "run_id": "02b37089-98bf-455e-abc1-b88acc6237d9",
+      "tick_id": 497548,
+      "revision": 21,
+      "committed_at": 1791173347827
+    },
+    {
+      "run_id": "b414a73b-c6fb-4997-8ae7-d4a5a8d4ef3b",
+      "tick_id": 497549,
+      "revision": 22,
+      "committed_at": 1791176714842
+    }
+  ],
+  "all_events_read": true,
+  "event_count": 31,
+  "baseline": {
+    "started_at": 1791098871364,
+    "revision": 0
+  },
+  "world": {
+    "revision": 22,
+    "last_tick": 497549,
+    "updated_at": 1791176714842,
+    "plants": 8,
+    "habitat": 11,
+    "water": 33.1
+  },
+  "stored_consequence_deltas": {
+    "water": 13.100000000000001,
+    "habitat": 7,
+    "plants": 7,
+    "soilMoisture": 61.75
+  },
+  "consequences_reconcile": {
+    "plants": true,
+    "habitat": true,
+    "water": true
+  },
+  "returned_view_logs_after_baseline": 0,
+  "absence_proof_status": "PENDING_24_HOUR_ABSENCE_CHECK",
+  "limitations": [
+    "Matching native storage and Worker logs establishes saved background progress.",
+    "These records do not establish every garden view remained closed for 24 hours.",
+    "Schedule trigger labels are caller declarations, not scheduler authentication.",
+    "No production snapshot view or writer was called in this audit."
+  ]
+}

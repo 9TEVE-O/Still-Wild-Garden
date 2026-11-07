@@ -7,6 +7,17 @@ from .agents import CouncilAgent, WildnessAgent, default_agents
 from .db import Repository
 from .domain import AgentOutput, GardenEvent
 
+TAXON_EVENT_TYPES = {"plant.observation", "wildlife.observation", "fungi.observation"}
+
+
+class SimulatedGardenError(RuntimeError):
+    """Raised instead of mixing a real observation into a simulated garden."""
+
+
+def is_real_observation(event: GardenEvent) -> bool:
+    """Identify non-tick events whose simulated payload flag is not the boolean True."""
+    return event.type != "system.tick" and event.payload.get("simulated") is not True
+
 
 class GardenEngine:
     def __init__(self, repo: Repository, automation_authority: bool = False):
@@ -16,10 +27,24 @@ class GardenEngine:
         self.wildness = WildnessAgent()
         self.council = CouncilAgent()
 
-    def ingest(self, event: GardenEvent) -> dict:
+    def ingest(self, event: GardenEvent, connection: sqlite3.Connection | None = None) -> dict:
+        """Store and process an event atomically, joining a supplied transaction when provided.
+
+        Raise SimulatedGardenError if a real observation would enter a simulated garden."""
+        if connection is not None:
+            return self._ingest(event, connection)
         with self.repo.transaction() as conn:
-            seq = self.repo.add_event(event, connection=conn)
-            return self.process(event, seq=seq, conn=conn)
+            return self._ingest(event, conn)
+
+    def _ingest(self, event: GardenEvent, conn: sqlite3.Connection) -> dict:
+        """Enforce the real/simulated boundary, then store and process using the given connection."""
+        if is_real_observation(event) and self.repo.has_world(connection=conn):
+            raise SimulatedGardenError(
+                "this database hosts a simulated garden; record real observations in a "
+                "separate garden database"
+            )
+        seq = self.repo.add_event(event, connection=conn)
+        return self.process(event, seq=seq, conn=conn)
 
     def process(
         self, event: GardenEvent, seq: int | None = None, conn: sqlite3.Connection | None = None
@@ -61,20 +86,20 @@ class GardenEngine:
             "agents": [item.model_dump() for item in outputs] + [wildness.model_dump()],
         }
 
-    def tick(self, source: str = "worker") -> dict:
+    def tick(self, source: str = "worker", connection: sqlite3.Connection | None = None) -> dict:
         event = GardenEvent(
             type="system.tick",
             source=source,
             observed_at=datetime.now(UTC),
             payload={"purpose": "periodic background evaluation"},
         )
-        result = self.ingest(event)
-        self.propose_agent_evolution()
+        result = self.ingest(event, connection=connection)
+        self.propose_agent_evolution(connection=connection)
         return result
 
-    def propose_agent_evolution(self) -> list[str]:
+    def propose_agent_evolution(self, connection: sqlite3.Connection | None = None) -> list[str]:
         created: list[str] = []
-        for score in self.repo.agent_scores():
+        for score in self.repo.agent_scores(connection=connection):
             if score["n"] < 5 or score["avg_score"] is None:
                 continue
             if score["avg_score"] < 0.2:
@@ -93,6 +118,7 @@ class GardenEngine:
                     expected_improvement="Reduce repeated low-utility recommendations.",
                     risk="Historical outcomes may be sparse or confounded by other agents.",
                     test_method="Offline replay against stored events, then bounded live trial.",
+                    connection=connection,
                 )
                 created.append(candidate)
         return created
@@ -104,6 +130,7 @@ class GardenEngine:
         final: AgentOutput,
         conn: sqlite3.Connection | None = None,
     ) -> None:
+        """Update event, taxon and soil memories from observed evidence and the council decision."""
         zone = event.zone_id or "garden"
         self.repo.upsert_memory(
             key=f"last_event:{zone}:{event.type}",
@@ -120,6 +147,24 @@ class GardenEngine:
             status="observation",
             connection=conn,
         )
+
+        if event.type in TAXON_EVENT_TYPES:
+            taxon = event.payload.get("taxon") or event.payload.get("species")
+            if isinstance(taxon, str) and taxon.strip():
+                kind = event.type.split(".", 1)[0]
+                self.repo.upsert_memory(
+                    key=f"taxon_record:{kind}:{taxon.strip().lower()}",
+                    value={
+                        "taxon": taxon.strip(),
+                        "kind": kind,
+                        "last_zone": event.zone_id,
+                        "last_observed_at": event.observed_at.isoformat(),
+                    },
+                    confidence=0.9,
+                    evidence_ids=[event.id],
+                    status="observation",
+                    connection=conn,
+                )
 
         if event.type == "sensor.soil_moisture":
             value = event.payload.get("percent")
