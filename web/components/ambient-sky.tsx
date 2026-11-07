@@ -10,7 +10,8 @@ import { useEffect, useRef } from "react";
  * fireflies. It is purely observational: it reads no garden, writes no persistent state, and never
  * touches lib/render-world.ts or the frozen version 1 renderer, so the Observation Invariant and the
  * renderer pixel-parity / provenance checks are unaffected. Honours prefers-reduced-motion by
- * painting a single still frame, and pauses while the tab is hidden.
+ * painting a single still frame (repainted on resize and when the preference changes), pauses while
+ * the tab is hidden, and keeps exactly one animation loop.
  */
 
 const STAR_COUNT = 54;
@@ -32,17 +33,7 @@ export function AmbientSky() {
     const ctx = el.getContext("2d");
     if (!ctx) return;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-    let dead = false, frame = 0, previous = 0;
-
-    const resize = () => {
-      const dpr = Math.min(devicePixelRatio, 2);
-      el.width = Math.round(el.clientWidth * dpr);
-      el.height = Math.round(el.clientHeight * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    const observer = new ResizeObserver(resize);
-    observer.observe(el);
-    resize();
+    let dead = false, frame = 0, previous = 0, running = false;
 
     const draw = (t: number) => {
       const w = el.clientWidth, h = el.clientHeight;
@@ -99,26 +90,51 @@ export function AmbientSky() {
       ctx.globalAlpha = 1;
     };
 
-    const paint = (time: number) => {
-      if (dead) return;
-      if (!document.hidden && (reduce.matches || time - previous > 33)) {
-        previous = time;
-        draw(time);
-      }
-      // Under reduced motion, paint one frame then idle.
-      if (reduce.matches) { if (!(previous > 0)) draw(time); return; }
-      frame = requestAnimationFrame(paint);
+    const resize = () => {
+      const dpr = Math.min(devicePixelRatio, 2);
+      el.width = Math.round(el.clientWidth * dpr);
+      el.height = Math.round(el.clientHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Setting width/height clears the bitmap. When the animation loop isn't running
+      // (reduced motion, or a hidden tab) repaint the still frame so it never goes blank.
+      if (!running) draw(reduce.matches ? 0 : performance.now());
     };
-    frame = requestAnimationFrame(paint);
 
-    const onVisibility = () => { if (!document.hidden && !reduce.matches) { frame = requestAnimationFrame(paint); } };
+    const loop = (time: number) => {
+      if (dead) return;
+      if (document.hidden) { running = false; return; }   // paused; the visibility handler restarts it
+      if (time - previous > 33) { previous = time; draw(time); }
+      frame = requestAnimationFrame(loop);
+    };
+    const start = () => {
+      if (dead || running || reduce.matches || document.hidden) return;
+      running = true;
+      cancelAnimationFrame(frame);                         // never stack a second loop
+      frame = requestAnimationFrame(loop);
+    };
+    const stop = () => { running = false; cancelAnimationFrame(frame); };
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(el);
+    resize();   // size the canvas and paint the first frame
+    start();    // begins the loop only when motion is allowed and the tab is visible
+
+    const onVisibility = () => {
+      if (document.hidden) { stop(); return; }
+      if (reduce.matches) draw(0); else start();
+    };
+    const onReduceChange = () => {
+      if (reduce.matches) { stop(); draw(0); } else start();   // settle on a still frame, or resume motion
+    };
     document.addEventListener("visibilitychange", onVisibility);
+    reduce.addEventListener("change", onReduceChange);
 
     return () => {
       dead = true;
-      cancelAnimationFrame(frame);
+      stop();
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      reduce.removeEventListener("change", onReduceChange);
     };
   }, []);
 

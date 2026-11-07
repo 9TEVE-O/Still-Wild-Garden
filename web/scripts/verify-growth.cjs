@@ -95,6 +95,9 @@ for (const seed of seeds) {
     assert.equal(speciesFor(seed, k), s, 'species is deterministic');
   }
 }
+// Different seeds produce different species sequences (not a fixed, seed-independent assignment).
+const speciesSeqs = seeds.map(s => Array.from({ length: 40 }, (_, i) => speciesFor(s, i + 1).id).join(','));
+assert.ok(new Set(speciesSeqs).size > 1, 'species assignment varies across different seeds');
 const speciesCensus = {};
 {
   const full = plantsAt({ seed: 4288523180, bornAt: now, version: 1 }, now + 400 * DAY);
@@ -145,6 +148,15 @@ function loadCanvas() {
       drawGarden(a.getContext('2d'), 800, 520, garden, now, art1, false, 1.3);
       drawWorld(b.getContext('2d'), 800, 520, garden, now, art2, false, 1.3);
       assert.ok(Buffer.from(a.getContext('2d').getImageData(0, 0, 800, 520).data).equals(Buffer.from(b.getContext('2d').getImageData(0, 0, 800, 520).data)), 'pixel parity without extra plants');
+    }
+    // 5b. The live renderer actually applies a non-emerald species tint when drawing plants.
+    {
+      const fc = createCanvas(390 * 2, 844 * 2), fctx = fc.getContext('2d'); fctx.setTransform(2, 0, 0, 2, 0, 0);
+      const seenFilters = new Set();
+      const realDrawImage = fctx.drawImage.bind(fctx);
+      fctx.drawImage = (...args) => { seenFilters.add(fctx.filter); return realDrawImage(...args); };
+      drawWorld(fctx, 390, 844, { seed: 4288523180, bornAt: now - 400 * DAY, version: 1 }, now, art2, false, 0);
+      assert.ok([...seenFilters].some(f => f && f !== 'none'), 'drawWorld applies a species tint for non-emerald plants');
     }
     // 6. Three ages at phone presentation size (390 x 844 points), drawn by the live renderer with the
     //    same backing store as components/garden-canvas.tsx, which caps device pixel ratio at 2.
