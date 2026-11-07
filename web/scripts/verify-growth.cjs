@@ -17,7 +17,7 @@ for (const name of ['garden', 'growth-atlas', 'growth', 'render-garden', 'render
 }
 const { gardenAt } = require(path.join(dir, 'garden.js'));
 const atlas = require(path.join(dir, 'growth-atlas.js'));
-const { plantsAt, spotOrder, stageForAge, sownAtHours, STAGE_START_DAYS } = require(path.join(dir, 'growth.js'));
+const { plantsAt, spotOrder, stageForAge, sownAtHours, STAGE_START_DAYS, speciesFor, SPECIES } = require(path.join(dir, 'growth.js'));
 const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const HOUR = 3600000, DAY = 86400000;
 const now = 1790000000000;
@@ -84,6 +84,31 @@ assert.equal(day7.sapling + day7.shrub + day7.flowering, 0, 'day 7 is mounds and
 assert.ok(day40.shrub > 0 && day40.flowering === 0, 'day 40 has shrubs and no flowers');
 assert.equal(day400.flowering, atlas.GROWTH_SPOTS.length, 'day 400 is fully grown and flowering');
 
+// 3b. Species layer: deterministic, drawn from the palette, with real variety but a natural emerald majority.
+assert.ok(Array.isArray(SPECIES) && SPECIES.length >= 4, 'species palette has several species');
+for (const s of SPECIES) { assert.ok(typeof s.id === 'string' && typeof s.name === 'string' && typeof s.filter === 'string', 'species shape'); }
+assert.equal(SPECIES[0].id, 'emerald'); assert.equal(SPECIES[0].filter, 'none', 'the native species draws untinted');
+for (const seed of seeds) {
+  for (let k = 1; k < 200; k++) {
+    const s = speciesFor(seed, k);
+    assert.ok(SPECIES.includes(s), 'species comes from the palette');
+    assert.equal(speciesFor(seed, k), s, 'species is deterministic');
+  }
+}
+// Different seeds produce different species sequences (not a fixed, seed-independent assignment).
+const speciesSeqs = seeds.map(s => Array.from({ length: 40 }, (_, i) => speciesFor(s, i + 1).id).join(','));
+assert.ok(new Set(speciesSeqs).size > 1, 'species assignment varies across different seeds');
+const speciesCensus = {};
+{
+  const full = plantsAt({ seed: 4288523180, bornAt: now, version: 1 }, now + 400 * DAY);
+  assert.equal(full.length, atlas.GROWTH_SPOTS.length, 'a full garden fills every spot');
+  for (const p of full) { assert.ok(p.species && SPECIES.includes(p.species), 'every placed plant carries a palette species'); speciesCensus[p.species.id] = (speciesCensus[p.species.id] || 0) + 1; }
+  assert.ok(Object.keys(speciesCensus).length >= 3, 'a full garden shows several species');
+  const emerald = speciesCensus.emerald || 0;
+  assert.ok(emerald === Math.max(...Object.values(speciesCensus)), 'emerald stays the natural majority');
+  assert.deepEqual(plantsAt({ seed: 4288523180, bornAt: now, version: 1 }, now + 400 * DAY).map(p => p.species.id), full.map(p => p.species.id), 'species assignment is deterministic across calls');
+}
+
 // 4. The version 1 renderer, growth rule and art that gifts and the Android companion bundle are unchanged.
 const provenance = JSON.parse(fs.readFileSync('android/app/src/main/assets/provenance.json', 'utf8'));
 for (const [file, digest] of Object.entries(provenance.sources)) assert.equal(sha(file), digest, `${file} unchanged for Android`);
@@ -93,6 +118,7 @@ const evidence = {
   atlas: { file: atlasFile, sha256: atlas.GROWTH_ATLAS_SHA256, width: atlasW, height: atlasH, sprites: spriteCount },
   spots: atlas.GROWTH_SPOTS.length, seeds: seeds.length, ages: ages.length,
   stageCensus: { day7, day40, day400 },
+  species: SPECIES.map(s => s.id), speciesCensusDay400Seed4288523180: speciesCensus,
   version1Unchanged: Object.keys(provenance.sources),
   canvas: 'NOT_EXECUTED: @napi-rs/canvas unavailable',
 };
@@ -122,6 +148,15 @@ function loadCanvas() {
       drawGarden(a.getContext('2d'), 800, 520, garden, now, art1, false, 1.3);
       drawWorld(b.getContext('2d'), 800, 520, garden, now, art2, false, 1.3);
       assert.ok(Buffer.from(a.getContext('2d').getImageData(0, 0, 800, 520).data).equals(Buffer.from(b.getContext('2d').getImageData(0, 0, 800, 520).data)), 'pixel parity without extra plants');
+    }
+    // 5b. The live renderer actually applies a non-emerald species tint when drawing plants.
+    {
+      const fc = createCanvas(390 * 2, 844 * 2), fctx = fc.getContext('2d'); fctx.setTransform(2, 0, 0, 2, 0, 0);
+      const seenFilters = new Set();
+      const realDrawImage = fctx.drawImage.bind(fctx);
+      fctx.drawImage = (...args) => { seenFilters.add(fctx.filter); return realDrawImage(...args); };
+      drawWorld(fctx, 390, 844, { seed: 4288523180, bornAt: now - 400 * DAY, version: 1 }, now, art2, false, 0);
+      assert.ok([...seenFilters].some(f => f && f !== 'none'), 'drawWorld applies a species tint for non-emerald plants');
     }
     // 6. Three ages at phone presentation size (390 x 844 points), drawn by the live renderer with the
     //    same backing store as components/garden-canvas.tsx, which caps device pixel ratio at 2.

@@ -103,6 +103,37 @@ GitHub Actions `test` run [38935569447](https://github.com/9TEVE-O/Still-Wild-Ga
 
 The same revision's Python `test` and isolated `background-proof` jobs also passed. The separate `web-evolution-proof` workflow passed but does not prove the camera or background absence milestone. Earlier intermediate revisions had failing camera-verifier runs due to a CommonJS `exports` name collision and strict equality distinguishing `-0` from `0`. These were reproduced from CI logs and resolved in subsequent commits; do not treat those intermediate failures as final.
 
+## Health check + species/ambient candidate — 2026-11-07
+
+Source only; the public Site was not published or touched. Node 22.23.4 and pnpm 11.25.0 in a cloud session; `@napi-rs/canvas` 1.0.11 installed outside the app's lockfile exactly as CI does (`npm install --no-save --no-package-lock --prefix` + `CODEX_PRIMARY_RUNTIME_NODE_MODULES`). Branch `ccr-f1566601-kxlckx`.
+
+**Health check (whole web CI chain re-run live at this HEAD):**
+
+| Executed check | Result and scope |
+|---|---|
+| `node node_modules/typescript/bin/tsc --noEmit` | PASS |
+| `node --experimental-strip-types scripts/verify-internal-auth.mjs` | PASS (12 scheduled-tick credential boundary assertions) |
+| `node scripts/verify-persistence.cjs` | PASS; SQLite-backed route/database fixture (empty read, idempotent plant, 5 repeats, reopen persistence, 403/400/415) |
+| `node scripts/verify-camera.cjs` | PASS |
+| `node scripts/verify-growth.cjs --require-canvas` | PASS; see below |
+| `node scripts/verify-garden.cjs` | PASS; 6s GIF 125,569 bytes, exact periodic boundary, full decode |
+| `node scripts/verify-android.cjs` | PASS; version 1 provenance digests match (gift/Android drawing unchanged) |
+| `node scripts/verify-evolution.cjs` | PASS; deterministic Dew consequence, duplicate-tick idempotency, read-only return |
+| `pnpm build` | PASS |
+
+`verify-provenance.cjs` and `verify-background.cjs` belong to the isolated `background-proof` app, not web; they were not run from `web/`.
+
+**Species + ambient candidate verification:**
+
+| Executed check | Result and scope |
+|---|---|
+| `verify-growth.cjs --require-canvas` | PASS. Atlas digest unchanged (`32d5c5…`, 60 sprites, 256×142). Exact version 1 plant-count parity across 5 seeds and 10 ages; stages never regress; deterministic; 78 spots clear of the first sprout. **Pixel-identical to the version 1 renderer when no extra plants are visible** — species tint runs only inside the extra-plant loop. Version 1 sources and art unchanged for Android (provenance digests match). New species checks: deterministic per `(seed, k)`, palette membership, and a full day-400 garden (seed 4288523180) showing 6 species with emerald the majority (emerald 22; jade 18; fern 18; amber 10; rose 5; violet 5). Phone-size day 7/40/400 renders regenerated; day-400 GIF loop closes at 143,563 bytes |
+| `tsc --noEmit` | PASS with the new `Species` types, `components/ambient-sky.tsx` and the `render-world.ts` tint |
+
+Implementation notes: the species layer is a canvas foliage tint keyed to the garden seed, confined to `lib/render-world.ts`'s extra-plant loop and reset every iteration, so the keepers, motes, stream and background stay identical to the frozen renderer. `components/ambient-sky.tsx` is a separate decorative overlay (twinkling stars, water shimmer, drifting fireflies) that reads no garden and writes no state, honouring `prefers-reduced-motion`.
+
+Not established: on-device browser/phone rendering, the five-stage blind ordering test, low-end phone performance, accessibility review of the overlay on real hardware, and publication to the managed Site. The candidate is unpublished and unmerged into any Site revision; publish stays owner-gated.
+
 Code corrections: viewport re-clamps on resize; pointer state clears on blur/visibility; third touch is ignored; zoom/pan geometry moved into pure `lib/garden-camera.ts`; optional non-dragging directional controls and accessible control names were added. Mobile control hit targets and title width were tightened. Time-neutral atmospheric copy replaced the unconditional dusk label.
 
 **Still NOT RUN:** actual browser/Android pointer QA, screenshot comparisons at 320–1440px, manual TalkBack/screen reader, focus order, contrast on rendered moving content, 200% text zoom and measured frame rate. Therefore automated CI passing is not a release approval or a WCAG conformance finding. No production seed/database, Android code or managed Site deployment was modified. See `DEPTH_DESIGN_ACCEPTANCE_2026-10-17.md`.
