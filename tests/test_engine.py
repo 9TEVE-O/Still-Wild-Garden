@@ -270,3 +270,37 @@ def test_blank_zone_is_rejected(blank_zone):
     """An empty explicit zone must not alias the whole-garden memory namespace."""
     with pytest.raises(ValidationError, match="zone_id must not be blank"):
         GardenEvent(type="wildlife.observation", zone_id=blank_zone)
+
+
+def test_memory_database_is_rejected_before_schema_initialization():
+    with pytest.raises(ValueError, match=":memory: is unsupported"):
+        Repository(":memory:")
+
+
+def test_duplicate_event_has_dedicated_error(tmp_path):
+    from stillwild.engine import DuplicateEventError
+
+    repo = Repository(str(tmp_path / "duplicate.db"))
+    engine = GardenEngine(repo)
+    event = GardenEvent(type="wildlife.observation")
+    engine.ingest(event)
+    with pytest.raises(DuplicateEventError):
+        engine.ingest(event)
+    assert len(repo.list_events()) == 1
+
+
+@pytest.mark.parametrize("during_processing", [False, True])
+def test_non_duplicate_integrity_errors_propagate(tmp_path, monkeypatch, during_processing):
+    repo = Repository(str(tmp_path / "integrity.db"))
+    engine = GardenEngine(repo)
+
+    def fail(*args, **kwargs):
+        # A real SQLite exception includes its extended constraint code.
+        conn = kwargs.get("conn") or kwargs["connection"]
+        conn.execute("INSERT INTO events (id) VALUES (NULL)")
+
+    monkeypatch.setattr(engine if during_processing else repo,
+                        "process" if during_processing else "add_event", fail)
+    with pytest.raises(sqlite3.IntegrityError, match="NOT NULL"):
+        engine.ingest(GardenEvent(type="wildlife.observation"))
+    assert repo.list_events() == []
