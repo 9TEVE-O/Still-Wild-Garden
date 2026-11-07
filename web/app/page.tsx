@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 import { Toaster, toast } from "sonner";
 import { GardenBubble } from "@/components/garden-bubble";
 import { GardenViewport } from "@/components/garden-viewport";
+import { AmbientSky } from "@/components/ambient-sky";
 import { gardenAt, type Garden } from "@/lib/garden";
 import { makeGift, saveFile, wallpaper } from "@/lib/gift";
 import { companionFile } from "@/lib/companion";
@@ -148,6 +149,7 @@ export default function Home() {
       </div>
       <div className="weather chrome"><Cloud size={17} strokeWidth={1.4} /><div><span>Under a quiet sky</span><small>{garden ? "Quietly becoming" : "Everything is still"}</small></div></div>
       <GardenViewport garden={garden} now={now + offset} />
+      <AmbientSky />
       <div className="garden-backtype" aria-hidden="true"><span>STILL</span><span>WILD</span></div>
       <div className="world-caption chrome"><span className="coordinate">{garden ? `SW · ${garden.seed.toString(16).slice(0, 6).toUpperCase()}` : "SW · ORIGIN"}</span><span className="world-caption-rule" /><span>{garden ? scene.note : "The smallest things hold entire worlds."}</span></div>
       {garden && <button className="keepers-peek chrome" onClick={() => setPanel("keepers")}><span className="keeper-pixels" aria-hidden="true"><i /><i /><i /></span><span>{scene.agents} {scene.agents === 1 ? "keeper" : "keepers"}, quietly at work</span><ArrowUpRight size={14} /></button>}

@@ -11,7 +11,37 @@ import { FIRST_SPROUT, GROWTH_SPOTS, GROWTH_SPRITES, SHRUB_SIZES, type SpriteCel
  */
 export type PlantStage = "mound" | "sprout" | "sapling" | "shrub" | "flowering";
 export const STAGE_START_DAYS: Readonly<Record<PlantStage, number>> = { mound: 0, sprout: 2, sapling: 9, shrub: 30, flowering: 120 };
-export type PlacedPlant = { k: number; spot: number; x: number; y: number; ageDays: number; stage: PlantStage; sprite: SpriteCell };
+
+/**
+ * Species layer for the live view (candidate, owner-gated).
+ *
+ * The version 1 renderer, growth rule, seed format and sprite atlas are all unchanged: a plant's
+ * shape and stage still come only from its age. Each plant is additionally assigned one deterministic
+ * species from its garden seed, expressed purely as a canvas foliage tint (CSS hue-rotate/saturate)
+ * applied when the live renderer draws that plant — see lib/render-world.ts. Species never changes a
+ * plant's spot, stage, count or timing, so every v1 contract and the gift/Android drawing are untouched.
+ * Weights keep the native emerald dominant, so the garden reads as one place with natural variety rather
+ * than a colour chart.
+ */
+export type Species = { id: string; name: string; filter: string; accent: string };
+export const SPECIES: readonly Species[] = [
+  { id: "emerald", name: "Emerald moss", filter: "none", accent: "#d2ea9f" },
+  { id: "jade", name: "Jade fern", filter: "hue-rotate(28deg) saturate(1.1)", accent: "#a9e6d2" },
+  { id: "fern", name: "Deep fern", filter: "hue-rotate(-22deg) saturate(1.16)", accent: "#bfe39a" },
+  { id: "amber", name: "Amberleaf", filter: "hue-rotate(-92deg) saturate(1.22)", accent: "#ecd083" },
+  { id: "rose", name: "Roseblossom", filter: "hue-rotate(-152deg) saturate(1.18)", accent: "#eaa7c6" },
+  { id: "violet", name: "Duskbell", filter: "hue-rotate(96deg) saturate(1.12)", accent: "#bcb1ea" },
+];
+const SPECIES_WEIGHTS = [5, 3, 3, 2, 1, 1] as const;
+/** Deterministic species for additional plant k (1-based) of a garden, emerald-weighted. */
+export function speciesFor(seed: number, k: number): Species {
+  const total = SPECIES_WEIGHTS.reduce((a, b) => a + b, 0);
+  let r = random(seed, 6000 + k) * total;
+  for (let i = 0; i < SPECIES.length; i++) { r -= SPECIES_WEIGHTS[i]; if (r < 0) return SPECIES[i]; }
+  return SPECIES[0];
+}
+
+export type PlacedPlant = { k: number; spot: number; x: number; y: number; ageDays: number; stage: PlantStage; sprite: SpriteCell; species: Species };
 
 const ISLAND_W = 1536, ISLAND_H = 1024;
 
@@ -70,7 +100,7 @@ export function plantsAt(garden: Garden | null, now: number): PlacedPlant[] {
     const [x, y] = GROWTH_SPOTS[spot];
     const ageDays = Math.max(0, (ageHours - sownAtHours(k)) / 24);
     const stage = stageForAge(ageDays);
-    plants.push({ k, spot, x, y, ageDays, stage, sprite: spriteFor(stage, garden.seed, spot, y, ageDays) });
+    plants.push({ k, spot, x, y, ageDays, stage, sprite: spriteFor(stage, garden.seed, spot, y, ageDays), species: speciesFor(garden.seed, k) });
   }
   return plants.sort((a, b) => a.y - b.y || a.x - b.x);
 }

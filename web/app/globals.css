@@ -22,6 +22,7 @@
 .garden-viewport:active{cursor:grabbing}
 .garden-viewport:focus-visible{outline:2px solid var(--control-signal)}
 .garden-view{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+.ambient-sky{position:absolute;inset:0;z-index:1;pointer-events:none;display:block;width:100%;height:100%}
 .garden-backtype{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;user-select:none;overflow:hidden;font-family:Georgia,'Times New Roman',serif;font-size:clamp(112px,19vw,330px);font-weight:400;letter-spacing:-.12em;line-height:.73;color:#c7dac0;opacity:.13;text-shadow:0 0 55px #d9edcd26;mask-image:radial-gradient(ellipse 34% 34% at 50% 54%,transparent 22%,#000 93%)}
 .garden-backtype span:first-child{transform:translateX(-9vw)}
 .garden-backtype span:last-child{transform:translateX(10vw)}

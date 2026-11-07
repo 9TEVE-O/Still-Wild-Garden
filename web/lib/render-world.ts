@@ -38,9 +38,16 @@ export function drawWorld(ctx: CanvasRenderingContext2D, width: number, height: 
     const unit = w * LOGICAL_PIXEL / ISLAND_SOURCE_WIDTH;
     const deviceScale = typeof ctx.getTransform === "function" ? ctx.getTransform().a || 1 : 1;
     const snap = (v: number) => Math.round(v * deviceScale) / deviceScale;
+    // Each plant's species is a deterministic foliage tint. It only ever runs here, inside the
+    // extra-plant loop, so a garden with no extra plants draws byte-identical to the version 1
+    // renderer (scripts/verify-growth.cjs pixel-parity check). The tint is reset every iteration,
+    // leaving the keepers, motes and stream below untouched.
+    const canFilter = "filter" in ctx;
     for (const plant of plantsAt(garden, now)) {
       const [sx, sy, sw, sh, bx, by] = plant.sprite;
+      if (canFilter) ctx.filter = plant.species.filter;
       ctx.drawImage(art.growth, sx, sy, sw, sh, snap(x + plant.x * w - bx * unit), snap(y + plant.y * h - by * unit), snap(sw * unit), snap(sh * unit));
+      if (canFilter) ctx.filter = "none";
     }
   }
   const agentCount = garden ? growth.agents : 3;
