@@ -1,11 +1,28 @@
 # Current background-garden state
 
-Live-state specimen: 14 October 2026. GitHub source reconciliation: 26 October 2026.
+Latest publication record: 10 November 2026 (Australia/Darwin). Historical live-data specimen: 14 October 2026.
 Authority: approved canonical App Brief v0.2.
-Active stage: scheduler recovery throughput verified; fail-closed view-closure source merged into `main` and source CI verified, but current managed-Site deployment and native D1 gate semantics are not verified. The separate second 24-hour absence window is not started or authorised.
+Active stage: repository background-proof source published successfully with owner-only access on 10 November 2026. Hosted native D1 gate semantics and current garden records remain unverified. No second 24-hour absence window was started by this publication.
 Scope: one owner-private Darwin test garden. The original public garden is unchanged.
 
-## Deployed runtime
+## 10 November 2026 owner-authorised publication
+
+This record supersedes older statements below that the merged view-closure source is not deployed. Historical D1 observations remain dated specimens.
+
+- **Authority:** The owner explicitly requested publication of the repository's current background-proof version, then authorised making the proof Site owner-only and publishing.
+- **Repository source:** `main` at `ac0828ee0d4dcd19c39dcf45543a81a9bfffac34`, using `background-proof/`.
+- **Site:** `appgprj_6ac1f8bb574c8191ad592b7d1a8587d2`, https://stillwild-background-proof.subzteveo.chatgpt.site.
+- **Published Site source:** `2fa7e1a388b72784c710fe7ae2fb06454e1394e9`. This is the Site repository commit, distinct from the GitHub repository commit.
+- **Saved version:** `appgprj_6ac1f8bb574c8191ad592b7d1a8587d2~appgver_9e79d369ac008191bce2685e9336b640`.
+- **Deployment:** `appgdep_6af1e779238481919a22880a5b322621`, native Sites result `succeeded` at `2026-11-09T15:32:22.944247Z` (10 November 2026, 01:02:22 ACST).
+- **Access:** Fresh metadata initially showed public access, contrary to the older private-access record. Publication was paused. After explicit owner approval, access changed to custom with only the owner, no other viewers or groups (access revision 3). The owner-private save-and-deploy operation then succeeded.
+- **Local validation:** TypeScript, deterministic transactional SQLite background checks, scheduler provenance checks and the production build passed. The packaged build used the repository app source and retained its exact Site identity and `d1: "DB"` binding.
+- **Scope preserved:** No garden reset, planting action, checkpoint creation, session closure or schedule change was performed. Existing storage binding was retained. No garden-view browser navigation was performed by the publishing agent.
+- **Limits:** Live `GET /api/evidence` and native D1 rows were not reread before or after this publication. Data preservation is therefore based on retaining storage and avoiding data-changing test calls, not a new row-by-row comparison. Native D1 marker/batch semantics, current scheduler progress, rollback behaviour, and full absence acceptance remain unverified. Publication success does not establish these gates.
+
+**Next work:** Read authenticated `GET /api/evidence` without opening the garden view; verify deployment behaviour, preserved baselines and native D1 gate semantics with isolated fixtures. The prior source-deployment gate is completed by the owner's explicit publication decision. Do not start `absence-check-002`, attest view closure, close saved sessions, or change scheduling without separate authority. The original absence review remains INCONCLUSIVE.
+
+## Historical deployed runtime — 14 October
 
 As last directly recorded on 14 October, private Site version 5 was deployed at https://stillwild-background-proof.subzteveo.chatgpt.site from Site source commit `1579149cd9b13ee5f7513ef508d39c6c361fce2a`. That recorded version was owner-only and used the existing D1 binding. The additive `0002_view_closure_gate` migration is present in D1.
 
@@ -36,7 +53,7 @@ The deployed gate requires an explicit owner attestation and zero active session
 
 The review automation is configured to use only `GET /api/evidence` after the checkpoint is due. It remains disabled until the owner attests closure and the new checkpoint is started. The first post-deadline return must be read-only; do not open the garden view during the window.
 
-## Fail-closed view gate (GitHub source only, not deployed)
+## Historical fail-closed view gate source record (now published; see 10 November)
 
 A local review of the version 5 gate reproduced two ways it can report full closure while a view stayed open: a session silent for more than 90 seconds no longer blocks the checkpoint and its later heartbeats are not counted, and a view opened between the separate closure check and the checkpoint insert is missed while the gate records zero active sessions. The 03:32 UTC unclosed session above would not block the version 5 gate.
 
@@ -88,7 +105,7 @@ This is a new test against Cloudflare's supported Wrangler 4.92.0 local D1 runti
 
 **Revised gate verdict:** merged source **PASS**, existing CI **PASS**, isolated Wrangler local D1 SQL **PASS (9/9)**. Hosted native D1 / deployment identity / privacy controls **NOT ESTABLISHED**. Deployment and `absence-check-002` **NOT AUTHORISED BY THIS TEST**.
 
-## Next gate
+## Historical 26 October next gate (publication status superseded above)
 
 1. Read the exact current private managed Site version/source and owner-private access through the authorised Sites workflow. Read current `GET /api/evidence` using that Site's private service credential without navigating to the garden view or writing data. Preserve the returned proof/baseline/session facts as a new dated native record; do not assume the 14 October snapshot is still current.
 2. Verify `stillwild-view-v2` checkpoint-marker and row-order behaviour against native Cloudflare D1 **in an isolated fixture**. Check atomicity, same-millisecond events, delayed request timestamps and repeated closes. Do not run destructive tests or create a checkpoint in either existing Site database.
