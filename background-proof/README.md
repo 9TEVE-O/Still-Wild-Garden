@@ -1,8 +1,10 @@
 # Stillwild background proof
 
-One private, isolated Darwin test garden under the approved [app brief v0.2](project_docs/APP_BRIEF_v0.2.md). This GitHub directory began as the source recovered from managed Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`; the later version 4 scheduler-provenance change is recorded in [CURRENT_BUILD_STATE.md](project_docs/CURRENT_BUILD_STATE.md). [The import manifest](../docs/audits/2026-10-05/background-source-manifest.json) records its original file hashes and the documentation/evidence changes made for this repository.
+One private, isolated Darwin test garden under the approved [app brief v0.2](project_docs/APP_BRIEF_v0.2.md). This GitHub directory began as the source recovered from managed Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`; the deployment history and 10 November 2026 owner-authorised publication are recorded in [CURRENT_BUILD_STATE.md](project_docs/CURRENT_BUILD_STATE.md). [The import manifest](../docs/audits/2026-10-05/background-source-manifest.json) records its original file hashes and the documentation/evidence changes made for this repository.
 
 The hourly updater stores completed UTC weather intervals and meaningful Pip, Dew and Moss consequences in D1. Reads never advance the world. Native evidence recorded revision 22 and 22 committed ticks at the 5 October cutoff. The original 24-hour absence review is **INCONCLUSIVE**: complete view closure and historical scheduler identity were not established. This is separate from the public legacy garden and the Python Wild simulation.
+
+On 10 November 2026, repository source `ac0828ee0d4dcd19c39dcf45543a81a9bfffac34` was published as Site source `2fa7e1a388b72784c710fe7ae2fb06454e1394e9`. Native Sites reported success with owner-only access. TypeScript, transactional background checks, provenance checks and the production build passed locally. The existing D1 binding was retained; live data was not reread, and no new absence checkpoint was started.
 
 ## Local development
 
@@ -27,4 +29,4 @@ The hosted writer relies on the managed Site's owner-private access boundary. It
 
 Read [BACKGROUND_PLAN.md](project_docs/BACKGROUND_PLAN.md) for service access, input provenance and keeper rules, and [CURRENT_BUILD_STATE.md](project_docs/CURRENT_BUILD_STATE.md) for current evidence. Source import omits the generated `tsconfig.tsbuildinfo` cache. Inherited legacy/Android verifier scripts are not this app's acceptance checks.
 
-The original checkpoint `absence-check-001` (4 October 2026, 16:57:51 ACST) is preserved and must never be restarted or overwritten. Its review was executed and is INCONCLUSIVE. Per the 5 October current-state record, the hourly task remains enabled and view-closure control is the next gate before any second 24-hour window, which needs a distinct immutable checkpoint and the owner's authorisation. Do not open the hosted view, reset state or redeploy without that authorisation.
+The original checkpoint `absence-check-001` (4 October 2026, 16:57:51 ACST) is preserved and must never be restarted or overwritten. Its review was executed and is INCONCLUSIVE. View-closure source is now published. Current scheduler progress, hosted D1 gate behaviour and preserved records still require fresh verification. A second 24-hour window needs a distinct immutable checkpoint and separate owner authorisation. Do not open the hosted view, reset state or redeploy without that authorisation.
