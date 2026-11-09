@@ -9,7 +9,7 @@ The repository now holds three distinct runtimes:
 | Location | Purpose | Current boundary |
 |---|---|---|
 | [web/](web/README.md) | Public pixel garden, gifts and Android companion candidate | Site version 2; one shared origin; version 1 age-based growth. Source adds an unpublished five-stage growth layer |
-| [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Private test Site version 4 per its current-state record; original 24-hour absence review INCONCLUSIVE; no new window started |
+| [background-proof/](background-proof/README.md) | Isolated Darwin garden with saved weather inputs and keeper consequences | Owner-only proof Site; repository source published 10 November 2026; original absence review INCONCLUSIVE; no new window started by publication |
 | [src/stillwild/](docs/EXPERIMENTAL_BACKEND_README.md) | Experimental Python agent service, isolated real-garden registry/weather ingestion, and opt-in Wild simulation | Separate SQLite runtime; model-derived Open-Meteo values; no connection to either pixel app |
 
 The public app and the original seed and birth time are preserved. GitHub updates do not deploy either managed Site.
@@ -18,7 +18,7 @@ The public app and the original seed and birth time are preserved. GitHub update
 
 The [approved v0.2 brief](web/project_docs/Stillwild_App_Brief_and_Background_Data_Plan_v0.2.md) governs this bounded milestone: scheduled jobs must save outcomes before a viewer returns. The first garden uses completed UTC-hour weather intervals, finite-state keeper actions and read-only snapshots with refresh. SSE remains deferred; the prompt catalog remains parked; future LLM use is undecided.
 
-The private background-test source was recovered from Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, and imported under `background-proof/`. Its D1 database is separate from the public origin. [Its current-state record](background-proof/project_docs/CURRENT_BUILD_STATE.md) owns the proof's status, including the later version 4 scheduler-provenance deployment.
+The private background-test source was recovered from Site version 3, commit `89babb648b5519f6f8545d265171b351d9c47154`, and imported under `background-proof/`. Its D1 database is separate from the public origin. [Its current-state record](background-proof/project_docs/CURRENT_BUILD_STATE.md) owns the proof's status, including the owner-authorised 10 November 2026 publication of repository source `ac0828ee0d4dcd19c39dcf45543a81a9bfffac34` as Site source `2fa7e1a388b72784c710fe7ae2fb06454e1394e9`. Native Sites reported successful deployment after owner-only access was restored.
 
 On 5 October 2026, native database reads showed **22 unique committed hourly ticks, revision 22 and 31 saved consequence events** at that cutoff. All 22 tick run IDs matched successful Worker log entries. Recorded planting, habitat and water changes reconcile with the saved world. This establishes background progress within the observed window.
 
@@ -57,4 +57,4 @@ GIF/renderer, Android-scene and local Worker/D1 behavior. [The sync record](web/
 and [import evidence](web/project_docs/repository-verification.json) bind those checks to the import.
 None of these local checks establishes the required hosted 24-hour absence proof.
 
-The next recorded gate is view-closure control, implemented and verified before any second 24-hour window is authorised (see the proof's current-state record). Preserve both managed Sites and their current data; GitHub changes do not deploy either Site.
+The view-closure source is now published. Next, verify the hosted runtime and preserved records through read-only evidence and test native D1 gate semantics in isolated fixtures before seeking authority for any second 24-hour window (see the proof's current-state record). Publication does not establish full absence acceptance. Preserve both managed Sites and their current data; GitHub changes do not deploy either Site.
