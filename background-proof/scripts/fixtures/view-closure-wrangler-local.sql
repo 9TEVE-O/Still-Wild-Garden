@@ -3,7 +3,17 @@
 -- These assertions test row ordering and fail-closed SQL conditions, NOT hosted D1 atomic batch semantics.
 
 CREATE TABLE d1_assertions (
-  name TEXT PRIMARY KEY,
+  name TEXT NOT NULL PRIMARY KEY CHECK (name IN (
+    'stale view blocks checkpoint',
+    'checkpoint and gate written after closure',
+    'same millisecond pre-checkpoint close excluded',
+    'no in-window close before post-marker activity',
+    'delayed earlier-timestamp event counted by rowid',
+    'repeated close recorded after checkpoint',
+    'in-window view evidence invalidates closure',
+    'missing marker cannot supply rowid',
+    'original checkpoint remains immutable'
+  )),
   passed INTEGER NOT NULL CHECK (passed = 1)
 );
 
@@ -98,8 +108,13 @@ SELECT 'missing marker cannot supply rowid',
  (SELECT rowid FROM view_events WHERE id = 'view:checkpoint:missing') IS NULL;
 INSERT INTO d1_assertions
 SELECT 'original checkpoint remains immutable',
- started_at = 500 AND revision = 0 AND state = '{"plants":1}'
-FROM proof_baseline WHERE id = 'absence-check-001';
+ EXISTS (
+   SELECT 1 FROM proof_baseline
+   WHERE id = 'absence-check-001' AND garden_id = 'darwin-proof-001'
+     AND started_at = 500 AND revision = 0 AND state = '{"plants":1}'
+ );
 
-SELECT 'WRANGLER_LOCAL_D1_VIEW_CLOSURE_PASS' AS status, COUNT(*) AS checks
-FROM d1_assertions;
+-- A missing result must fail Wrangler even if every assertion that ran passed.
+CREATE TABLE d1_verdict (checks INTEGER NOT NULL CHECK (checks = 9));
+INSERT INTO d1_verdict SELECT COUNT(*) FROM d1_assertions;
+SELECT 'WRANGLER_LOCAL_D1_VIEW_CLOSURE_PASS' AS status, checks FROM d1_verdict;
