@@ -14,6 +14,7 @@ Use Node.js 24 and `pnpm@11.25.0`. From this directory:
 pnpm install --frozen-lockfile
 pnpm exec tsc --noEmit
 node scripts/verify-background.cjs
+node scripts/verify-provenance.cjs
 pnpm build
 pnpm exec wrangler d1 execute site-creator-d1 --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_melodic_lucky_pierre.sql
 pnpm start
@@ -21,7 +22,9 @@ pnpm start
 
 Use the local URL printed by Wrangler. A fresh local database is empty until its first local background write. For example, send JSON `{"trigger":"manual"}` to the local `/api/background/tick` route, then read local `/api/evidence`. Never use these steps against either hosted garden.
 
-`verify-background.cjs` tests the actual transition, weather parser, SQL and route code against an isolated transactional SQLite adapter with a controlled clock and weather. It exercises duplicate/overlapping ticks, rollback, rainfall intervals, fallback, catch-up, read-only snapshots served only to open view sessions, immutable checkpoints and the view-closure gate (stale and racing sessions, close-before-open, in-window activity). Both verifiers run from any working directory. It does not prove deployed absence or platform access enforcement.
+`verify-background.cjs` tests the actual transition, weather parser, SQL and route code against an isolated transactional SQLite adapter with a controlled clock and weather. It exercises duplicate/overlapping ticks, rollback, rainfall intervals, fallback, catch-up, read-only snapshots served only to open view sessions, immutable checkpoints and the view-closure gate (stale and racing sessions, close-before-open, in-window activity). Both verifiers run from any working directory. These local checks cover fixture behaviour. Deployed absence and platform access enforcement require hosted evidence.
+
+Both verification scripts print their results. To deliberately refresh the corresponding tracked receipt in `project_docs/`, pass `--record` to that script and review the diff before committing it.
 
 ## Hosted boundary and continuation
 

@@ -70,6 +70,9 @@ jobs:
           CODEX_PRIMARY_RUNTIME_NODE_MODULES: ${{ runner.temp }}/canvas/node_modules
       - if: matrix.app == 'background-proof'
         run: node scripts/verify-provenance.cjs
+      - if: matrix.app == 'background-proof'
+        name: Check that verification preserved the tracked receipts
+        run: git diff --exit-code HEAD -- project_docs/background-test-evidence.json project_docs/scheduler-provenance-test-evidence.json
       - run: pnpm build
       # Test the migrated SQLite schema through Cloudflare Wrangler's D1 local emulator.
       # The state directory is ephemeral and separate from either managed Site.

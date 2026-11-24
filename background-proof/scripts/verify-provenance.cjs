@@ -127,7 +127,9 @@ const get = (query, ...params) => sql.prepare(query).get(...params);
     chain: { schedulerExecutionId: scheduler.executionId, gardenRunId: run.id, tickId: tick.tick_id, revision: tick.revision, eventId: event.id },
     checks: ['scheduler metadata validated', 'scheduled delivery without scheduler metadata rejected', 'execution ID persisted uniquely', 'execution ID joins to garden run', 'tick revision matches world revision', 'event carries direct run ID', 'read-only evidence exposes scheduler to run to tick to event chain', 'duplicate execution ID rejected as HTTP 409 with no new run or revision']
   };
-  fs.writeFileSync('project_docs/scheduler-provenance-test-evidence.json', JSON.stringify(evidence, null, 2) + '\n');
+  if (process.argv.includes('--record')) {
+    fs.writeFileSync('project_docs/scheduler-provenance-test-evidence.json', JSON.stringify(evidence, null, 2) + '\n');
+  }
   console.log(JSON.stringify(evidence));
   sql.close();
 })().catch(e => { console.error(e); process.exitCode = 1; });
